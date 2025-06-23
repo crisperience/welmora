@@ -1,42 +1,38 @@
-'use client'
+'use client';
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Calendar } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Calendar } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function HomePage() {
-  const router = useRouter()
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  )
+  const router = useRouter();
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   const formatDateForDisplay = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return date.toLocaleDateString('en-GB', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
-    })
-  }
+      day: 'numeric',
+    });
+  };
 
   const setToday = () => {
-    setSelectedDate(new Date().toISOString().split('T')[0])
-  }
+    setSelectedDate(new Date().toISOString().split('T')[0]);
+  };
 
-  const isToday = selectedDate === new Date().toISOString().split('T')[0]
+  const isToday = selectedDate === new Date().toISOString().split('T')[0];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-2xl mx-auto pt-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welmora Scanner
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welmora Scanner</h1>
         </div>
 
         {/* Date Selection */}
@@ -57,21 +53,19 @@ export default function HomePage() {
                 <input
                   type="date"
                   value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  onChange={e => setSelectedDate(e.target.value)}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <Button
                   onClick={setToday}
-                  variant={isToday ? "default" : "outline"}
+                  variant={isToday ? 'default' : 'outline'}
                   className="px-4 py-2"
                 >
                   Today
                 </Button>
               </div>
 
-              <p className="text-sm text-gray-600">
-                {formatDateForDisplay(selectedDate)}
-              </p>
+              <p className="text-sm text-gray-600">{formatDateForDisplay(selectedDate)}</p>
             </div>
           </CardContent>
         </Card>
@@ -85,9 +79,7 @@ export default function HomePage() {
               onClick={() => router.push(`/shopping/${selectedDate}`)}
             >
               <div className="text-6xl mb-4">🛒</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                SHOPPING
-              </h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">SHOPPING</h2>
             </CardContent>
           </Card>
 
@@ -98,13 +90,11 @@ export default function HomePage() {
               onClick={() => router.push(`/packing/${selectedDate}`)}
             >
               <div className="text-6xl mb-4">📦</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                PACKING
-              </h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">PACKING</h2>
             </CardContent>
           </Card>
         </div>
       </div>
     </div>
-  )
+  );
 }

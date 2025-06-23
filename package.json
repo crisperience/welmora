@@ -60,6 +60,7 @@
     "eslint-config-next": "15.3.4",
     "jest": "^30.0.2",
     "jest-environment-jsdom": "^30.0.2",
+    "node-mocks-http": "^1.17.2",
     "prettier": "^3.6.0",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.4",
