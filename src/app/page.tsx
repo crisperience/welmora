@@ -26,24 +26,12 @@ export default function HomePage() {
     });
   };
 
-  const getYesterdayDate = () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    return yesterday;
-  };
-
   const handleShopping = () => {
-    // Always use yesterday's date for shopping functionality
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    router.push(`/shopping/${formatDateForUrl(yesterday)}`);
+    router.push(`/shopping/${formatDateForUrl(selectedDate)}`);
   };
 
   const handlePacking = () => {
-    // Always use yesterday's date for packing functionality
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    router.push(`/packing/${formatDateForUrl(yesterday)}`);
+    router.push(`/packing/${formatDateForUrl(selectedDate)}`);
   };
 
   return (
@@ -93,7 +81,7 @@ export default function HomePage() {
                   Start Shopping
                 </Button>
                 <div className="text-center text-sm text-gray-500 mt-2">
-                  Orders from {formatDisplayDate(getYesterdayDate())}
+                  Orders from {formatDisplayDate(selectedDate)}
                 </div>
               </CardContent>
             </Card>
@@ -115,7 +103,7 @@ export default function HomePage() {
                   Start Packing
                 </Button>
                 <div className="text-center text-sm text-gray-500 mt-2">
-                  Orders from {formatDisplayDate(getYesterdayDate())}
+                  Orders from {formatDisplayDate(selectedDate)}
                 </div>
               </CardContent>
             </Card>
