@@ -13,7 +13,7 @@ export default function HomePage() {
 
   const formatDateForDisplay = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('de-CH', {
+    return date.toLocaleDateString('en-GB', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -25,7 +25,7 @@ export default function HomePage() {
     // Shopping shows orders from the previous day
     const date = new Date(selectedDate);
     date.setDate(date.getDate() - 1);
-    return date.toLocaleDateString('de-CH', {
+    return date.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
@@ -36,7 +36,7 @@ export default function HomePage() {
     // Packing shows orders from the previous day
     const date = new Date(selectedDate);
     date.setDate(date.getDate() - 1);
-    return date.toLocaleDateString('de-CH', {
+    return date.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
