@@ -125,9 +125,8 @@ export default function PackingPage() {
 
   const processProduct = (code: string) => {
     try {
-      // Find which package contains this SKU
-      let foundPackage: PackageType | null = null;
-      let foundItem: PackageItem | null = null;
+      // Find ALL packages that contain this SKU and still need items
+      const matchingPackages: Array<{ package: PackageType; item: PackageItem }> = [];
 
       for (const pkg of packages) {
         const item = pkg.items.find(
@@ -136,22 +135,71 @@ export default function PackingPage() {
             item.productId?.toString() === code ||
             item.name.toLowerCase().includes(code.toLowerCase())
         );
-        if (item) {
-          foundPackage = pkg;
-          foundItem = item;
-          break;
+        if (item && item.scanned < item.needed) {
+          matchingPackages.push({ package: pkg, item });
         }
       }
 
-      if (!foundPackage || !foundItem) {
+      if (matchingPackages.length === 0) {
+        // Check if product exists but is already complete in all packages
+        const anyMatch = packages.some(pkg =>
+          pkg.items.some(item =>
+            item.sku === code ||
+            item.productId?.toString() === code ||
+            item.name.toLowerCase().includes(code.toLowerCase())
+          )
+        );
+
         setScanFeedback({
           success: false,
-          message: `❌ Product "${code}" not found in any package for this date`,
+          message: anyMatch
+            ? `⚠️ Product "${code}" already complete in all packages`
+            : `❌ Product "${code}" not found in any package for this date`,
           urgency: 'medium',
           sound: 'error',
         });
         return;
       }
+
+      // If multiple packages need this product, show selection dialog
+      if (matchingPackages.length > 1) {
+        setScanFeedback({
+          success: false,
+          message: `🤔 Multiple packages need "${matchingPackages[0].item.name}"`,
+          packageInfo: {
+            packageId: 'multiple',
+            orderNumber: 'Multiple Orders',
+            customerName: `${matchingPackages.length} customers need this product`,
+            shippingAddress: matchingPackages.map(mp =>
+              `${mp.package.customerName} (${mp.package.orderNumber}): ${mp.item.needed - mp.item.scanned} needed`
+            ).join('\n'),
+            remainingItems: matchingPackages.reduce((sum, mp) => sum + (mp.item.needed - mp.item.scanned), 0),
+            totalItems: matchingPackages.reduce((sum, mp) => sum + mp.item.needed, 0),
+            isComplete: false,
+          },
+          productInfo: {
+            name: matchingPackages[0].item.name,
+            sku: matchingPackages[0].item.sku,
+            needed: matchingPackages.reduce((sum, mp) => sum + mp.item.needed, 0),
+            scanned: matchingPackages.reduce((sum, mp) => sum + mp.item.scanned, 0),
+            remaining: matchingPackages.reduce((sum, mp) => sum + (mp.item.needed - mp.item.scanned), 0),
+          },
+          urgency: 'high',
+          sound: 'warning',
+          multiplePackages: matchingPackages.map(mp => ({
+            packageId: mp.package.id,
+            customerName: mp.package.customerName,
+            orderNumber: mp.package.orderNumber,
+            needed: mp.item.needed,
+            scanned: mp.item.scanned,
+            remaining: mp.item.needed - mp.item.scanned,
+          })),
+        });
+        return;
+      }
+
+      // Single package found - proceed as normal
+      const { package: foundPackage, item: foundItem } = matchingPackages[0];
 
       if (foundItem.scanned >= foundItem.needed) {
         setScanFeedback({
@@ -489,6 +537,77 @@ export default function PackingPage() {
                                       </Badge>
                                     )}
                                   </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {scanFeedback.multiplePackages && (
+                              <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <Package className="h-4 w-4 text-yellow-600" />
+                                  <span className="font-semibold text-yellow-800">Choose Package</span>
+                                </div>
+                                <p className="text-sm text-yellow-700 mb-3">
+                                  Multiple customers ordered this product. Click the package you want to add it to:
+                                </p>
+                                <div className="space-y-2">
+                                  {scanFeedback.multiplePackages.map((pkg) => (
+                                    <button
+                                      key={pkg.packageId}
+                                      onClick={() => {
+                                        // Find the specific package and process the product for it
+                                        const targetPackage = packages.find(p => p.id === pkg.packageId);
+                                        if (targetPackage) {
+                                          // Process for this specific package
+                                          const item = targetPackage.items.find(item =>
+                                            scanFeedback.productInfo && (
+                                              item.sku === scanFeedback.productInfo.sku ||
+                                              item.name === scanFeedback.productInfo.name
+                                            )
+                                          );
+                                          if (item) {
+                                            // Update only this package
+                                            const updatedPackages = packages.map(p => {
+                                              if (p.id === pkg.packageId) {
+                                                const updatedItems = p.items.map(i => {
+                                                  if (i.sku === item.sku) {
+                                                    return { ...i, scanned: Math.min(i.scanned + 1, i.needed) };
+                                                  }
+                                                  return i;
+                                                });
+                                                const allComplete = updatedItems.every(i => i.scanned >= i.needed);
+                                                return { ...p, items: updatedItems, status: allComplete ? 'completed' as const : 'in-progress' as const };
+                                              }
+                                              return p;
+                                            });
+                                            setPackages(updatedPackages);
+                                            setScanFeedback({
+                                              success: true,
+                                              message: `✅ Added to ${pkg.customerName}'s package`,
+                                              urgency: 'low',
+                                              sound: 'success',
+                                            });
+                                          }
+                                        }
+                                      }}
+                                      className="w-full p-3 text-left bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <div>
+                                          <div className="font-medium text-gray-900">{pkg.customerName}</div>
+                                          <div className="text-sm text-gray-600">{pkg.orderNumber}</div>
+                                        </div>
+                                        <div className="text-right">
+                                          <div className="text-sm font-medium text-blue-600">
+                                            Need: {pkg.remaining}
+                                          </div>
+                                          <div className="text-xs text-gray-500">
+                                            {pkg.scanned}/{pkg.needed}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </button>
+                                  ))}
                                 </div>
                               </div>
                             )}

@@ -139,6 +139,14 @@ export interface ScanFeedback {
   };
   urgency: 'low' | 'medium' | 'high'; // For prioritizing packages
   sound?: 'success' | 'warning' | 'error'; // Audio feedback
+  multiplePackages?: Array<{
+    packageId: string;
+    customerName: string;
+    orderNumber: string;
+    needed: number;
+    scanned: number;
+    remaining: number;
+  }>; // For handling same product in multiple packages
 }
 
 // Scanner types
