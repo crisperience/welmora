@@ -414,8 +414,16 @@ export default function PackingPage() {
       {/* Scanner */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="mb-4">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Scanner</h2>
+            <Button
+              onClick={() => setScannerActive(!scannerActive)}
+              variant={scannerActive ? 'destructive' : 'default'}
+              size="sm"
+            >
+              <Scan className="mr-2 h-4 w-4" />
+              {scannerActive ? 'Stop' : 'Start'}
+            </Button>
           </div>
 
           {scannerActive && (
@@ -785,4 +793,4 @@ export default function PackingPage() {
       )}
     </div>
   );
-}
+} 

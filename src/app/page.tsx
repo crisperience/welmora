@@ -1,28 +1,24 @@
-'use client';
+"use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, PackageOpen, ShoppingCart } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PackageOpen, ShoppingCart } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function HomePage() {
   const router = useRouter();
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    // Default to today for calendar display
+    return new Date();
+  });
 
-  const formatDateForDisplay = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  const formatDateForUrl = (date: Date) => {
+    return date.toISOString().split('T')[0];
   };
 
-  const getShoppingOrdersDate = (selectedDate: string) => {
-    // Shopping shows orders from the previous day
-    const date = new Date(selectedDate);
-    date.setDate(date.getDate() - 1);
+  const formatDisplayDate = (date: Date) => {
     return date.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: '2-digit',
@@ -30,88 +26,105 @@ export default function HomePage() {
     });
   };
 
-  const getPackingOrdersDate = (selectedDate: string) => {
-    // Packing shows orders from the previous day
-    const date = new Date(selectedDate);
-    date.setDate(date.getDate() - 1);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+  const getYesterdayDate = () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday;
+  };
+
+  const handleShopping = () => {
+    // Always use yesterday's date for shopping functionality
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    router.push(`/shopping/${formatDateForUrl(yesterday)}`);
+  };
+
+  const handlePacking = () => {
+    // Always use yesterday's date for packing functionality
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    router.push(`/packing/${formatDateForUrl(yesterday)}`);
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col overflow-hidden">
-      {/* Main content area */}
-      <div className="flex-1 flex items-center justify-center p-4 overflow-y-auto">
-        <div className="max-w-2xl w-full">
-          {/* Header */}
+    <div className="h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welmora Scanner</h1>
-            <p className="text-gray-600">Barcode scanning for shopping and packing</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              Welmora Scanner
+            </h1>
+            <p className="text-xl text-gray-600">
+              WooCommerce Inventory Management System
+            </p>
           </div>
 
-          {/* Date Selection */}
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Calendar className="h-6 w-6 text-gray-600" />
-                  <span className="text-lg font-medium">Select Order Date</span>
-                </div>
-
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={e => setSelectedDate(e.target.value)}
-                  className="w-full px-6 py-4 text-xl border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
+          <div className="space-y-6">
+            {/* Date Selection */}
+            <Card className="bg-white shadow-lg border-0">
+              <CardHeader className="text-center">
+                <CardTitle className="text-xl text-gray-800">Select Order Date</CardTitle>
+                <CardDescription>Choose the date for orders to process</CardDescription>
+              </CardHeader>
+              <CardContent className="flex justify-center">
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  className="rounded-md border"
                 />
+              </CardContent>
+            </Card>
 
-                <p className="text-center text-gray-600 mt-4 text-lg">{formatDateForDisplay(selectedDate)}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Main Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Shopping */}
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardContent
-                className="p-8 text-center"
-                onClick={() => router.push(`/shopping/${selectedDate}`)}
-              >
-                <div className="mb-4 flex justify-center">
-                  <ShoppingCart className="h-16 w-16 text-blue-600" />
+            <Card className="bg-white shadow-lg border-0 hover:shadow-xl transition-shadow">
+              <CardHeader className="text-center">
+                <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <ShoppingCart className="w-8 h-8 text-blue-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">SHOPPING</h2>
-                <p className="text-sm text-gray-600">
-                  Orders from {getShoppingOrdersDate(selectedDate)}
-                </p>
+                <CardTitle className="text-xl text-blue-800">Shopping</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={handleShopping}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg"
+                  size="lg"
+                >
+                  Start Shopping
+                </Button>
+                <div className="text-center text-sm text-gray-500 mt-2">
+                  Orders from {formatDisplayDate(getYesterdayDate())}
+                </div>
               </CardContent>
             </Card>
 
             {/* Packing */}
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardContent
-                className="p-8 text-center"
-                onClick={() => router.push(`/packing/${selectedDate}`)}
-              >
-                <div className="mb-4 flex justify-center">
-                  <PackageOpen className="h-16 w-16 text-green-600" />
+            <Card className="bg-white shadow-lg border-0 hover:shadow-xl transition-shadow">
+              <CardHeader className="text-center">
+                <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <PackageOpen className="w-8 h-8 text-green-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">PACKING</h2>
-                <p className="text-sm text-gray-600">
-                  Orders from {getPackingOrdersDate(selectedDate)}
-                </p>
+                <CardTitle className="text-xl text-green-800">Packing</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={handlePacking}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg"
+                  size="lg"
+                >
+                  Start Packing
+                </Button>
+                <div className="text-center text-sm text-gray-500 mt-2">
+                  Orders from {formatDisplayDate(getYesterdayDate())}
+                </div>
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
 
-      {/* Footer - fixed at bottom */}
-      <footer className="flex-shrink-0 p-4 text-center">
+      {/* Footer */}
+      <footer className="p-4 text-center">
         <p className="text-xs text-gray-400">
           Developed by{' '}
           <a

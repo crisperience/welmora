@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Welmora Scanner',
-  description: 'WooCommerce inventory scanner for efficient warehouse management',
+  description: 'Inventory scanner for efficient warehouse management',
   icons: {
     icon: '/Favicon Original.ico',
   },
@@ -27,25 +27,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
-      >
-        <main className="flex-1">{children}</main>
-        <footer className="border-t bg-gray-50 py-4 mt-8">
-          <div className="container mx-auto px-4 text-center">
-            <p className="text-sm text-gray-600">
-              Developed by{' '}
-              <a
-                href="https://crisp.hr"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-blue-600 hover:text-blue-800 transition-colors"
-              >
-                CRISP
-              </a>
-            </p>
-          </div>
-        </footer>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {children}
       </body>
     </html>
   );
