@@ -1,15 +1,17 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Info, PackageOpen, ShoppingCart } from 'lucide-react';
+import { Calendar, PackageOpen, ShoppingCart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function HomePage() {
   const router = useRouter();
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split('T')[0];
+  });
 
   const formatDateForDisplay = (dateString: string) => {
     const date = new Date(dateString);
@@ -43,21 +45,6 @@ export default function HomePage() {
     });
   };
 
-  const setToday = () => {
-    setSelectedDate(new Date().toISOString().split('T')[0]);
-  };
-
-  const setTomorrow = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setSelectedDate(tomorrow.toISOString().split('T')[0]);
-  };
-
-  const isToday = selectedDate === new Date().toISOString().split('T')[0];
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const isTomorrow = selectedDate === tomorrow.toISOString().split('T')[0];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-2xl mx-auto pt-8">
@@ -72,58 +59,18 @@ export default function HomePage() {
           <CardContent className="p-6">
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
-                <Calendar className="h-5 w-5 text-gray-600" />
-                <span className="font-medium">Select Work Date</span>
-                {isToday && (
-                  <Badge variant="default" className="bg-green-600">
-                    Today
-                  </Badge>
-                )}
-                {isTomorrow && (
-                  <Badge variant="default" className="bg-blue-600">
-                    Tomorrow
-                  </Badge>
-                )}
+                <Calendar className="h-6 w-6 text-gray-600" />
+                <span className="text-lg font-medium">Select Order Date</span>
               </div>
 
-              <div className="flex gap-3 items-center">
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={e => setSelectedDate(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <Button
-                  onClick={setToday}
-                  variant={isToday ? 'default' : 'outline'}
-                  size="sm"
-                >
-                  Today
-                </Button>
-                <Button
-                  onClick={setTomorrow}
-                  variant={isTomorrow ? 'default' : 'outline'}
-                  size="sm"
-                >
-                  Tomorrow
-                </Button>
-              </div>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={e => setSelectedDate(e.target.value)}
+                className="w-full px-6 py-4 text-xl border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
+              />
 
-              <p className="text-sm text-gray-600">{formatDateForDisplay(selectedDate)}</p>
-
-              {/* Info about order dates */}
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                <div className="flex items-start gap-2">
-                  <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-1">Orders shown:</p>
-                    <p>• Shopping & Packing: Orders from {getShoppingOrdersDate(selectedDate)}</p>
-                    <p className="text-xs text-blue-600 mt-1">
-                      {isTomorrow ? "Tomorrow shows today's orders (ready for packing)" : ""}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <p className="text-center text-gray-600 mt-4 text-lg">{formatDateForDisplay(selectedDate)}</p>
             </div>
           </CardContent>
         </Card>
@@ -164,14 +111,14 @@ export default function HomePage() {
         </div>
 
         {/* Footer */}
-        <footer className="mt-12 text-center">
-          <p className="text-sm text-gray-500">
+        <footer className="mt-16 text-center">
+          <p className="text-xs text-gray-400">
             Developed by{' '}
             <a
               href="https://crisp.hr"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+              className="text-gray-500 hover:text-gray-700 transition-colors"
             >
               CRISP
             </a>

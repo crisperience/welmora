@@ -69,18 +69,33 @@ export default function PackingPage() {
     }
   }, [packages, date]);
 
-  // Clear feedback after 5 seconds
-  useEffect(() => {
-    if (scanFeedback) {
-      const timer = setTimeout(() => {
-        setScanFeedback(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [scanFeedback]);
+  // Remove automatic feedback clearing - user must manually dismiss
 
   const dismissFeedback = () => {
     setScanFeedback(null);
+  };
+
+  const updateWooCommerceStatus = async (orderId: number) => {
+    try {
+      const response = await fetch('/api/packing/update-order-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          status: 'completed',
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to update order status in WooCommerce');
+      } else {
+        console.log(`Order ${orderId} automatically marked as completed in WooCommerce`);
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+    }
   };
 
   const handleScan = async (scannedCode: string) => {
@@ -179,6 +194,14 @@ export default function PackingPage() {
 
           // Check if package is complete
           const allComplete = updatedItems.every(item => item.scanned >= item.needed);
+          const wasCompleted = pkg.status === 'completed';
+          const isNowCompleted = allComplete;
+
+          // If package just became completed, we'll need to update WooCommerce
+          if (!wasCompleted && isNowCompleted) {
+            // Async call to update WooCommerce order status
+            updateWooCommerceStatus(pkg.orderId);
+          }
 
           return {
             ...pkg,
@@ -343,16 +366,8 @@ export default function PackingPage() {
       {/* Scanner */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4">
             <h2 className="font-semibold">Scanner</h2>
-            <Button
-              onClick={() => setScannerActive(!scannerActive)}
-              variant={scannerActive ? 'destructive' : 'default'}
-              size="sm"
-            >
-              <Scan className="mr-2 h-4 w-4" />
-              {scannerActive ? 'Stop' : 'Start'}
-            </Button>
           </div>
 
           {scannerActive && (

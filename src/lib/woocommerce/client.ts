@@ -352,18 +352,19 @@ export async function getPackagesForDate(
         0
       );
 
-      // Format shipping address
+      // Format shipping address - use shipping if available, otherwise use billing
+      const hasShippingAddress = order.shipping?.address_1 && order.shipping?.city;
       const shippingAddress = {
-        first_name: order.shipping?.first_name || order.billing.first_name,
-        last_name: order.shipping?.last_name || order.billing.last_name,
-        company: order.shipping?.company,
-        address_1: order.shipping?.address_1 || order.billing.address_1,
-        address_2: order.shipping?.address_2 || order.billing.address_2,
-        city: order.shipping?.city || order.billing.city,
-        state: order.shipping?.state || order.billing.state,
-        postcode: order.shipping?.postcode || order.billing.postcode,
-        country: order.shipping?.country || order.billing.country,
-        phone: order.shipping?.phone || order.billing.phone,
+        first_name: hasShippingAddress ? (order.shipping?.first_name || order.billing.first_name) : order.billing.first_name,
+        last_name: hasShippingAddress ? (order.shipping?.last_name || order.billing.last_name) : order.billing.last_name,
+        company: hasShippingAddress ? order.shipping?.company : order.billing.company,
+        address_1: hasShippingAddress ? order.shipping?.address_1 : order.billing.address_1,
+        address_2: hasShippingAddress ? order.shipping?.address_2 : order.billing.address_2,
+        city: hasShippingAddress ? order.shipping?.city : order.billing.city,
+        state: hasShippingAddress ? order.shipping?.state : order.billing.state,
+        postcode: hasShippingAddress ? order.shipping?.postcode : order.billing.postcode,
+        country: hasShippingAddress ? order.shipping?.country : order.billing.country,
+        phone: hasShippingAddress ? order.shipping?.phone : order.billing.phone,
       };
 
       return {
