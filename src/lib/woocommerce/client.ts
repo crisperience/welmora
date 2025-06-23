@@ -29,7 +29,7 @@ export default WooCommerce;
 // Interfaces for WooCommerce data structures
 interface WooCommerceOrder {
   id: number;
-  number: string;
+  number?: string;
   date_created: string;
   status: string;
   total: string;
@@ -47,20 +47,20 @@ interface WooCommerceOrder {
     country: string;
     phone?: string;
   };
-  shipping: {
-    first_name: string;
-    last_name: string;
+  shipping?: {
+    first_name?: string;
+    last_name?: string;
     company?: string;
-    address_1: string;
+    address_1?: string;
     address_2?: string;
-    city: string;
+    city?: string;
     state?: string;
-    postcode: string;
-    country: string;
+    postcode?: string;
+    country?: string;
     phone?: string;
   };
   line_items: WooCommerceLineItem[];
-  shipping_lines: Array<{
+  shipping_lines?: Array<{
     method_title: string;
     method_id: string;
     total: string;
@@ -69,7 +69,7 @@ interface WooCommerceOrder {
 }
 
 interface WooCommerceLineItem {
-  sku: string;
+  sku?: string;
   name: string;
   quantity: number;
   price: string;
@@ -239,7 +239,7 @@ export async function getOrdersByDateRange(
     const response = await WooCommerce.get('orders', {
       after: startDateTime,
       before: endDateTime,
-      status: 'processing,completed',
+      status: 'pending,processing,on-hold,completed',
       per_page: 100,
     });
 
@@ -267,13 +267,13 @@ export async function generateDailySnapshot(
   date: string
 ): Promise<{ success: boolean; data?: DailySnapshot; error?: string }> {
   try {
+    // Get yesterday's date (the date we're actually packing for)
     const yesterday = new Date(date);
     yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-    const startDate = yesterday.toISOString().split('T')[0];
-    const endDate = date;
-
-    const ordersResult = await getOrdersByDateRange(startDate, endDate);
+    // Get orders from yesterday only (00:00 to 23:59)
+    const ordersResult = await getOrdersByDateRange(yesterdayStr, yesterdayStr);
 
     if (!ordersResult.success || !ordersResult.data) {
       return {
@@ -328,13 +328,15 @@ export async function getPackagesForDate(
   date: string
 ): Promise<{ success: boolean; data?: Package[]; error?: string }> {
   try {
+    // For packing, we always get orders from yesterday (not today)
+    // This makes sense because orders are typically placed one day and packed the next
     const yesterday = new Date(date);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const startDate = yesterday.toISOString().split('T')[0];
-    const endDate = date;
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-    const ordersResult = await getOrdersByDateRange(startDate, endDate);
+    // Get only yesterday's orders (not a range)
+    const ordersResult = await getOrdersByDateRange(yesterdayStr, yesterdayStr);
 
     if (!ordersResult.success || !ordersResult.data) {
       return {
@@ -346,7 +348,7 @@ export async function getPackagesForDate(
     const packages: Package[] = ordersResult.data.map((order: WooCommerceOrder) => {
       // Calculate total package value
       const totalValue = order.line_items.reduce(
-        (sum, item) => sum + parseFloat(item.price) * item.quantity,
+        (sum: number, item: WooCommerceLineItem) => sum + parseFloat(item.price) * item.quantity,
         0
       );
 
@@ -482,6 +484,39 @@ export async function testWooCommerceDateFiltering(): Promise<
     };
   } catch (error) {
     console.error('Error testing WooCommerce date filtering:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+// Update order status to completed
+export async function updateOrderStatus(
+  orderId: number,
+  status: 'completed' | 'processing' | 'cancelled' | 'refunded'
+): Promise<WooCommerceApiResponse<WooCommerceOrder>> {
+  try {
+    console.log(`Updating order ${orderId} status to ${status}`);
+
+    const response = await WooCommerce.put(`orders/${orderId}`, {
+      status: status,
+    });
+
+    const updatedOrder = response.data as WooCommerceOrder;
+
+    console.log('Order status updated successfully:', {
+      orderId,
+      newStatus: status,
+      responseStatus: updatedOrder.status,
+    });
+
+    return {
+      success: true,
+      data: updatedOrder,
+    };
+  } catch (error) {
+    console.error('Error updating order status:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

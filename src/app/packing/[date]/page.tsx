@@ -79,6 +79,10 @@ export default function PackingPage() {
     }
   }, [scanFeedback]);
 
+  const dismissFeedback = () => {
+    setScanFeedback(null);
+  };
+
   const handleScan = async (scannedCode: string) => {
     processProduct(scannedCode);
   };
@@ -231,30 +235,60 @@ export default function PackingPage() {
     }
   };
 
-  const togglePackageStatus = (packageId: string) => {
+  const togglePackageStatus = async (packageId: string) => {
+    const pkg = packages.find(p => p.id === packageId);
+    if (!pkg) return;
+
+    const newStatus = pkg.status === 'completed' ? 'pending' : 'completed';
+
+    // Update local state first for immediate UI feedback
     setPackages(prev =>
-      prev.map(pkg => {
-        if (pkg.id === packageId) {
-          const newStatus = pkg.status === 'completed' ? 'pending' : 'completed';
+      prev.map(p => {
+        if (p.id === packageId) {
           // If marking as completed, mark all items as scanned
           if (newStatus === 'completed') {
-            const updatedItems = pkg.items.map(item => ({
+            const updatedItems = p.items.map(item => ({
               ...item,
               scanned: item.needed,
             }));
-            return { ...pkg, status: newStatus, items: updatedItems };
+            return { ...p, status: newStatus, items: updatedItems };
           } else {
             // If marking as pending, reset all items
-            const updatedItems = pkg.items.map(item => ({
+            const updatedItems = p.items.map(item => ({
               ...item,
               scanned: 0,
             }));
-            return { ...pkg, status: newStatus, items: updatedItems };
+            return { ...p, status: newStatus, items: updatedItems };
           }
         }
-        return pkg;
+        return p;
       })
     );
+
+    // If marking as completed, update WooCommerce order status
+    if (newStatus === 'completed') {
+      try {
+        const response = await fetch('/api/packing/update-order-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderId: pkg.orderId,
+            status: 'completed',
+          }),
+        });
+
+        if (!response.ok) {
+          console.error('Failed to update order status in WooCommerce');
+          // Optionally show user notification
+        } else {
+          console.log(`Order ${pkg.orderId} marked as completed in WooCommerce`);
+        }
+      } catch (error) {
+        console.error('Error updating order status:', error);
+      }
+    }
   };
 
   const getPackageProgress = (pkg: PackageType) => {
@@ -347,16 +381,14 @@ export default function PackingPage() {
 
           {scanFeedback && (
             <Card
-              className={`border-l-4 ${
-                scanFeedback.success ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'
-              }`}
+              className={`border-l-4 ${scanFeedback.success ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'
+                }`}
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div
-                    className={`p-2 rounded-full ${
-                      scanFeedback.success ? 'bg-green-100' : 'bg-red-100'
-                    }`}
+                    className={`p-2 rounded-full ${scanFeedback.success ? 'bg-green-100' : 'bg-red-100'
+                      }`}
                   >
                     {scanFeedback.success ? (
                       <CheckCircle className="h-5 w-5 text-green-600" />
@@ -365,87 +397,98 @@ export default function PackingPage() {
                     )}
                   </div>
                   <div className="flex-1">
-                    <p
-                      className={`font-medium ${
-                        scanFeedback.success ? 'text-green-800' : 'text-red-800'
-                      }`}
-                    >
-                      {scanFeedback.message}
-                    </p>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p
+                          className={`font-medium ${scanFeedback.success ? 'text-green-800' : 'text-red-800'
+                            }`}
+                        >
+                          {scanFeedback.message}
+                        </p>
 
-                    {scanFeedback.packageInfo && (
-                      <div className="mt-3 space-y-2">
-                        <div className="bg-white p-3 rounded-lg border">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Package className="h-4 w-4 text-blue-600" />
-                            <span className="font-semibold text-blue-800">
-                              Package {scanFeedback.packageInfo.orderNumber}
-                            </span>
-                            <Badge
-                              variant={
-                                scanFeedback.packageInfo.isComplete ? 'default' : 'secondary'
-                              }
-                            >
-                              {scanFeedback.packageInfo.isComplete ? 'Complete' : 'In Progress'}
-                            </Badge>
-                          </div>
-
-                          <div className="grid grid-cols-1 gap-2 text-sm">
-                            <div className="flex items-center gap-2">
-                              <User className="h-3 w-3 text-gray-500" />
-                              <span className="font-medium">
-                                {scanFeedback.packageInfo.customerName}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-3 w-3 text-gray-500" />
-                              <span className="text-gray-600 text-xs">
-                                {scanFeedback.packageInfo.shippingAddress}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-gray-600">
-                                Items:{' '}
-                                {scanFeedback.packageInfo.totalItems -
-                                  scanFeedback.packageInfo.remainingItems}
-                                /{scanFeedback.packageInfo.totalItems}
-                              </span>
-                              {scanFeedback.packageInfo.remainingItems > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  {scanFeedback.packageInfo.remainingItems} remaining
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {scanFeedback.productInfo && (
-                          <div className="bg-white p-3 rounded-lg border">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Scan className="h-4 w-4 text-purple-600" />
-                              <span className="font-semibold text-purple-800">Product Details</span>
-                            </div>
-                            <div className="text-sm space-y-1">
-                              <div className="font-medium">{scanFeedback.productInfo.name}</div>
-                              <div className="text-gray-600">
-                                SKU: {scanFeedback.productInfo.sku}
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span>
-                                  Scanned: {scanFeedback.productInfo.scanned}/
-                                  {scanFeedback.productInfo.needed}
+                        {scanFeedback.packageInfo && (
+                          <div className="mt-3 space-y-2">
+                            <div className="bg-white p-3 rounded-lg border">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Package className="h-4 w-4 text-blue-600" />
+                                <span className="font-semibold text-blue-800">
+                                  Package {scanFeedback.packageInfo.orderNumber}
                                 </span>
-                                {scanFeedback.productInfo.remaining > 0 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {scanFeedback.productInfo.remaining} more needed
-                                  </Badge>
-                                )}
+                                <Badge
+                                  variant={
+                                    scanFeedback.packageInfo.isComplete ? 'default' : 'secondary'
+                                  }
+                                >
+                                  {scanFeedback.packageInfo.isComplete ? 'Complete' : 'In Progress'}
+                                </Badge>
+                              </div>
+
+                              <div className="grid grid-cols-1 gap-2 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <User className="h-3 w-3 text-gray-500" />
+                                  <span className="font-medium">
+                                    {scanFeedback.packageInfo.customerName}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-3 w-3 text-gray-500" />
+                                  <span className="text-gray-600 text-xs">
+                                    {scanFeedback.packageInfo.shippingAddress}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-gray-600">
+                                    Items:{' '}
+                                    {scanFeedback.packageInfo.totalItems -
+                                      scanFeedback.packageInfo.remainingItems}
+                                    /{scanFeedback.packageInfo.totalItems}
+                                  </span>
+                                  {scanFeedback.packageInfo.remainingItems > 0 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {scanFeedback.packageInfo.remainingItems} remaining
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
                             </div>
+
+                            {scanFeedback.productInfo && (
+                              <div className="bg-white p-3 rounded-lg border">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Scan className="h-4 w-4 text-purple-600" />
+                                  <span className="font-semibold text-purple-800">Product Details</span>
+                                </div>
+                                <div className="text-sm space-y-1">
+                                  <div className="font-medium">{scanFeedback.productInfo.name}</div>
+                                  <div className="text-gray-600">
+                                    SKU: {scanFeedback.productInfo.sku}
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span>
+                                      Scanned: {scanFeedback.productInfo.scanned}/
+                                      {scanFeedback.productInfo.needed}
+                                    </span>
+                                    {scanFeedback.productInfo.remaining > 0 && (
+                                      <Badge variant="outline" className="text-xs">
+                                        {scanFeedback.productInfo.remaining} more needed
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-                    )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={dismissFeedback}
+                        className="text-gray-500 hover:text-gray-700 ml-2"
+                      >
+                        ✕
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -462,13 +505,12 @@ export default function PackingPage() {
           return (
             <Card
               key={pkg.id}
-              className={`${
-                pkg.status === 'completed'
-                  ? 'bg-green-50 border-green-200'
-                  : pkg.status === 'in-progress'
-                    ? 'bg-blue-50 border-blue-200'
-                    : 'bg-white'
-              }`}
+              className={`${pkg.status === 'completed'
+                ? 'bg-green-50 border-green-200'
+                : pkg.status === 'in-progress'
+                  ? 'bg-blue-50 border-blue-200'
+                  : 'bg-white'
+                }`}
             >
               <CardContent className="p-4">
                 {/* Package Header */}
@@ -508,7 +550,7 @@ export default function PackingPage() {
                   <p className="text-sm text-gray-600 leading-relaxed">
                     {formatAddress(pkg.shippingAddress)}
                   </p>
-                  {pkg.shippingAddress.phone && (
+                  {pkg.shippingAddress?.phone && (
                     <p className="text-xs text-gray-500 mt-1">📞 {pkg.shippingAddress.phone}</p>
                   )}
                 </div>
@@ -523,9 +565,8 @@ export default function PackingPage() {
                   {pkg.items.map(item => (
                     <div
                       key={item.sku}
-                      className={`flex items-center gap-3 p-2 rounded-lg ${
-                        item.scanned >= item.needed ? 'bg-green-100' : 'bg-gray-50'
-                      }`}
+                      className={`flex items-center gap-3 p-2 rounded-lg ${item.scanned >= item.needed ? 'bg-green-100' : 'bg-gray-50'
+                        }`}
                     >
                       {/* Product Image */}
                       <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
@@ -555,11 +596,10 @@ export default function PackingPage() {
                             <div className="h-4 w-4 border-2 border-gray-300 rounded-full flex-shrink-0" />
                           )}
                           <span
-                            className={`font-medium text-sm truncate ${
-                              item.scanned >= item.needed
-                                ? 'text-green-800 line-through'
-                                : 'text-gray-900'
-                            }`}
+                            className={`font-medium text-sm truncate ${item.scanned >= item.needed
+                              ? 'text-green-800 line-through'
+                              : 'text-gray-900'
+                              }`}
                           >
                             {item.name}
                           </span>

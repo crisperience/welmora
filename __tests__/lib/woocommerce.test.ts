@@ -14,9 +14,13 @@ const mockWooCommerceApi = {
 };
 
 // Mock the WooCommerce module
-jest.mock('woocommerce-api', () => {
-  return jest.fn().mockImplementation(() => mockWooCommerceApi);
-});
+jest.mock(
+  'woocommerce-api',
+  () => {
+    return jest.fn().mockImplementation(() => mockWooCommerceApi);
+  },
+  { virtual: true }
+);
 
 const mockOrdersData = [
   {

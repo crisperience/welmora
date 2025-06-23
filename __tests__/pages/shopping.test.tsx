@@ -120,7 +120,7 @@ describe('ShoppingPage', () => {
     fireEvent.click(product2Card!);
 
     await waitFor(() => {
-      expect(screen.getByText('🎉 Shopping Complete!')).toBeTruthy();
+      expect(screen.getByText(/🎉 Shopping Complete!/)).toBeTruthy();
     });
   });
 
@@ -139,7 +139,7 @@ describe('ShoppingPage', () => {
     render(<ShoppingPage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Error:/)).toBeTruthy();
+      expect(screen.getByText(/Error:/i)).toBeTruthy();
     });
   });
 

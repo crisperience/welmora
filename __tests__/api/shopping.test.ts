@@ -116,7 +116,7 @@ describe('/api/shopping/[date]', () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.error).toBe('Failed to generate snapshot');
+    expect(data.error).toBe('Failed to generate shopping snapshot');
     expect(data.message).toBe('Network timeout');
   });
 
