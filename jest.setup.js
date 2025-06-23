@@ -88,6 +88,21 @@ global.Headers = jest.fn().mockImplementation(init => {
   };
 });
 
+// Mock NextResponse
+jest.mock('next/server', () => ({
+  NextResponse: {
+    json: jest.fn((data, options) => ({
+      ok: options?.status ? options.status < 400 : true,
+      status: options?.status || 200,
+      statusText: options?.statusText || 'OK',
+      headers: new Map(Object.entries(options?.headers || {})),
+      json: jest.fn().mockResolvedValue(data),
+      text: jest.fn().mockResolvedValue(JSON.stringify(data)),
+      clone: jest.fn(),
+    })),
+  },
+}));
+
 // Mock URL and URLSearchParams
 global.URL = URL;
 global.URLSearchParams = URLSearchParams;
