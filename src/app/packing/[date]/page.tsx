@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress'
 import { ArrowLeft, CheckCircle, Package, Scan, User } from 'lucide-react'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 interface PackageItem {
     sku: string
@@ -39,6 +39,25 @@ export default function PackingPage() {
 
     const date = Array.isArray(params.date) ? params.date[0] : params.date
 
+    const fetchPackingData = useCallback(async () => {
+        try {
+            setLoading(true)
+            const response = await fetch(`/api/packing/${date}`)
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch packing data')
+            }
+
+            const data = await response.json()
+            // API directly returns array of packages
+            setPackages(Array.isArray(data) ? data : [])
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An error occurred')
+        } finally {
+            setLoading(false)
+        }
+    }, [date])
+
     // Load state from localStorage
     useEffect(() => {
         const savedState = localStorage.getItem(`packing-${date}`)
@@ -56,7 +75,7 @@ export default function PackingPage() {
         if (date) {
             fetchPackingData()
         }
-    }, [date])
+    }, [date, fetchPackingData])
 
     // Save state to localStorage whenever packages change
     useEffect(() => {
@@ -64,25 +83,6 @@ export default function PackingPage() {
             localStorage.setItem(`packing-${date}`, JSON.stringify(packages))
         }
     }, [packages, date])
-
-    const fetchPackingData = async () => {
-        try {
-            setLoading(true)
-            const response = await fetch(`/api/packing/${date}`)
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch packing data')
-            }
-
-            const data = await response.json()
-            // API directly returns array of packages
-            setPackages(Array.isArray(data) ? data : [])
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred')
-        } finally {
-            setLoading(false)
-        }
-    }
 
     const handleScan = async (scannedCode: string) => {
         processProduct(scannedCode)

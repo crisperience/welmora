@@ -9,7 +9,7 @@ import { DailySnapshot, ShoppingItem as WooShoppingItem } from '@/types/woocomme
 import { ArrowLeft, CheckCircle, Search } from 'lucide-react'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 interface ShoppingItem {
     sku: string
@@ -31,47 +31,7 @@ export default function ShoppingPage() {
 
     const date = Array.isArray(params.date) ? params.date[0] : params.date
 
-    // Load state from localStorage
-    useEffect(() => {
-        const savedState = localStorage.getItem(`shopping-${date}`)
-        if (savedState) {
-            try {
-                const parsed = JSON.parse(savedState)
-                setShoppingList(parsed)
-                setFilteredList(parsed)
-                setLoading(false)
-                return
-            } catch (e) {
-                console.error('Failed to parse saved state:', e)
-            }
-        }
-
-        if (date) {
-            fetchShoppingData()
-        }
-    }, [date])
-
-    // Save state to localStorage whenever shoppingList changes
-    useEffect(() => {
-        if (shoppingList.length > 0) {
-            localStorage.setItem(`shopping-${date}`, JSON.stringify(shoppingList))
-        }
-    }, [shoppingList, date])
-
-    // Filter list based on search term
-    useEffect(() => {
-        if (searchTerm.trim() === '') {
-            setFilteredList(shoppingList)
-        } else {
-            const filtered = shoppingList.filter(item =>
-                item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.sku.toLowerCase().includes(searchTerm.toLowerCase())
-            )
-            setFilteredList(filtered)
-        }
-    }, [searchTerm, shoppingList])
-
-    const fetchShoppingData = async () => {
+    const fetchShoppingData = useCallback(async () => {
         try {
             setLoading(true)
             const response = await fetch(`/api/shopping/${date}`)
@@ -99,7 +59,47 @@ export default function ShoppingPage() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [date])
+
+    // Load state from localStorage
+    useEffect(() => {
+        const savedState = localStorage.getItem(`shopping-${date}`)
+        if (savedState) {
+            try {
+                const parsed = JSON.parse(savedState)
+                setShoppingList(parsed)
+                setFilteredList(parsed)
+                setLoading(false)
+                return
+            } catch (e) {
+                console.error('Failed to parse saved state:', e)
+            }
+        }
+
+        if (date) {
+            fetchShoppingData()
+        }
+    }, [date, fetchShoppingData])
+
+    // Save state to localStorage whenever shoppingList changes
+    useEffect(() => {
+        if (shoppingList.length > 0) {
+            localStorage.setItem(`shopping-${date}`, JSON.stringify(shoppingList))
+        }
+    }, [shoppingList, date])
+
+    // Filter list based on search term
+    useEffect(() => {
+        if (searchTerm.trim() === '') {
+            setFilteredList(shoppingList)
+        } else {
+            const filtered = shoppingList.filter(item =>
+                item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.sku.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+            setFilteredList(filtered)
+        }
+    }, [searchTerm, shoppingList])
 
     const toggleItemCompleted = (sku: string) => {
         setShoppingList(prev => prev.map(item =>
