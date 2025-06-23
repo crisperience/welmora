@@ -267,13 +267,11 @@ export async function generateDailySnapshot(
   date: string
 ): Promise<{ success: boolean; data?: DailySnapshot; error?: string }> {
   try {
-    // Get yesterday's date (the date we're actually packing for)
-    const yesterday = new Date(date);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    // Use the exact date selected by the user
+    const selectedDate = date;
 
-    // Get orders from yesterday only (00:00 to 23:59)
-    const ordersResult = await getOrdersByDateRange(yesterdayStr, yesterdayStr);
+    // Get orders from the selected date only (00:00 to 23:59)
+    const ordersResult = await getOrdersByDateRange(selectedDate, selectedDate);
 
     if (!ordersResult.success || !ordersResult.data) {
       return {
@@ -328,15 +326,11 @@ export async function getPackagesForDate(
   date: string
 ): Promise<{ success: boolean; data?: Package[]; error?: string }> {
   try {
-    // For packing, we always get orders from yesterday (not today)
-    // This makes sense because orders are typically placed one day and packed the next
-    const yesterday = new Date(date);
-    yesterday.setDate(yesterday.getDate() - 1);
+    // Use the exact date selected by the user
+    const selectedDate = date;
 
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-    // Get only yesterday's orders (not a range)
-    const ordersResult = await getOrdersByDateRange(yesterdayStr, yesterdayStr);
+    // Get orders from the selected date
+    const ordersResult = await getOrdersByDateRange(selectedDate, selectedDate);
 
     if (!ordersResult.success || !ordersResult.data) {
       return {
