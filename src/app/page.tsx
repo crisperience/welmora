@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar } from 'lucide-react';
+import { Calendar, PackageOpen, ShoppingCart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -78,7 +78,9 @@ export default function HomePage() {
               className="p-8 text-center"
               onClick={() => router.push(`/shopping/${selectedDate}`)}
             >
-              <div className="text-6xl mb-4">🛒</div>
+              <div className="mb-4 flex justify-center">
+                <ShoppingCart className="h-16 w-16 text-blue-600" />
+              </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">SHOPPING</h2>
             </CardContent>
           </Card>
@@ -89,7 +91,9 @@ export default function HomePage() {
               className="p-8 text-center"
               onClick={() => router.push(`/packing/${selectedDate}`)}
             >
-              <div className="text-6xl mb-4">📦</div>
+              <div className="mb-4 flex justify-center">
+                <PackageOpen className="h-16 w-16 text-green-600" />
+              </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">PACKING</h2>
             </CardContent>
           </Card>

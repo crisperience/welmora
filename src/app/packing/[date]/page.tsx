@@ -91,6 +91,9 @@ export default function PackingPage() {
   };
 
   const formatAddress = (address: PackageType['shippingAddress']) => {
+    if (!address) {
+      return 'Address not available';
+    }
     const parts = [
       address.address_1,
       address.address_2,
