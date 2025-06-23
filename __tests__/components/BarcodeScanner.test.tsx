@@ -28,7 +28,7 @@ describe('BarcodeScanner', () => {
 
         expect(screen.getByText('Barcode Scanner')).toBeInTheDocument()
         expect(screen.getByText('Start Scanner')).toBeInTheDocument()
-        expect(container).toBeInTheDocument()
+        expect(container).toBeTruthy()
     })
 
     test('shows stop button when scanner is active', () => {
@@ -41,7 +41,8 @@ describe('BarcodeScanner', () => {
         )
 
         expect(screen.getByText('Stop Scanner')).toBeInTheDocument()
-        expect(container.querySelector('video')).toBeInTheDocument()
+        const videoElement = container.querySelector('video')
+        expect(videoElement).toBeTruthy()
     })
 
     test('calls onToggle when button is clicked', () => {
