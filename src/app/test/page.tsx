@@ -9,7 +9,7 @@ import { useState } from 'react'
 interface TestResult {
     success: boolean
     message: string
-    data?: unknown
+    data?: boolean
     error?: string
 }
 
@@ -109,8 +109,7 @@ export default function TestPage() {
                                     )}
                                     {results.supabase.data && (
                                         <div className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded">
-                                            <strong>Data:</strong>
-                                            <pre>{JSON.stringify(results.supabase.data, null, 2)}</pre>
+                                            <strong>Data:</strong> Connection successful
                                         </div>
                                     )}
                                 </div>
@@ -143,8 +142,7 @@ export default function TestPage() {
                                     )}
                                     {results.woocommerce.data && (
                                         <div className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded">
-                                            <strong>Sample Data:</strong>
-                                            <pre>{JSON.stringify(results.woocommerce.data, null, 2)}</pre>
+                                            <strong>Sample Data:</strong> Connection successful
                                         </div>
                                     )}
                                 </div>

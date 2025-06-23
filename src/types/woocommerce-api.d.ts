@@ -3,7 +3,7 @@ declare module 'woocommerce-api' {
         url: string
         consumerKey: string
         consumerSecret: string
-        version?: string
+        version: string
         queryStringAuth?: boolean
         timeout?: number
     }
@@ -26,4 +26,55 @@ declare module 'woocommerce-api' {
     }
 
     export = WooCommerceRestApi
+}
+
+// Daily snapshot types for shopping workflow
+export interface DailySnapshot {
+    date: string // YYYY-MM-DD format
+    products: ShoppingItem[]
+    totalOrders: number
+    generatedAt: string
+}
+
+export interface ShoppingItem {
+    sku: string
+    name: string
+    quantity: number
+    price?: number
+    image?: string
+}
+
+// Package types for packing workflow
+export interface Package {
+    id: string
+    orderId: number
+    customerName: string
+    customerEmail?: string
+    orderDate: string
+    items: PackageItem[]
+    status: 'pending' | 'in-progress' | 'completed'
+    qrCode?: string
+}
+
+export interface PackageItem {
+    sku: string
+    name: string
+    needed: number
+    scanned: number
+    price?: number
+    image?: string
+}
+
+// Scanner types
+export interface ScanResult {
+    type: 'qr' | 'barcode'
+    data: string
+    timestamp: string
+}
+
+export interface ValidationResult {
+    valid: boolean
+    message: string
+    item?: PackageItem
+    package?: Package
 } 

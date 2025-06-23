@@ -9,6 +9,6 @@
     "NEXTAUTH_SECRET": "welmora-scanner-secret-2024-production",
     "NEXTAUTH_URL": "https://welmora-scanner.vercel.app",
     "APP_NAME": "Welmora Scanner",
-    "APP_VERSION": "2.0.0"
+    "APP_VERSION": "1.0.0"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "welmora-scanner-v2",
+  "name": "welmora-scanner",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -16,10 +16,11 @@
     "@radix-ui/react-progress": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.12",
-    "@supabase/supabase-js": "^2.50.0",
     "@types/nodemailer": "^6.4.17",
     "@types/qrcode": "^1.5.5",
+    "@woocommerce/woocommerce-rest-api": "^1.0.1",
     "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
@@ -35,7 +36,6 @@
     "react-hook-form": "^7.58.1",
     "sonner": "^2.0.5",
     "tailwind-merge": "^3.3.1",
-    "woocommerce-api": "^1.5.0",
     "zod": "^3.25.67",
     "zustand": "^5.0.5"
   },
