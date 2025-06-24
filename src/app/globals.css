@@ -161,25 +161,24 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
 
-  /* iOS specific styles - only apply safe area on mobile devices */
-  @supports (-webkit-touch-callout: none) {
+  /* iOS notch compatibility - apply to html element for proper coverage */
+  @supports (padding: env(safe-area-inset-top)) {
     @media (max-width: 768px) {
-      body {
-        /* iOS notch compatibility - only on mobile */
-        padding-top: var(--safe-area-inset-top);
-        padding-right: var(--safe-area-inset-right);
-        padding-bottom: var(--safe-area-inset-bottom);
-        padding-left: var(--safe-area-inset-left);
+      html {
+        /* Key: Apply safe area to html element, not body */
+        min-height: calc(100% + env(safe-area-inset-top));
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+          env(safe-area-inset-left);
         /* Ensure background extends to notch area */
-        background: var(--bg-primary);
-        min-height: 100vh;
-        min-height: -webkit-fill-available;
+        background: #ffffff; /* Use explicit white for notch area */
+        background-attachment: fixed;
       }
     }
+  }
+
+  body {
+    @apply bg-background text-foreground;
   }
 }
 
