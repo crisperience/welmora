@@ -115,6 +115,12 @@
   --touch-target: 44px; /* Minimum touch target */
   --mobile-padding: 1rem;
   --mobile-gap: 0.75rem;
+
+  /* iOS Safe Area Support */
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-right: env(safe-area-inset-right);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
 }
 
 .dark {
@@ -157,6 +163,21 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* iOS notch compatibility */
+    padding-top: var(--safe-area-inset-top);
+    padding-right: var(--safe-area-inset-right);
+    padding-bottom: var(--safe-area-inset-bottom);
+    padding-left: var(--safe-area-inset-left);
+  }
+
+  /* iOS specific styles */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      /* Ensure background extends to notch area */
+      background: var(--bg-primary);
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+    }
   }
 }
 
@@ -277,4 +298,33 @@
 
 .haptic-medium {
   animation: haptic-medium 0.2s ease-in-out;
+}
+
+/* iOS Safe Area Utilities */
+.safe-area-top {
+  padding-top: max(1rem, var(--safe-area-inset-top));
+}
+
+.safe-area-bottom {
+  padding-bottom: max(1rem, var(--safe-area-inset-bottom));
+}
+
+.safe-area-left {
+  padding-left: max(1rem, var(--safe-area-inset-left));
+}
+
+.safe-area-right {
+  padding-right: max(1rem, var(--safe-area-inset-right));
+}
+
+.safe-area-all {
+  padding-top: max(1rem, var(--safe-area-inset-top));
+  padding-right: max(1rem, var(--safe-area-inset-right));
+  padding-bottom: max(1rem, var(--safe-area-inset-bottom));
+  padding-left: max(1rem, var(--safe-area-inset-left));
+}
+
+/* iOS status bar overlay protection */
+.ios-status-bar-safe {
+  padding-top: max(1rem, calc(var(--safe-area-inset-top) + 0.5rem));
 }

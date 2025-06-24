@@ -7,6 +7,8 @@
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "orientation": "portrait-primary",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "scope": "/",
   "icons": [
     {
       "src": "/welmora-logo.svg",
