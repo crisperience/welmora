@@ -152,7 +152,7 @@ export default function HomePage() {
                     {formatDisplayDate(selectedDate)}
                     {getDayOrderCount(selectedDate) > 0 && (
                       <span className="ml-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                        {getDayOrderCount(selectedDate)} orders
+                        {getDayOrderCount(selectedDate)} processing orders
                       </span>
                     )}
                   </div>
@@ -181,7 +181,7 @@ export default function HomePage() {
                     {formatDisplayDate(selectedDate)}
                     {getDayOrderCount(selectedDate) > 0 && (
                       <span className="ml-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                        {getDayOrderCount(selectedDate)} orders
+                        {getDayOrderCount(selectedDate)} processing orders
                       </span>
                     )}
                   </div>

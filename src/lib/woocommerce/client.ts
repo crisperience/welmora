@@ -231,38 +231,66 @@ export async function getOrdersByDateRange(
   endDate: string
 ): Promise<WooCommerceApiResponse<WooCommerceOrder[]>> {
   try {
+    const isRangeQuery = startDate !== endDate;
+
     console.log('Fetching orders from WooCommerce for date range:', {
       startDate,
       endDate,
+      isRangeQuery,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
 
-    // Use WooCommerce's date parameter to get orders in the date range
+    // For single day requests, use more precise filtering
+    if (!isRangeQuery) {
+      // Single day - fetch only PROCESSING orders from that specific date
+      const response = await WooCommerce.get('orders', {
+        after: `${startDate}T00:00:00`,
+        before: `${startDate}T23:59:59`,
+        status: 'processing', // ONLY PROCESSING orders
+        per_page: 50, // Smaller limit for single day
+      });
+
+      const ordersData = isArrayData(response.data) ? (response.data as WooCommerceOrder[]) : [];
+
+      // Filter to ensure exact date match
+      const filteredOrders = ordersData.filter((order: WooCommerceOrder) => {
+        const orderDateOnly = order.date_created.split('T')[0];
+        return orderDateOnly === startDate;
+      });
+
+      console.log('Single day WooCommerce response (PROCESSING only):', {
+        targetDate: startDate,
+        totalFetched: ordersData.length,
+        afterDateFilter: filteredOrders.length,
+        sampleDates: ordersData.slice(0, 3).map(o => ({
+          id: o.id,
+          date_created: o.date_created,
+          date_only: o.date_created.split('T')[0],
+          status: o.status,
+        })),
+      });
+
+      return {
+        success: true,
+        data: filteredOrders,
+        headers: response.headers as Record<string, string>,
+      };
+    }
+
+    // Range query (for calendar counts) - fetch PROCESSING orders for calendar
     const response = await WooCommerce.get('orders', {
       after: `${startDate}T00:00:00`,
       before: `${endDate}T23:59:59`,
-      status: 'pending,processing,on-hold,completed',
-      per_page: 100,
+      status: 'processing', // ONLY PROCESSING orders for calendar too
+      per_page: 100, // Larger limit for range queries
     });
 
     const ordersData = isArrayData(response.data) ? (response.data as WooCommerceOrder[]) : [];
 
-    // If startDate equals endDate, filter to exact date (for single day requests)
-    // Otherwise return all orders in range (for calendar counts)
-    const filteredOrders =
-      startDate === endDate
-        ? ordersData.filter((order: WooCommerceOrder) => {
-            const orderDateOnly = order.date_created.split('T')[0];
-            return orderDateOnly === startDate;
-          })
-        : ordersData;
-
-    console.log('WooCommerce orders response:', {
-      totalFetched: ordersData.length,
-      afterDateFilter: filteredOrders.length,
-      isRangeQuery: startDate !== endDate,
+    console.log('Range query WooCommerce response:', {
       startDate,
       endDate,
+      totalFetched: ordersData.length,
       sampleDates: ordersData.slice(0, 5).map(o => ({
         id: o.id,
         date_created: o.date_created,
@@ -272,7 +300,7 @@ export async function getOrdersByDateRange(
 
     return {
       success: true,
-      data: filteredOrders,
+      data: ordersData,
       headers: response.headers as Record<string, string>,
     };
   } catch (error) {
