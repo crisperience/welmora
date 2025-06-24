@@ -360,7 +360,7 @@ export default function PackingPage() {
   const totalPackages = packages.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 safe-area-all">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-6 max-w-md md:max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
