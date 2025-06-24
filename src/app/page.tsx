@@ -14,7 +14,11 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const formatDateForUrl = (date: Date) => {
-    return date.toISOString().split('T')[0];
+    // Use local date without timezone conversion to match API expectations
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const formatDisplayDate = (date: Date) => {
@@ -125,6 +129,12 @@ export default function HomePage() {
                   }
                 }}
                 className="rounded-md border"
+                modifiers={{
+                  hasOrders: (date) => getDayOrderCount(date) > 0
+                }}
+                modifiersClassNames={{
+                  hasOrders: 'bg-blue-50 border-blue-200 text-blue-900 font-semibold'
+                }}
               />
             </CardContent>
           </Card>
