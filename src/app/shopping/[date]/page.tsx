@@ -118,13 +118,6 @@ export default function ShoppingPage() {
   const completedItems = shoppingList.filter(item => item.completed).length;
   const totalItems = shoppingList.length;
   const progressPercentage = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
-  const totalWeight = shoppingList.reduce(
-    (sum, item) => sum + (item.weight || 0) * item.totalNeeded,
-    0
-  );
-  const completedWeight = shoppingList
-    .filter(item => item.completed)
-    .reduce((sum, item) => sum + (item.weight || 0) * item.totalNeeded, 0);
 
   if (loading) {
     return (
@@ -175,13 +168,7 @@ export default function ShoppingPage() {
             <Progress value={progressPercentage} className="h-3" />
 
             {/* Weight Info */}
-            {totalWeight > 0 && (
-              <div className="flex items-center justify-between text-xs text-gray-600 mt-2">
-                <span>
-                  Weight: {completedWeight.toFixed(1)}kg / {totalWeight.toFixed(1)}kg
-                </span>
-              </div>
-            )}
+            {/* Weight removed from shopping - only needed for packing */}
 
             {completedItems === totalItems && totalItems > 0 && (
               <div className="mt-3 text-center">
@@ -191,77 +178,96 @@ export default function ShoppingPage() {
           </CardContent>
         </Card>
 
-        {/* Shopping List */}
-        <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-          {shoppingList.map((item: ShoppingItem) => (
-            <Card
-              key={item.sku}
-              className={`cursor-pointer transition-all duration-200 ${
-                item.completed
-                  ? 'bg-green-50 border-green-200 shadow-sm'
-                  : 'hover:bg-gray-50 hover:shadow-md'
-              }`}
-              onClick={() => toggleItemCompleted(item.sku)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  {/* Checkbox */}
-                  <div className="flex-shrink-0">
-                    {item.completed ? (
-                      <CheckCircle className="h-6 w-6 text-green-600" />
-                    ) : (
-                      <div className="h-6 w-6 border-2 border-gray-300 rounded-full hover:border-green-400 transition-colors" />
-                    )}
-                  </div>
+        {/* Shopping List - Grouped by Category */}
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+          {(() => {
+            // Group items by category
+            const groupedItems = shoppingList.reduce(
+              (groups, item) => {
+                const category = item.category || 'Uncategorized';
+                if (!groups[category]) {
+                  groups[category] = [];
+                }
+                groups[category].push(item);
+                return groups;
+              },
+              {} as Record<string, ShoppingItem[]>
+            );
 
-                  {/* Product Image */}
-                  <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                    {item.image ? (
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        width={64}
-                        height={64}
-                        className="w-full h-full object-cover"
-                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
-                        No img
-                      </div>
-                    )}
-                  </div>
+            // Sort categories and items within each category
+            const sortedCategories = Object.keys(groupedItems).sort();
 
-                  {/* Product Info */}
-                  <div className="flex-1 min-w-0">
-                    <h3
-                      className={`font-medium text-lg leading-tight mb-1 ${
-                        item.completed ? 'text-green-800 line-through' : 'text-gray-900'
-                      }`}
-                    >
-                      {item.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-2">SKU: {item.sku}</p>
-                    {item.category && (
-                      <p className="text-xs text-blue-600 mb-2">📦 {item.category}</p>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <Badge variant={item.completed ? 'default' : 'secondary'} className="text-sm">
-                        Qty: {item.totalNeeded}
-                      </Badge>
-                      {item.weight && item.weight > 0 && (
-                        <Badge variant="outline" className="text-xs text-gray-600">
-                          {(item.weight * item.totalNeeded).toFixed(1)}kg
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
+            return sortedCategories.map(category => (
+              <div key={category} className="space-y-2">
+                {/* Category Header */}
+                <div className="sticky top-0 bg-gradient-to-br from-blue-50 to-indigo-100 py-2 z-10">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    {category}
+                  </h3>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+
+                {/* Items in this category */}
+                <div className="space-y-2">
+                  {groupedItems[category].map((item: ShoppingItem) => (
+                    <Card
+                      key={item.sku}
+                      className={`cursor-pointer transition-all duration-200 ${
+                        item.completed
+                          ? 'bg-green-50 border-green-200 shadow-sm'
+                          : 'bg-white hover:shadow-md hover:scale-[1.02]'
+                      }`}
+                      onClick={() => toggleItemCompleted(item.sku)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-4">
+                          {/* Checkbox */}
+                          <div
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                              item.completed
+                                ? 'bg-green-600 border-green-600'
+                                : 'border-gray-300 hover:border-green-400'
+                            }`}
+                          >
+                            {item.completed && <CheckCircle className="h-4 w-4 text-white" />}
+                          </div>
+
+                          {/* Product Image */}
+                          {item.image && (
+                            <div className="w-12 h-12 relative flex-shrink-0">
+                              <Image
+                                src={item.image}
+                                alt={item.name}
+                                fill
+                                className="object-cover rounded-md"
+                                sizes="48px"
+                              />
+                            </div>
+                          )}
+
+                          {/* Product Info */}
+                          <div className="flex-1 min-w-0">
+                            <h3
+                              className={`font-medium text-sm leading-tight ${
+                                item.completed ? 'text-green-800 line-through' : 'text-gray-900'
+                              }`}
+                            >
+                              {item.name}
+                            </h3>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {item.totalNeeded}x
+                              </Badge>
+                              <span className="text-xs text-gray-500">SKU: {item.sku}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ));
+          })()}
         </div>
       </div>
     </div>

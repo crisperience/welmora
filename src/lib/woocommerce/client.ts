@@ -231,29 +231,48 @@ export async function getOrdersByDateRange(
   endDate: string
 ): Promise<WooCommerceApiResponse<WooCommerceOrder[]>> {
   try {
-    const startDateTime = `${startDate}T00:00:00`;
-    const endDateTime = `${endDate}T23:59:59`;
-
-    console.log('Fetching orders from WooCommerce:', {
-      after: startDateTime,
-      before: endDateTime,
+    console.log('Fetching orders from WooCommerce for date range:', {
+      startDate,
+      endDate,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
 
+    // Use WooCommerce's date parameter to get orders in the date range
     const response = await WooCommerce.get('orders', {
-      after: startDateTime,
-      before: endDateTime,
+      after: `${startDate}T00:00:00`,
+      before: `${endDate}T23:59:59`,
       status: 'pending,processing,on-hold,completed',
       per_page: 100,
     });
 
+    const ordersData = isArrayData(response.data) ? (response.data as WooCommerceOrder[]) : [];
+
+    // If startDate equals endDate, filter to exact date (for single day requests)
+    // Otherwise return all orders in range (for calendar counts)
+    const filteredOrders =
+      startDate === endDate
+        ? ordersData.filter((order: WooCommerceOrder) => {
+            const orderDateOnly = order.date_created.split('T')[0];
+            return orderDateOnly === startDate;
+          })
+        : ordersData;
+
     console.log('WooCommerce orders response:', {
-      count: isArrayData(response.data) ? response.data.length : 0,
-      headers: response.headers,
+      totalFetched: ordersData.length,
+      afterDateFilter: filteredOrders.length,
+      isRangeQuery: startDate !== endDate,
+      startDate,
+      endDate,
+      sampleDates: ordersData.slice(0, 5).map(o => ({
+        id: o.id,
+        date_created: o.date_created,
+        date_only: o.date_created.split('T')[0],
+      })),
     });
 
     return {
       success: true,
-      data: isArrayData(response.data) ? (response.data as WooCommerceOrder[]) : [],
+      data: filteredOrders,
       headers: response.headers as Record<string, string>,
     };
   } catch (error) {
@@ -402,12 +421,15 @@ export async function getPackagesForDate(
       };
     }
 
-    console.log('Found orders:', ordersResult.data.map(o => ({
-      id: o.id,
-      date_created: o.date_created,
-      billing_name: `${o.billing.first_name} ${o.billing.last_name}`,
-      items_count: o.line_items.length
-    })));
+    console.log(
+      'Found orders:',
+      ordersResult.data.map(o => ({
+        id: o.id,
+        date_created: o.date_created,
+        billing_name: `${o.billing.first_name} ${o.billing.last_name}`,
+        items_count: o.line_items.length,
+      }))
+    );
 
     // Collect all product IDs to fetch weights
     const productIds = new Set<number>();
@@ -452,27 +474,41 @@ export async function getPackagesForDate(
         0
       );
 
-      // Determine which address to use - prefer shipping if it has address_1
-      const useShipping = order.shipping?.address_1 && order.shipping?.address_1.trim() !== '';
+      // Determine which address to use - prefer shipping if it has a real address
+      const hasShippingAddress =
+        order.shipping?.address_1 &&
+        order.shipping.address_1.trim() !== '' &&
+        order.shipping.address_1.trim() !== order.billing.address_1.trim();
 
       const shippingAddress = {
-        first_name: useShipping ? order.shipping?.first_name : order.billing.first_name,
-        last_name: useShipping ? order.shipping?.last_name : order.billing.last_name,
-        company: useShipping ? order.shipping?.company : order.billing.company,
-        address_1: useShipping ? order.shipping?.address_1 : order.billing.address_1,
-        address_2: useShipping ? order.shipping?.address_2 : order.billing.address_2,
-        city: useShipping ? order.shipping?.city : order.billing.city,
-        state: useShipping ? order.shipping?.state : order.billing.state,
-        postcode: useShipping ? order.shipping?.postcode : order.billing.postcode,
-        country: useShipping ? order.shipping?.country : order.billing.country,
-        phone: useShipping ? order.shipping?.phone : order.billing.phone,
+        first_name: hasShippingAddress
+          ? order.shipping?.first_name || order.billing.first_name
+          : order.billing.first_name,
+        last_name: hasShippingAddress
+          ? order.shipping?.last_name || order.billing.last_name
+          : order.billing.last_name,
+        company: hasShippingAddress ? order.shipping?.company : order.billing.company,
+        address_1: hasShippingAddress ? order.shipping?.address_1 : order.billing.address_1,
+        address_2: hasShippingAddress ? order.shipping?.address_2 : order.billing.address_2,
+        city: hasShippingAddress ? order.shipping?.city || order.billing.city : order.billing.city,
+        state: hasShippingAddress ? order.shipping?.state : order.billing.state,
+        postcode: hasShippingAddress
+          ? order.shipping?.postcode || order.billing.postcode
+          : order.billing.postcode,
+        country: hasShippingAddress
+          ? order.shipping?.country || order.billing.country
+          : order.billing.country,
+        phone: hasShippingAddress ? order.shipping?.phone : order.billing.phone,
       };
 
       console.log(`Order ${order.id} address logic:`, {
-        useShipping,
+        hasShippingAddress,
         shipping_address_1: order.shipping?.address_1,
         billing_address_1: order.billing.address_1,
-        final_address: shippingAddress.address_1
+        final_address: shippingAddress.address_1,
+        shipping_city: order.shipping?.city,
+        billing_city: order.billing.city,
+        final_city: shippingAddress.city,
       });
 
       return {
@@ -513,13 +549,16 @@ export async function getPackagesForDate(
       };
     });
 
-    console.log('Created packages:', packages.map(p => ({
-      id: p.id,
-      orderNumber: p.orderNumber,
-      customerName: p.customerName,
-      address: p.shippingAddress.address_1,
-      totalWeight: p.items.reduce((sum, item) => sum + (item.weight || 0) * item.needed, 0)
-    })));
+    console.log(
+      'Created packages:',
+      packages.map(p => ({
+        id: p.id,
+        orderNumber: p.orderNumber,
+        customerName: p.customerName,
+        address: p.shippingAddress.address_1,
+        totalWeight: p.items.reduce((sum, item) => sum + (item.weight || 0) * item.needed, 0),
+      }))
+    );
 
     return {
       success: true,
