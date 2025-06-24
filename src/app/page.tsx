@@ -109,7 +109,6 @@ export default function HomePage() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Welmora Scanner</h1>
-            <p className="text-gray-600">Inventory Management</p>
           </div>
 
           {/* Date Selection */}
@@ -129,12 +128,6 @@ export default function HomePage() {
                   }
                 }}
                 className="rounded-md border"
-                modifiers={{
-                  hasOrders: date => getDayOrderCount(date) > 0,
-                }}
-                modifiersClassNames={{
-                  hasOrders: 'bg-blue-50 border-blue-200 text-blue-900 font-semibold',
-                }}
               />
             </CardContent>
           </Card>
