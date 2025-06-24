@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { DailySnapshot, ShoppingItem as WooShoppingItem } from '@/types/woocommerce-api';
-import { ArrowLeft, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, ShoppingCart } from 'lucide-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -153,7 +153,10 @@ export default function ShoppingPage() {
           <Button variant="ghost" onClick={() => router.push('/')} className="p-2">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-bold">Shopping List</h1>
+          <div className="flex flex-col items-center">
+            <ShoppingCart className="h-8 w-8 text-blue-600 mb-2" />
+            <h1 className="text-xl font-bold">Shopping List</h1>
+          </div>
           <div className="w-10" />
         </div>
 
@@ -180,7 +183,7 @@ export default function ShoppingPage() {
         </Card>
 
         {/* Shopping List - Grouped by Category */}
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+        <div className="space-y-4">
           {(() => {
             // Group items by category
             const groupedItems = shoppingList.reduce(
@@ -201,8 +204,8 @@ export default function ShoppingPage() {
             return sortedCategories.map(category => (
               <div key={category} className="space-y-2">
                 {/* Category Header */}
-                <div className="sticky top-0 bg-gradient-to-br from-blue-50 to-indigo-100 py-2 z-10">
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                <div className="sticky top-0 bg-blue-100 border border-blue-200 rounded-lg px-3 py-2 z-10 shadow-sm">
+                  <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wide">
                     {category}
                   </h3>
                 </div>
@@ -220,10 +223,10 @@ export default function ShoppingPage() {
                       onClick={() => toggleItemCompleted(item.sku)}
                     >
                       <CardContent className="p-4">
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center gap-4">
                           {/* Checkbox */}
                           <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
                               item.completed
                                 ? 'bg-green-600 border-green-600'
                                 : 'border-gray-300 hover:border-green-400'
@@ -254,7 +257,7 @@ export default function ShoppingPage() {
                             >
                               {item.name}
                             </h3>
-                            <div className="flex items-center space-x-2 mt-1">
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <Badge variant="outline" className="text-xs">
                                 {item.totalNeeded}x
                               </Badge>

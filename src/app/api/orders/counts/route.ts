@@ -16,7 +16,7 @@ export async function GET() {
       endDateStr,
       currentTime: new Date().toISOString(),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      note: 'Fetching PROCESSING orders only for calendar'
+      note: 'Fetching PROCESSING orders only for calendar',
     });
 
     const response = await getOrdersByDateRange(startDateStr, endDateStr);

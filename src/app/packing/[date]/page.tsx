@@ -177,23 +177,11 @@ export default function PackingPage() {
         return;
       }
 
-      // If multiple packages need this product, show selection dialog with better info
+      // If multiple packages need this product, show selection dialog
       if (matchingPackages.length > 1) {
         setScanFeedback({
           success: false,
-          message: `MULTIPLE PACKAGES need "${matchingPackages[0].item.name}" - Choose customer:`,
-          packageInfo: {
-            packageId: 'multiple',
-            orderNumber: 'Multiple Orders',
-            customerName: `${matchingPackages.length} customers need this product`,
-            shippingAddress: `Found in ${matchingPackages.length} different packages`,
-            remainingItems: matchingPackages.reduce(
-              (sum, mp) => sum + (mp.item.needed - mp.item.scanned),
-              0
-            ),
-            totalItems: matchingPackages.reduce((sum, mp) => sum + mp.item.needed, 0),
-            isComplete: false,
-          },
+          message: `Multiple customers need "${matchingPackages[0].item.name}" - Choose customer:`,
           urgency: 'high',
           sound: 'warning',
           multiplePackages: matchingPackages.map(mp => ({
@@ -204,6 +192,16 @@ export default function PackingPage() {
             scanned: mp.item.scanned,
             remaining: mp.item.needed - mp.item.scanned,
           })),
+          productInfo: {
+            name: matchingPackages[0].item.name,
+            sku: matchingPackages[0].item.sku,
+            needed: matchingPackages.reduce((sum, mp) => sum + mp.item.needed, 0),
+            scanned: matchingPackages.reduce((sum, mp) => sum + mp.item.scanned, 0),
+            remaining: matchingPackages.reduce(
+              (sum, mp) => sum + (mp.item.needed - mp.item.scanned),
+              0
+            ),
+          },
         });
         return;
       }
@@ -369,7 +367,10 @@ export default function PackingPage() {
           <Button variant="ghost" onClick={() => router.push('/')} className="mobile-touch">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-bold">Packing</h1>
+          <div className="flex flex-col items-center">
+            <Package className="h-8 w-8 text-green-600 mb-2" />
+            <h1 className="text-xl font-bold">Packing</h1>
+          </div>
           <div className="w-10" />
         </div>
 
@@ -442,8 +443,111 @@ export default function PackingPage() {
                             {scanFeedback.message}
                           </p>
 
-                          {scanFeedback.packageInfo && (
-                            <div className="mt-3 space-y-2">
+                          {scanFeedback.multiplePackages && (
+                            <div className="mt-3">
+                              <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <Package className="h-4 w-4 text-yellow-600" />
+                                  <span className="font-semibold text-yellow-800">
+                                    Choose Package
+                                  </span>
+                                </div>
+                                <p className="text-sm text-yellow-700 mb-3">
+                                  Multiple customers ordered this product. Click the package you
+                                  want to add it to:
+                                </p>
+                                <div className="space-y-2">
+                                  {scanFeedback.multiplePackages.map(pkg => (
+                                    <button
+                                      key={pkg.packageId}
+                                      onClick={() => {
+                                        // Find the specific package and process the product for it
+                                        const targetPackage = packages.find(
+                                          p => p.id === pkg.packageId
+                                        );
+                                        if (targetPackage && scanFeedback.productInfo) {
+                                          // Process for this specific package
+                                          const item = targetPackage.items.find(
+                                            item =>
+                                              item.sku === scanFeedback.productInfo!.sku ||
+                                              item.name === scanFeedback.productInfo!.name
+                                          );
+                                          if (item) {
+                                            // Update only this package
+                                            const updatedPackages = packages.map(p => {
+                                              if (p.id === pkg.packageId) {
+                                                const updatedItems = p.items.map(i => {
+                                                  if (i.sku === item.sku) {
+                                                    return {
+                                                      ...i,
+                                                      scanned: Math.min(i.scanned + 1, i.needed),
+                                                    };
+                                                  }
+                                                  return i;
+                                                });
+                                                const allComplete = updatedItems.every(
+                                                  i => i.scanned >= i.needed
+                                                );
+
+                                                const updatedPackage = {
+                                                  ...p,
+                                                  items: updatedItems,
+                                                  status: allComplete
+                                                    ? ('completed' as const)
+                                                    : ('in-progress' as const),
+                                                };
+
+                                                // Auto-update WooCommerce status if package is complete
+                                                if (allComplete && p.status !== 'completed') {
+                                                  updateWooCommerceStatus(p.orderId, 'completed');
+                                                }
+
+                                                return updatedPackage;
+                                              }
+                                              return p;
+                                            });
+                                            setPackages(updatedPackages);
+
+                                            // Check if the package is now complete for better feedback message
+                                            const completedPackage = updatedPackages.find(
+                                              p => p.id === pkg.packageId
+                                            );
+                                            const isPackageComplete =
+                                              completedPackage?.status === 'completed';
+
+                                            setScanFeedback({
+                                              success: true,
+                                              message: isPackageComplete
+                                                ? `Package complete for ${pkg.customerName}!`
+                                                : `Added to ${pkg.customerName}'s package`,
+                                              urgency: isPackageComplete ? 'high' : 'low',
+                                              sound: 'success',
+                                            });
+                                          }
+                                        }
+                                      }}
+                                      className="w-full p-3 text-left bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <div>
+                                          <div className="font-medium">{pkg.customerName}</div>
+                                          <div className="text-sm text-gray-600">
+                                            Order #{pkg.orderNumber}
+                                          </div>
+                                        </div>
+                                        <Badge variant="outline" className="text-xs">
+                                          {pkg.remaining} needed
+                                        </Badge>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {scanFeedback.packageInfo && !scanFeedback.multiplePackages && (
+                            <div className="mt-3">
                               <div className="bg-white p-3 rounded-lg border">
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="flex items-center gap-2">
@@ -492,90 +596,6 @@ export default function PackingPage() {
                                   </div>
                                 </div>
                               </div>
-
-                              {scanFeedback.multiplePackages && (
-                                <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <Package className="h-4 w-4 text-yellow-600" />
-                                    <span className="font-semibold text-yellow-800">
-                                      Choose Package
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-yellow-700 mb-3">
-                                    Multiple customers ordered this product. Click the package you
-                                    want to add it to:
-                                  </p>
-                                  <div className="space-y-2">
-                                    {scanFeedback.multiplePackages.map(pkg => (
-                                      <button
-                                        key={pkg.packageId}
-                                        onClick={() => {
-                                          // Find the specific package and process the product for it
-                                          const targetPackage = packages.find(
-                                            p => p.id === pkg.packageId
-                                          );
-                                          if (targetPackage) {
-                                            // Process for this specific package
-                                            const item = targetPackage.items.find(
-                                              item =>
-                                                scanFeedback.productInfo &&
-                                                (item.sku === scanFeedback.productInfo.sku ||
-                                                  item.name === scanFeedback.productInfo.name)
-                                            );
-                                            if (item) {
-                                              // Update only this package
-                                              const updatedPackages = packages.map(p => {
-                                                if (p.id === pkg.packageId) {
-                                                  const updatedItems = p.items.map(i => {
-                                                    if (i.sku === item.sku) {
-                                                      return {
-                                                        ...i,
-                                                        scanned: Math.min(i.scanned + 1, i.needed),
-                                                      };
-                                                    }
-                                                    return i;
-                                                  });
-                                                  const allComplete = updatedItems.every(
-                                                    i => i.scanned >= i.needed
-                                                  );
-                                                  return {
-                                                    ...p,
-                                                    items: updatedItems,
-                                                    status: allComplete
-                                                      ? ('completed' as const)
-                                                      : ('in-progress' as const),
-                                                  };
-                                                }
-                                                return p;
-                                              });
-                                              setPackages(updatedPackages);
-                                              setScanFeedback({
-                                                success: true,
-                                                message: `Added to ${pkg.customerName}'s package`,
-                                                urgency: 'low',
-                                                sound: 'success',
-                                              });
-                                            }
-                                          }
-                                        }}
-                                        className="w-full p-3 text-left bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                                      >
-                                        <div className="flex items-center justify-between">
-                                          <div>
-                                            <div className="font-medium">{pkg.customerName}</div>
-                                            <div className="text-sm text-gray-600">
-                                              Order #{pkg.orderNumber}
-                                            </div>
-                                          </div>
-                                          <Badge variant="outline" className="text-xs">
-                                            {pkg.remaining} needed
-                                          </Badge>
-                                        </div>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
                             </div>
                           )}
                         </div>

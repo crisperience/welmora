@@ -130,10 +130,10 @@ export default function HomePage() {
                 }}
                 className="rounded-md border"
                 modifiers={{
-                  hasOrders: (date) => getDayOrderCount(date) > 0
+                  hasOrders: date => getDayOrderCount(date) > 0,
                 }}
                 modifiersClassNames={{
-                  hasOrders: 'bg-blue-50 border-blue-200 text-blue-900 font-semibold'
+                  hasOrders: 'bg-blue-50 border-blue-200 text-blue-900 font-semibold',
                 }}
               />
             </CardContent>
@@ -159,11 +159,13 @@ export default function HomePage() {
                 </Button>
                 {selectedDate && (
                   <div className="text-center text-sm text-gray-600 mt-3">
-                    {formatDisplayDate(selectedDate)}
+                    <div>{formatDisplayDate(selectedDate)}</div>
                     {getDayOrderCount(selectedDate) > 0 && (
-                      <span className="ml-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                        {getDayOrderCount(selectedDate)} processing orders
-                      </span>
+                      <div className="mt-2">
+                        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                          {getDayOrderCount(selectedDate)} orders
+                        </span>
+                      </div>
                     )}
                   </div>
                 )}
@@ -188,11 +190,13 @@ export default function HomePage() {
                 </Button>
                 {selectedDate && (
                   <div className="text-center text-sm text-gray-600 mt-3">
-                    {formatDisplayDate(selectedDate)}
+                    <div>{formatDisplayDate(selectedDate)}</div>
                     {getDayOrderCount(selectedDate) > 0 && (
-                      <span className="ml-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                        {getDayOrderCount(selectedDate)} processing orders
-                      </span>
+                      <div className="mt-2">
+                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                          {getDayOrderCount(selectedDate)} orders
+                        </span>
+                      </div>
                     )}
                   </div>
                 )}
