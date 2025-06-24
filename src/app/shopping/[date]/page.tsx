@@ -106,10 +106,10 @@ export default function ShoppingPage() {
       prev.map(item =>
         item.sku === sku
           ? {
-              ...item,
-              completed: !item.completed,
-              purchased: !item.completed ? item.totalNeeded : 0,
-            }
+            ...item,
+            completed: !item.completed,
+            purchased: !item.completed ? item.totalNeeded : 0,
+          }
           : item
       )
     );
@@ -172,7 +172,7 @@ export default function ShoppingPage() {
 
             {completedItems === totalItems && totalItems > 0 && (
               <div className="mt-3 text-center">
-                <Badge className="bg-green-600">🎉 Shopping Complete!</Badge>
+                <Badge className="bg-green-600">Shopping Complete!</Badge>
               </div>
             )}
           </CardContent>
@@ -211,22 +211,20 @@ export default function ShoppingPage() {
                   {groupedItems[category].map((item: ShoppingItem) => (
                     <Card
                       key={item.sku}
-                      className={`cursor-pointer transition-all duration-200 ${
-                        item.completed
+                      className={`cursor-pointer transition-all duration-200 ${item.completed
                           ? 'bg-green-50 border-green-200 shadow-sm'
                           : 'bg-white hover:shadow-md hover:scale-[1.02]'
-                      }`}
+                        }`}
                       onClick={() => toggleItemCompleted(item.sku)}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center space-x-4">
                           {/* Checkbox */}
                           <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                              item.completed
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${item.completed
                                 ? 'bg-green-600 border-green-600'
                                 : 'border-gray-300 hover:border-green-400'
-                            }`}
+                              }`}
                           >
                             {item.completed && <CheckCircle className="h-4 w-4 text-white" />}
                           </div>
@@ -247,9 +245,8 @@ export default function ShoppingPage() {
                           {/* Product Info */}
                           <div className="flex-1 min-w-0">
                             <h3
-                              className={`font-medium text-sm leading-tight ${
-                                item.completed ? 'text-green-800 line-through' : 'text-gray-900'
-                              }`}
+                              className={`font-medium text-sm leading-tight ${item.completed ? 'text-green-800 line-through' : 'text-gray-900'
+                                }`}
                             >
                               {item.name}
                             </h3>
