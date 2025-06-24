@@ -74,6 +74,7 @@ interface WooCommerceLineItem {
   quantity: number;
   price: string;
   product_id: number;
+  weight?: string;
   image?: {
     src: string;
   };
@@ -84,7 +85,9 @@ interface WooCommerceProduct {
   name: string;
   sku: string;
   price: string;
+  weight?: string;
   images: Array<{ src: string }>;
+  categories?: Array<{ name: string }>;
 }
 
 interface WooCommerceCustomer {
@@ -387,6 +390,8 @@ export async function getPackagesForDate(
     // Use the exact date selected by the user
     const selectedDate = date;
 
+    console.log('Getting packages for date:', selectedDate);
+
     // Get orders from the selected date
     const ordersResult = await getOrdersByDateRange(selectedDate, selectedDate);
 
@@ -397,6 +402,49 @@ export async function getPackagesForDate(
       };
     }
 
+    console.log('Found orders:', ordersResult.data.map(o => ({
+      id: o.id,
+      date_created: o.date_created,
+      billing_name: `${o.billing.first_name} ${o.billing.last_name}`,
+      items_count: o.line_items.length
+    })));
+
+    // Collect all product IDs to fetch weights
+    const productIds = new Set<number>();
+    ordersResult.data.forEach((order: WooCommerceOrder) => {
+      order.line_items.forEach((item: WooCommerceLineItem) => {
+        productIds.add(item.product_id);
+      });
+    });
+
+    // Fetch product details to get weights
+    const productWeights = new Map<number, number>();
+    if (productIds.size > 0) {
+      try {
+        const productIdsArray = Array.from(productIds);
+        const batchSize = 20;
+
+        for (let i = 0; i < productIdsArray.length; i += batchSize) {
+          const batch = productIdsArray.slice(i, i + batchSize);
+          const response = await WooCommerce.get('products', {
+            include: batch.join(','),
+            per_page: batchSize,
+          });
+
+          if (isArrayData(response.data)) {
+            response.data.forEach((product: unknown) => {
+              const prod = product as WooCommerceProduct;
+              const weight = parseFloat(prod.weight || '0') || 0;
+              productWeights.set(prod.id, weight);
+            });
+          }
+        }
+        console.log('Fetched product weights:', Object.fromEntries(productWeights));
+      } catch (error) {
+        console.warn('Failed to fetch product weights:', error);
+      }
+    }
+
     const packages: Package[] = ordersResult.data.map((order: WooCommerceOrder) => {
       // Calculate total package value
       const totalValue = order.line_items.reduce(
@@ -404,29 +452,33 @@ export async function getPackagesForDate(
         0
       );
 
-      // Format shipping address - use shipping if available, otherwise use billing
-      const hasShippingAddress = order.shipping?.address_1 && order.shipping?.city;
+      // Determine which address to use - prefer shipping if it has address_1
+      const useShipping = order.shipping?.address_1 && order.shipping?.address_1.trim() !== '';
+
       const shippingAddress = {
-        first_name: hasShippingAddress
-          ? order.shipping?.first_name || order.billing.first_name
-          : order.billing.first_name,
-        last_name: hasShippingAddress
-          ? order.shipping?.last_name || order.billing.last_name
-          : order.billing.last_name,
-        company: hasShippingAddress ? order.shipping?.company : order.billing.company,
-        address_1: hasShippingAddress ? order.shipping?.address_1 : order.billing.address_1,
-        address_2: hasShippingAddress ? order.shipping?.address_2 : order.billing.address_2,
-        city: hasShippingAddress ? order.shipping?.city : order.billing.city,
-        state: hasShippingAddress ? order.shipping?.state : order.billing.state,
-        postcode: hasShippingAddress ? order.shipping?.postcode : order.billing.postcode,
-        country: hasShippingAddress ? order.shipping?.country : order.billing.country,
-        phone: hasShippingAddress ? order.shipping?.phone : order.billing.phone,
+        first_name: useShipping ? order.shipping?.first_name : order.billing.first_name,
+        last_name: useShipping ? order.shipping?.last_name : order.billing.last_name,
+        company: useShipping ? order.shipping?.company : order.billing.company,
+        address_1: useShipping ? order.shipping?.address_1 : order.billing.address_1,
+        address_2: useShipping ? order.shipping?.address_2 : order.billing.address_2,
+        city: useShipping ? order.shipping?.city : order.billing.city,
+        state: useShipping ? order.shipping?.state : order.billing.state,
+        postcode: useShipping ? order.shipping?.postcode : order.billing.postcode,
+        country: useShipping ? order.shipping?.country : order.billing.country,
+        phone: useShipping ? order.shipping?.phone : order.billing.phone,
       };
+
+      console.log(`Order ${order.id} address logic:`, {
+        useShipping,
+        shipping_address_1: order.shipping?.address_1,
+        billing_address_1: order.billing.address_1,
+        final_address: shippingAddress.address_1
+      });
 
       return {
         id: `package-${order.id}`,
         orderId: order.id,
-        orderNumber: order.number || `#${order.id}`,
+        orderNumber: order.number || `${order.id}`,
         customerName: `${order.billing.first_name} ${order.billing.last_name}`,
         customerEmail: order.billing.email,
         shippingAddress,
@@ -456,15 +508,25 @@ export async function getPackagesForDate(
           price: parseFloat(item.price),
           image: item.image?.src,
           productId: item.product_id,
+          weight: productWeights.get(item.product_id) || 0, // Add actual weight
         })),
       };
     });
+
+    console.log('Created packages:', packages.map(p => ({
+      id: p.id,
+      orderNumber: p.orderNumber,
+      customerName: p.customerName,
+      address: p.shippingAddress.address_1,
+      totalWeight: p.items.reduce((sum, item) => sum + (item.weight || 0) * item.needed, 0)
+    })));
 
     return {
       success: true,
       data: packages,
     };
   } catch (error) {
+    console.error('Error in getPackagesForDate:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

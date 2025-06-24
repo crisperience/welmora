@@ -117,6 +117,7 @@ export interface PackageItem {
   image?: string;
   productId?: number;
   variation?: string;
+  weight?: number;
 }
 
 // Enhanced scan feedback types
