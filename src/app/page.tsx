@@ -25,6 +25,20 @@ export default function HomePage() {
     });
   };
 
+  // Load order counts for calendar
+  const loadOrderCounts = async () => {
+    try {
+      // Add cache busting parameter
+      const response = await fetch(`/api/orders/counts?t=${Date.now()}`);
+      if (response.ok) {
+        const counts = await response.json();
+        setOrderCounts(counts);
+      }
+    } catch (error) {
+      console.error('Failed to load order counts:', error);
+    }
+  };
+
   // Load saved selected date and order counts
   useEffect(() => {
     // Load saved date from localStorage
@@ -38,20 +52,13 @@ export default function HomePage() {
       }
     }
 
-    // Load order counts for calendar
-    const loadOrderCounts = async () => {
-      try {
-        const response = await fetch('/api/orders/counts');
-        if (response.ok) {
-          const counts = await response.json();
-          setOrderCounts(counts);
-        }
-      } catch (error) {
-        console.error('Failed to load order counts:', error);
-      }
-    };
     loadOrderCounts();
   }, []);
+
+  // Reload order counts when component mounts or date changes
+  useEffect(() => {
+    loadOrderCounts();
+  }, [selectedDate]);
 
   // Save selected date to localStorage whenever it changes
   useEffect(() => {

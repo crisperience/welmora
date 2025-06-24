@@ -27,7 +27,7 @@ export default function PackingPage() {
   const fetchPackingData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/packing/${date}`);
+      const response = await fetch(`/api/packing/${date}?t=${Date.now()}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch packing data');
@@ -47,24 +47,25 @@ export default function PackingPage() {
   useEffect(() => {
     if (!date) return;
 
-    const savedState = localStorage.getItem(`packing-${date}`);
-    if (savedState) {
-      try {
-        const parsed = JSON.parse(savedState);
-        // Check if saved data is valid and from the same date
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setPackages(parsed);
-          setLoading(false);
-          return;
-        }
-      } catch (e) {
-        console.error('Failed to parse saved state:', e);
-        // Clear invalid saved state
-        localStorage.removeItem(`packing-${date}`);
-      }
-    }
+    // TEMPORARILY DISABLE CACHE TO FORCE FRESH DATA
+    // const savedState = localStorage.getItem(`packing-${date}`);
+    // if (savedState) {
+    //   try {
+    //     const parsed = JSON.parse(savedState);
+    //     // Check if saved data is valid and from the same date
+    //     if (Array.isArray(parsed) && parsed.length > 0) {
+    //       setPackages(parsed);
+    //       setLoading(false);
+    //       return;
+    //     }
+    //   } catch (e) {
+    //     console.error('Failed to parse saved state:', e);
+    //     // Clear invalid saved state
+    //     localStorage.removeItem(`packing-${date}`);
+    //   }
+    // }
 
-    // Always fetch fresh data if no valid saved state
+    // Always fetch fresh data
     fetchPackingData();
   }, [date, fetchPackingData]);
 

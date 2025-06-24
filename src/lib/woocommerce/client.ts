@@ -337,6 +337,8 @@ export async function generateDailySnapshot(
         const productIdsArray = Array.from(productIds);
         const batchSize = 20;
 
+        console.log('Fetching product details for IDs:', productIdsArray);
+
         for (let i = 0; i < productIdsArray.length; i += batchSize) {
           const batch = productIdsArray.slice(i, i + batchSize);
           const response = await WooCommerce.get('products', {
@@ -354,6 +356,12 @@ export async function generateDailySnapshot(
               const primaryCategory = prod.categories?.[0]?.name || 'Uncategorized';
               const weight = parseFloat(prod.weight || '0') || 0;
 
+              console.log(`Product ${prod.id} details:`, {
+                categories: prod.categories,
+                primaryCategory,
+                weight,
+              });
+
               productDetails.set(prod.id, {
                 category: primaryCategory,
                 weight: weight,
@@ -361,6 +369,7 @@ export async function generateDailySnapshot(
             });
           }
         }
+        console.log('Fetched product details:', Object.fromEntries(productDetails));
       } catch (error) {
         console.warn('Failed to fetch product details:', error);
       }
@@ -375,12 +384,29 @@ export async function generateDailySnapshot(
         const product = productMap.get(sku);
         const details = productDetails.get(item.product_id);
 
+        console.log(`Updating product ${item.product_id}:`, {
+          sku,
+          productExists: !!product,
+          detailsExists: !!details,
+          category: details?.category,
+          weight: details?.weight,
+        });
+
         if (product && details) {
           product.category = details.category || 'Uncategorized';
           product.weight = details.weight || 0;
         }
       });
     });
+
+    console.log(
+      'Final products array:',
+      productsArray.map(p => ({
+        name: p.name,
+        category: p.category,
+        weight: p.weight,
+      }))
+    );
 
     const snapshot: DailySnapshot = {
       date,
