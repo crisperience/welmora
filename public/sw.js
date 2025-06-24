@@ -1,4 +1,4 @@
-const CACHE_NAME = 'welmora-scanner-v1';
+const CACHE_NAME = 'welmora-scanner-v' + Date.now();
 const STATIC_CACHE_URLS = ['/', '/manifest.json', '/welmora-logo.svg', '/favicon.ico'];
 
 // Install event - cache static assets
@@ -52,7 +52,7 @@ self.addEventListener('fetch', event => {
   // Skip cross-origin requests
   if (url.origin !== self.location.origin) return;
 
-  // Cache-first strategy for static assets
+  // Network-first strategy for development - always fetch fresh resources
   if (
     STATIC_CACHE_URLS.includes(url.pathname) ||
     url.pathname.startsWith('/_next/static/') ||
@@ -62,32 +62,28 @@ self.addEventListener('fetch', event => {
     url.pathname.includes('.ico')
   ) {
     event.respondWith(
-      caches
-        .match(request)
-        .then(cachedResponse => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-
-          return fetch(request).then(response => {
-            // Don't cache if not a valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
+      fetch(request)
+        .then(response => {
+          // Cache the fresh response
+          if (response && response.status === 200 && response.type === 'basic') {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then(cache => {
               cache.put(request, responseToCache);
             });
-
-            return response;
-          });
+          }
+          return response;
         })
         .catch(() => {
-          // Return offline fallback for navigation requests
-          if (request.mode === 'navigate') {
-            return caches.match('/');
-          }
+          // Fallback to cache only if network fails
+          return caches.match(request).then(cachedResponse => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // Return offline fallback for navigation requests
+            if (request.mode === 'navigate') {
+              return caches.match('/');
+            }
+          });
         })
     );
   }

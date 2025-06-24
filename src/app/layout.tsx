@@ -61,6 +61,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
+                  // In development, disable service worker to avoid caching issues
+                  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    console.log('Development mode: Service Worker disabled to prevent caching issues');
+                    
+                    // Clear all existing caches
+                    caches.keys().then(function(cacheNames) {
+                      return Promise.all(
+                        cacheNames.map(function(cacheName) {
+                          console.log('Clearing cache:', cacheName);
+                          return caches.delete(cacheName);
+                        })
+                      );
+                    }).then(function() {
+                      console.log('All caches cleared for development');
+                    });
+                    
+                    // Unregister any existing service workers
+                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                      for (let registration of registrations) {
+                        registration.unregister();
+                        console.log('Unregistered service worker:', registration.scope);
+                      }
+                    });
+                    
+                    return; // Exit early in development
+                  }
+                  
+                  // Only register service worker in production
                   navigator.serviceWorker.register('/sw.js')
                     .then(function(registration) {
                       console.log('ServiceWorker registration successful with scope: ', registration.scope);
