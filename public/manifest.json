@@ -7,6 +7,7 @@
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "orientation": "portrait-primary",
+  "permissions": ["camera"],
   "icons": [
     {
       "src": "/welmora-logo.svg",

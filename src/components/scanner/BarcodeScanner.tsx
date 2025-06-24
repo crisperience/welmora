@@ -17,6 +17,7 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
   const [codeReader] = useState(() => new BrowserMultiFormatReader());
   const [error, setError] = useState<string | null>(null);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   useEffect(() => {
     if (isActive && videoRef.current) {
@@ -33,10 +34,29 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
   const startScanning = async () => {
     try {
       setError(null);
+      setIsInitializing(true);
 
       if (!videoRef.current) return;
 
-      // Start decoding from default video device
+      // Check if we're in a PWA context
+      const isPWA =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+      // For PWA, we need to request camera permission explicitly first
+      if (isPWA) {
+        try {
+          // Test camera access with basic constraints first
+          const testStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          testStream.getTracks().forEach(track => track.stop());
+        } catch {
+          throw new Error(
+            'Camera permission denied. Please allow camera access in your browser settings.'
+          );
+        }
+      }
+
+      // Start decoding with enhanced error handling
       await codeReader.decodeFromVideoDevice(
         null, // Use default camera
         videoRef.current,
@@ -59,15 +79,38 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
           }
         }
       );
+
+      setIsInitializing(false);
     } catch (err) {
       console.error('Scanner error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to start camera');
+      setIsInitializing(false);
+
+      let errorMessage = 'Failed to start camera';
+
+      if (err instanceof Error) {
+        if (err.message.includes('Permission denied') || err.message.includes('permission')) {
+          errorMessage = 'Camera permission denied. Please allow camera access and try again.';
+        } else if (err.message.includes('not found') || err.message.includes('NotFoundError')) {
+          errorMessage = 'No camera found. Please check your device has a camera.';
+        } else if (err.message.includes('NotAllowedError')) {
+          errorMessage =
+            'Camera access blocked. Please check browser settings and allow camera access.';
+        } else if (err.message.includes('NotReadableError')) {
+          errorMessage =
+            'Camera is being used by another application. Please close other apps using the camera.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
+      setError(errorMessage);
     }
   };
 
   const stopScanning = () => {
     try {
       codeReader.reset();
+      setIsInitializing(false);
     } catch (err) {
       console.warn('Error stopping scanner:', err);
     }
@@ -88,8 +131,14 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
             onClick={onToggle}
             variant={isActive ? 'destructive' : 'default'}
             className="flex items-center gap-2"
+            disabled={isInitializing}
           >
-            {isActive ? (
+            {isInitializing ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Starting Camera...
+              </>
+            ) : isActive ? (
               <>
                 <CameraOff className="h-4 w-4" />
                 Stop Scanner
@@ -111,6 +160,7 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
               className="w-full h-64 bg-black rounded-lg object-cover"
               playsInline
               muted
+              autoPlay
             />
 
             {/* Scanning Overlay */}
@@ -121,6 +171,16 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
                 </div>
               </div>
             </div>
+
+            {/* Loading overlay */}
+            {isInitializing && (
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
+                <div className="text-white text-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent mx-auto mb-2" />
+                  <p className="text-sm">Initializing camera...</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -130,9 +190,17 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
             <p className="text-red-600 text-sm">
               <strong>Error:</strong> {error}
             </p>
-            <p className="text-red-500 text-xs mt-1">
-              Make sure you have granted camera permissions and have a camera available.
-            </p>
+            <div className="text-red-500 text-xs mt-2 space-y-1">
+              <p>
+                <strong>Troubleshooting:</strong>
+              </p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Make sure you have granted camera permissions</li>
+                <li>Check if another app is using the camera</li>
+                <li>Try refreshing the page</li>
+                <li>Ensure you&apos;re using HTTPS (required for camera access)</li>
+              </ul>
+            </div>
           </div>
         )}
 
@@ -146,6 +214,7 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
               <li>• Click &quot;Start Scanner&quot; to activate the camera</li>
               <li>• Position the barcode or QR code in the scanning area</li>
               <li>• The app will automatically detect and process the code</li>
+              <li>• For best results, ensure good lighting and hold device steady</li>
             </ul>
           </div>
         )}

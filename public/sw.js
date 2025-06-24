@@ -52,6 +52,17 @@ self.addEventListener('fetch', event => {
   // Skip cross-origin requests
   if (url.origin !== self.location.origin) return;
 
+  // Skip media streams and camera-related requests to avoid interfering with camera access
+  if (
+    request.url.includes('mediaDevices') ||
+    request.url.includes('getUserMedia') ||
+    request.url.includes('stream') ||
+    request.destination === 'video' ||
+    request.destination === 'audio'
+  ) {
+    return;
+  }
+
   // Network-first strategy for development - always fetch fresh resources
   if (
     STATIC_CACHE_URLS.includes(url.pathname) ||
