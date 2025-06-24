@@ -15,8 +15,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ date
     // Debug environment variables
     const envDebug = {
       woocommerceUrl: process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WOOCOMMERCE_URL,
-      hasWooCommerceKey: !!(process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_KEY),
-      hasWooCommerceSecret: !!(process.env.WOOCOMMERCE_CONSUMER_SECRET || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_SECRET),
+      hasWooCommerceKey: !!(
+        process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_KEY
+      ),
+      hasWooCommerceSecret: !!(
+        process.env.WOOCOMMERCE_CONSUMER_SECRET ||
+        process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_SECRET
+      ),
     };
 
     console.log('Environment debug:', envDebug);
@@ -26,11 +31,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ date
     console.log('Shopping snapshot result:', { success: result.success, error: result.error });
 
     if (!result.success) {
-      return NextResponse.json({
-        error: result.error,
-        debug: envDebug,
-        date
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: result.error,
+          debug: envDebug,
+          date,
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(result.data);

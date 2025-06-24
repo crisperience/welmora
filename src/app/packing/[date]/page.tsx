@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { PackageItem, Package as PackageType, ScanFeedback } from '@/types/woocommerce-api';
-import { ArrowLeft, CheckCircle, MapPin, Package, Scan, User } from 'lucide-react';
+import { ArrowLeft, CheckCircle, MapPin, Package, RotateCcw, Scan, User } from 'lucide-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -43,23 +43,29 @@ export default function PackingPage() {
     }
   }, [date]);
 
-  // Load state from localStorage
+  // Load state from localStorage or fetch fresh data
   useEffect(() => {
+    if (!date) return;
+
     const savedState = localStorage.getItem(`packing-${date}`);
     if (savedState) {
       try {
         const parsed = JSON.parse(savedState);
-        setPackages(parsed);
-        setLoading(false);
-        return;
+        // Check if saved data is valid and from the same date
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPackages(parsed);
+          setLoading(false);
+          return;
+        }
       } catch (e) {
         console.error('Failed to parse saved state:', e);
+        // Clear invalid saved state
+        localStorage.removeItem(`packing-${date}`);
       }
     }
 
-    if (date) {
-      fetchPackingData();
-    }
+    // Always fetch fresh data if no valid saved state
+    fetchPackingData();
   }, [date, fetchPackingData]);
 
   // Save state to localStorage whenever packages change
@@ -69,13 +75,11 @@ export default function PackingPage() {
     }
   }, [packages, date]);
 
-  // Remove automatic feedback clearing - user must manually dismiss
-
   const dismissFeedback = () => {
     setScanFeedback(null);
   };
 
-  const updateWooCommerceStatus = async (orderId: number) => {
+  const updateWooCommerceStatus = async (orderId: number, status: 'completed' | 'processing') => {
     try {
       const response = await fetch('/api/packing/update-order-status', {
         method: 'POST',
@@ -84,14 +88,14 @@ export default function PackingPage() {
         },
         body: JSON.stringify({
           orderId: orderId,
-          status: 'completed',
+          status: status,
         }),
       });
 
       if (!response.ok) {
         console.error('Failed to update order status in WooCommerce');
       } else {
-        console.log(`Order ${orderId} automatically marked as completed in WooCommerce`);
+        console.log(`Order ${orderId} marked as ${status} in WooCommerce`);
       }
     } catch (error) {
       console.error('Error updating order status:', error);
@@ -110,7 +114,7 @@ export default function PackingPage() {
   };
 
   const formatAddress = (address: PackageType['shippingAddress']) => {
-    if (!address) {
+    if (!address || !address.address_1) {
       return 'Address not available';
     }
     const parts = [
@@ -121,6 +125,16 @@ export default function PackingPage() {
       address.country,
     ].filter(Boolean);
     return parts.join(', ');
+  };
+
+  const calculatePackageWeight = (pkg: PackageType) => {
+    // Estimate weight based on items (you can adjust this logic)
+    const totalWeight = pkg.items.reduce((sum, item) => {
+      // Assume average item weight of 0.5kg if not specified
+      const itemWeight = 0.5; // Default weight per item
+      return sum + itemWeight * item.needed;
+    }, 0);
+    return totalWeight;
   };
 
   const processProduct = (code: string) => {
@@ -143,18 +157,19 @@ export default function PackingPage() {
       if (matchingPackages.length === 0) {
         // Check if product exists but is already complete in all packages
         const anyMatch = packages.some(pkg =>
-          pkg.items.some(item =>
-            item.sku === code ||
-            item.productId?.toString() === code ||
-            item.name.toLowerCase().includes(code.toLowerCase())
+          pkg.items.some(
+            item =>
+              item.sku === code ||
+              item.productId?.toString() === code ||
+              item.name.toLowerCase().includes(code.toLowerCase())
           )
         );
 
         setScanFeedback({
           success: false,
           message: anyMatch
-            ? `⚠️ Product "${code}" already complete in all packages`
-            : `❌ Product "${code}" not found in any package for this date`,
+            ? `Product "${code}" already complete in all packages`
+            : `Product "${code}" not found in any package for this date`,
           urgency: 'medium',
           sound: 'error',
         });
@@ -165,24 +180,23 @@ export default function PackingPage() {
       if (matchingPackages.length > 1) {
         setScanFeedback({
           success: false,
-          message: `🤔 Multiple packages need "${matchingPackages[0].item.name}"`,
+          message: `Multiple packages need "${matchingPackages[0].item.name}"`,
           packageInfo: {
             packageId: 'multiple',
             orderNumber: 'Multiple Orders',
             customerName: `${matchingPackages.length} customers need this product`,
-            shippingAddress: matchingPackages.map(mp =>
-              `${mp.package.customerName} (${mp.package.orderNumber}): ${mp.item.needed - mp.item.scanned} needed`
-            ).join('\n'),
-            remainingItems: matchingPackages.reduce((sum, mp) => sum + (mp.item.needed - mp.item.scanned), 0),
+            shippingAddress: matchingPackages
+              .map(
+                mp =>
+                  `${mp.package.customerName} (${mp.package.orderNumber}): ${mp.item.needed - mp.item.scanned} needed`
+              )
+              .join('\n'),
+            remainingItems: matchingPackages.reduce(
+              (sum, mp) => sum + (mp.item.needed - mp.item.scanned),
+              0
+            ),
             totalItems: matchingPackages.reduce((sum, mp) => sum + mp.item.needed, 0),
             isComplete: false,
-          },
-          productInfo: {
-            name: matchingPackages[0].item.name,
-            sku: matchingPackages[0].item.sku,
-            needed: matchingPackages.reduce((sum, mp) => sum + mp.item.needed, 0),
-            scanned: matchingPackages.reduce((sum, mp) => sum + mp.item.scanned, 0),
-            remaining: matchingPackages.reduce((sum, mp) => sum + (mp.item.needed - mp.item.scanned), 0),
           },
           urgency: 'high',
           sound: 'warning',
@@ -204,7 +218,7 @@ export default function PackingPage() {
       if (foundItem.scanned >= foundItem.needed) {
         setScanFeedback({
           success: false,
-          message: `⚠️ "${foundItem.name}" already complete for ${foundPackage.customerName}`,
+          message: `"${foundItem.name}" already complete for ${foundPackage.customerName}`,
           packageInfo: {
             packageId: foundPackage.id,
             orderNumber: foundPackage.orderNumber,
@@ -213,13 +227,6 @@ export default function PackingPage() {
             remainingItems: 0,
             totalItems: foundItem.needed,
             isComplete: true,
-          },
-          productInfo: {
-            name: foundItem.name,
-            sku: foundItem.sku,
-            needed: foundItem.needed,
-            scanned: foundItem.scanned,
-            remaining: 0,
           },
           urgency: 'low',
           sound: 'warning',
@@ -240,142 +247,100 @@ export default function PackingPage() {
             return item;
           });
 
-          // Check if package is complete
+          // Check if all items in this package are complete
           const allComplete = updatedItems.every(item => item.scanned >= item.needed);
-          const wasCompleted = pkg.status === 'completed';
-          const isNowCompleted = allComplete;
 
-          // If package just became completed, we'll need to update WooCommerce
-          if (!wasCompleted && isNowCompleted) {
-            // Async call to update WooCommerce order status
-            updateWooCommerceStatus(pkg.orderId);
-          }
-
-          return {
+          const updatedPackage = {
             ...pkg,
             items: updatedItems,
             status: allComplete ? ('completed' as const) : ('in-progress' as const),
           };
+
+          // Auto-update WooCommerce status if package is complete
+          if (allComplete && pkg.status !== 'completed') {
+            updateWooCommerceStatus(pkg.orderId, 'completed');
+          }
+
+          return updatedPackage;
         }
         return pkg;
       });
 
       setPackages(updatedPackages);
 
-      const remaining = foundItem.needed - (foundItem.scanned + 1);
-      const packageTotalItems = foundPackage.items.reduce((sum, item) => sum + item.needed, 0);
-      const packageScannedItems = foundPackage.items.reduce(
-        (sum, item) =>
-          sum + Math.min(item.scanned + (item.sku === foundItem!.sku ? 1 : 0), item.needed),
-        0
-      );
-      const packageComplete = remaining <= 0 && packageScannedItems === packageTotalItems;
+      // Show success feedback
+      const remainingForThisItem = foundItem!.needed - (foundItem!.scanned + 1);
+      const packageComplete = updatedPackages
+        .find(p => p.id === foundPackage!.id)!
+        .items.every(item => item.scanned >= item.needed);
 
       setScanFeedback({
         success: true,
-        message:
-          remaining <= 0
-            ? `✅ "${foundItem.name}" COMPLETE!`
-            : `📦 "${foundItem.name}" - ${remaining} more needed`,
+        message: packageComplete
+          ? `Package complete for ${foundPackage!.customerName}!`
+          : remainingForThisItem > 0
+            ? `Item added! ${remainingForThisItem} more "${foundItem!.name}" needed for ${foundPackage!.customerName}`
+            : `"${foundItem!.name}" complete for ${foundPackage!.customerName}!`,
         packageInfo: {
-          packageId: foundPackage.id,
-          orderNumber: foundPackage.orderNumber,
-          customerName: foundPackage.customerName,
-          shippingAddress: formatAddress(foundPackage.shippingAddress),
-          remainingItems: packageTotalItems - packageScannedItems,
-          totalItems: packageTotalItems,
+          packageId: foundPackage!.id,
+          orderNumber: foundPackage!.orderNumber,
+          customerName: foundPackage!.customerName,
+          shippingAddress: formatAddress(foundPackage!.shippingAddress),
+          remainingItems: updatedPackages
+            .find(p => p.id === foundPackage!.id)!
+            .items.reduce((sum, item) => sum + Math.max(0, item.needed - item.scanned), 0),
+          totalItems: foundPackage!.items.reduce((sum, item) => sum + item.needed, 0),
           isComplete: packageComplete,
         },
-        productInfo: {
-          name: foundItem.name,
-          sku: foundItem.sku,
-          needed: foundItem.needed,
-          scanned: foundItem.scanned + 1,
-          remaining: remaining,
-        },
-        urgency: remaining <= 0 ? 'low' : packageComplete ? 'high' : 'medium',
-        sound: remaining <= 0 ? 'success' : 'success',
+        urgency: packageComplete ? 'high' : 'low',
+        sound: packageComplete ? 'success' : 'success',
       });
-    } catch {
+    } catch (error) {
+      console.error('Error processing product:', error);
       setScanFeedback({
         success: false,
-        message: '❌ Processing failed - please try again',
+        message: `Error processing "${code}". Please try again.`,
         urgency: 'high',
         sound: 'error',
       });
     }
   };
 
-  const togglePackageStatus = async (packageId: string) => {
-    const pkg = packages.find(p => p.id === packageId);
-    if (!pkg) return;
+  const resetPackage = async (packageId: string) => {
+    const updatedPackages = packages.map(pkg => {
+      if (pkg.id === packageId) {
+        // Reset all items to 0 scanned
+        const resetItems = pkg.items.map(item => ({ ...item, scanned: 0 }));
 
-    const newStatus = pkg.status === 'completed' ? 'pending' : 'completed';
+        // Update WooCommerce status back to processing
+        updateWooCommerceStatus(pkg.orderId, 'processing');
 
-    // Update local state first for immediate UI feedback
-    setPackages(prev =>
-      prev.map(p => {
-        if (p.id === packageId) {
-          // If marking as completed, mark all items as scanned
-          if (newStatus === 'completed') {
-            const updatedItems = p.items.map(item => ({
-              ...item,
-              scanned: item.needed,
-            }));
-            return { ...p, status: newStatus, items: updatedItems };
-          } else {
-            // If marking as pending, reset all items
-            const updatedItems = p.items.map(item => ({
-              ...item,
-              scanned: 0,
-            }));
-            return { ...p, status: newStatus, items: updatedItems };
-          }
-        }
-        return p;
-      })
-    );
-
-    // If marking as completed, update WooCommerce order status
-    if (newStatus === 'completed') {
-      try {
-        const response = await fetch('/api/packing/update-order-status', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            orderId: pkg.orderId,
-            status: 'completed',
-          }),
-        });
-
-        if (!response.ok) {
-          console.error('Failed to update order status in WooCommerce');
-          // Optionally show user notification
-        } else {
-          console.log(`Order ${pkg.orderId} marked as completed in WooCommerce`);
-        }
-      } catch (error) {
-        console.error('Error updating order status:', error);
+        return {
+          ...pkg,
+          status: 'in-progress' as const,
+          items: resetItems,
+        };
       }
-    }
+      return pkg;
+    });
+
+    setPackages(updatedPackages);
   };
 
   const getPackageProgress = (pkg: PackageType) => {
-    const totalNeeded = pkg.items.reduce((sum, item) => sum + item.needed, 0);
-    const totalScanned = pkg.items.reduce((sum, item) => sum + item.scanned, 0);
+    const totalItems = pkg.items.reduce((sum, item) => sum + item.needed, 0);
+    const scannedItems = pkg.items.reduce((sum, item) => sum + item.scanned, 0);
     return {
-      totalNeeded,
-      totalScanned,
-      percentage: totalNeeded > 0 ? (totalScanned / totalNeeded) * 100 : 0,
+      scanned: scannedItems,
+      total: totalItems,
+      percentage: totalItems > 0 ? (scannedItems / totalItems) * 100 : 0,
     };
   };
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="text-center py-8">
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading...</p>
         </div>
@@ -385,8 +350,8 @@ export default function PackingPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="text-center py-8">
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
           <p className="text-red-600 mb-4">Error: {error}</p>
           <Button onClick={() => router.push('/')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -401,396 +366,407 @@ export default function PackingPage() {
   const totalPackages = packages.length;
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <Button variant="ghost" onClick={() => router.push('/')} className="p-2">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-xl font-bold">Packing</h1>
-        <div className="w-10" />
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-6 max-w-md md:max-w-4xl">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <Button variant="ghost" onClick={() => router.push('/')} className="mobile-touch">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-xl font-bold">Packing</h1>
+          <div className="w-10" />
+        </div>
 
-      {/* Scanner */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Scanner</h2>
-            <Button
-              onClick={() => setScannerActive(!scannerActive)}
-              variant={scannerActive ? 'destructive' : 'default'}
-              size="sm"
-            >
-              <Scan className="mr-2 h-4 w-4" />
-              {scannerActive ? 'Stop' : 'Start'}
-            </Button>
-          </div>
-
-          {scannerActive && (
-            <div className="mb-4">
-              <BarcodeScanner
-                onScan={handleScan}
-                isActive={scannerActive}
-                onToggle={() => setScannerActive(!scannerActive)}
-              />
+        {/* Scanner */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold">Scanner</h2>
+              <Button
+                onClick={() => setScannerActive(!scannerActive)}
+                variant={scannerActive ? 'destructive' : 'default'}
+                size="sm"
+              >
+                <Scan className="mr-2 h-4 w-4" />
+                {scannerActive ? 'Stop' : 'Start'}
+              </Button>
             </div>
-          )}
 
-          {/* Manual SKU Entry */}
-          <div className="flex gap-2 mb-4">
-            <Input
-              placeholder="Enter SKU manually..."
-              value={manualSku}
-              onChange={e => setManualSku(e.target.value)}
-              onKeyPress={e => e.key === 'Enter' && handleManualEntry()}
-              className="flex-1"
-            />
-            <Button onClick={handleManualEntry} disabled={!manualSku.trim()}>
-              Add
-            </Button>
-          </div>
+            {scannerActive && (
+              <div className="mb-4">
+                <BarcodeScanner
+                  onScan={handleScan}
+                  isActive={scannerActive}
+                  onToggle={() => setScannerActive(!scannerActive)}
+                />
+              </div>
+            )}
 
-          {scanFeedback && (
-            <Card
-              className={`border-l-4 ${scanFeedback.success ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'
+            {/* Manual SKU Entry */}
+            <div className="flex gap-2 mb-4">
+              <Input
+                placeholder="Enter SKU manually..."
+                value={manualSku}
+                onChange={e => setManualSku(e.target.value)}
+                onKeyPress={e => e.key === 'Enter' && handleManualEntry()}
+                className="flex-1"
+              />
+              <Button onClick={handleManualEntry} disabled={!manualSku.trim()}>
+                Add
+              </Button>
+            </div>
+
+            {scanFeedback && (
+              <Card
+                className={`border-l-4 ${
+                  scanFeedback.success ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'
                 }`}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <div
-                    className={`p-2 rounded-full ${scanFeedback.success ? 'bg-green-100' : 'bg-red-100'
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`p-2 rounded-full ${
+                        scanFeedback.success ? 'bg-green-100' : 'bg-red-100'
                       }`}
-                  >
-                    {scanFeedback.success ? (
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <Package className="h-5 w-5 text-red-600" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p
-                          className={`font-medium ${scanFeedback.success ? 'text-green-800' : 'text-red-800'
+                    >
+                      {scanFeedback.success ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <Package className="h-5 w-5 text-red-600" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p
+                            className={`font-medium ${
+                              scanFeedback.success ? 'text-green-800' : 'text-red-800'
                             }`}
-                        >
-                          {scanFeedback.message}
-                        </p>
+                          >
+                            {scanFeedback.message}
+                          </p>
 
-                        {scanFeedback.packageInfo && (
-                          <div className="mt-3 space-y-2">
-                            <div className="bg-white p-3 rounded-lg border">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Package className="h-4 w-4 text-blue-600" />
-                                <span className="font-semibold text-blue-800">
-                                  Package {scanFeedback.packageInfo.orderNumber}
-                                </span>
-                                <Badge
-                                  variant={
-                                    scanFeedback.packageInfo.isComplete ? 'default' : 'secondary'
-                                  }
-                                >
-                                  {scanFeedback.packageInfo.isComplete ? 'Complete' : 'In Progress'}
-                                </Badge>
-                              </div>
-
-                              <div className="grid grid-cols-1 gap-2 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <User className="h-3 w-3 text-gray-500" />
-                                  <span className="font-medium">
-                                    {scanFeedback.packageInfo.customerName}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <MapPin className="h-3 w-3 text-gray-500" />
-                                  <span className="text-gray-600 text-xs">
-                                    {scanFeedback.packageInfo.shippingAddress}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-gray-600">
-                                    Items:{' '}
-                                    {scanFeedback.packageInfo.totalItems -
-                                      scanFeedback.packageInfo.remainingItems}
-                                    /{scanFeedback.packageInfo.totalItems}
-                                  </span>
-                                  {scanFeedback.packageInfo.remainingItems > 0 && (
-                                    <Badge variant="outline" className="text-xs">
-                                      {scanFeedback.packageInfo.remainingItems} remaining
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            {scanFeedback.productInfo && (
+                          {scanFeedback.packageInfo && (
+                            <div className="mt-3 space-y-2">
                               <div className="bg-white p-3 rounded-lg border">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Scan className="h-4 w-4 text-purple-600" />
-                                  <span className="font-semibold text-purple-800">Product Details</span>
-                                </div>
-                                <div className="text-sm space-y-1">
-                                  <div className="font-medium">{scanFeedback.productInfo.name}</div>
-                                  <div className="text-gray-600">
-                                    SKU: {scanFeedback.productInfo.sku}
-                                  </div>
-                                  <div className="flex justify-between items-center">
-                                    <span>
-                                      Scanned: {scanFeedback.productInfo.scanned}/
-                                      {scanFeedback.productInfo.needed}
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <Package className="h-4 w-4 text-blue-600" />
+                                    <span className="font-semibold text-blue-800">
+                                      <span className="font-semibold text-blue-800">#</span>
+                                      {scanFeedback.packageInfo.orderNumber}
                                     </span>
-                                    {scanFeedback.productInfo.remaining > 0 && (
+                                  </div>
+                                  <Badge
+                                    variant={
+                                      scanFeedback.packageInfo.isComplete ? 'default' : 'secondary'
+                                    }
+                                  >
+                                    {scanFeedback.packageInfo.isComplete
+                                      ? 'Complete'
+                                      : 'In Progress'}
+                                  </Badge>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-2 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <User className="h-3 w-3 text-gray-500" />
+                                    <span className="font-medium">
+                                      {scanFeedback.packageInfo.customerName}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className="h-3 w-3 text-gray-500" />
+                                    <span className="text-xs text-gray-600 leading-tight">
+                                      {scanFeedback.packageInfo.shippingAddress}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-gray-600">
+                                      Items:{' '}
+                                      {scanFeedback.packageInfo.totalItems -
+                                        scanFeedback.packageInfo.remainingItems}
+                                      /{scanFeedback.packageInfo.totalItems}
+                                    </span>
+                                    {scanFeedback.packageInfo.remainingItems > 0 && (
                                       <Badge variant="outline" className="text-xs">
-                                        {scanFeedback.productInfo.remaining} more needed
+                                        {scanFeedback.packageInfo.remainingItems} remaining
                                       </Badge>
                                     )}
                                   </div>
                                 </div>
                               </div>
-                            )}
 
-                            {scanFeedback.multiplePackages && (
-                              <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                                <div className="flex items-center gap-2 mb-3">
-                                  <Package className="h-4 w-4 text-yellow-600" />
-                                  <span className="font-semibold text-yellow-800">Choose Package</span>
-                                </div>
-                                <p className="text-sm text-yellow-700 mb-3">
-                                  Multiple customers ordered this product. Click the package you want to add it to:
-                                </p>
-                                <div className="space-y-2">
-                                  {scanFeedback.multiplePackages.map((pkg) => (
-                                    <button
-                                      key={pkg.packageId}
-                                      onClick={() => {
-                                        // Find the specific package and process the product for it
-                                        const targetPackage = packages.find(p => p.id === pkg.packageId);
-                                        if (targetPackage) {
-                                          // Process for this specific package
-                                          const item = targetPackage.items.find(item =>
-                                            scanFeedback.productInfo && (
-                                              item.sku === scanFeedback.productInfo.sku ||
-                                              item.name === scanFeedback.productInfo.name
-                                            )
+                              {scanFeedback.multiplePackages && (
+                                <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Package className="h-4 w-4 text-yellow-600" />
+                                    <span className="font-semibold text-yellow-800">
+                                      Choose Package
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-yellow-700 mb-3">
+                                    Multiple customers ordered this product. Click the package you
+                                    want to add it to:
+                                  </p>
+                                  <div className="space-y-2">
+                                    {scanFeedback.multiplePackages.map(pkg => (
+                                      <button
+                                        key={pkg.packageId}
+                                        onClick={() => {
+                                          // Find the specific package and process the product for it
+                                          const targetPackage = packages.find(
+                                            p => p.id === pkg.packageId
                                           );
-                                          if (item) {
-                                            // Update only this package
-                                            const updatedPackages = packages.map(p => {
-                                              if (p.id === pkg.packageId) {
-                                                const updatedItems = p.items.map(i => {
-                                                  if (i.sku === item.sku) {
-                                                    return { ...i, scanned: Math.min(i.scanned + 1, i.needed) };
-                                                  }
-                                                  return i;
-                                                });
-                                                const allComplete = updatedItems.every(i => i.scanned >= i.needed);
-                                                return { ...p, items: updatedItems, status: allComplete ? 'completed' as const : 'in-progress' as const };
-                                              }
-                                              return p;
-                                            });
-                                            setPackages(updatedPackages);
-                                            setScanFeedback({
-                                              success: true,
-                                              message: `✅ Added to ${pkg.customerName}'s package`,
-                                              urgency: 'low',
-                                              sound: 'success',
-                                            });
+                                          if (targetPackage) {
+                                            // Process for this specific package
+                                            const item = targetPackage.items.find(
+                                              item =>
+                                                scanFeedback.productInfo &&
+                                                (item.sku === scanFeedback.productInfo.sku ||
+                                                  item.name === scanFeedback.productInfo.name)
+                                            );
+                                            if (item) {
+                                              // Update only this package
+                                              const updatedPackages = packages.map(p => {
+                                                if (p.id === pkg.packageId) {
+                                                  const updatedItems = p.items.map(i => {
+                                                    if (i.sku === item.sku) {
+                                                      return {
+                                                        ...i,
+                                                        scanned: Math.min(i.scanned + 1, i.needed),
+                                                      };
+                                                    }
+                                                    return i;
+                                                  });
+                                                  const allComplete = updatedItems.every(
+                                                    i => i.scanned >= i.needed
+                                                  );
+                                                  return {
+                                                    ...p,
+                                                    items: updatedItems,
+                                                    status: allComplete
+                                                      ? ('completed' as const)
+                                                      : ('in-progress' as const),
+                                                  };
+                                                }
+                                                return p;
+                                              });
+                                              setPackages(updatedPackages);
+                                              setScanFeedback({
+                                                success: true,
+                                                message: `Added to ${pkg.customerName}'s package`,
+                                                urgency: 'low',
+                                                sound: 'success',
+                                              });
+                                            }
                                           }
-                                        }
-                                      }}
-                                      className="w-full p-3 text-left bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                                    >
-                                      <div className="flex items-center justify-between">
-                                        <div>
-                                          <div className="font-medium text-gray-900">{pkg.customerName}</div>
-                                          <div className="text-sm text-gray-600">{pkg.orderNumber}</div>
-                                        </div>
-                                        <div className="text-right">
-                                          <div className="text-sm font-medium text-blue-600">
-                                            Need: {pkg.remaining}
+                                        }}
+                                        className="w-full p-3 text-left bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div>
+                                            <div className="font-medium">{pkg.customerName}</div>
+                                            <div className="text-sm text-gray-600">
+                                              Order #{pkg.orderNumber}
+                                            </div>
                                           </div>
-                                          <div className="text-xs text-gray-500">
-                                            {pkg.scanned}/{pkg.needed}
-                                          </div>
+                                          <Badge variant="outline" className="text-xs">
+                                            {pkg.remaining} needed
+                                          </Badge>
                                         </div>
-                                      </div>
-                                    </button>
-                                  ))}
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={dismissFeedback}
-                        className="text-gray-500 hover:text-gray-700 ml-2"
-                      >
-                        ✕
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Packages */}
-      <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-        {packages.map(pkg => {
-          const progress = getPackageProgress(pkg);
-
-          return (
-            <Card
-              key={pkg.id}
-              className={`${pkg.status === 'completed'
-                ? 'bg-green-50 border-green-200'
-                : pkg.status === 'in-progress'
-                  ? 'bg-blue-50 border-blue-200'
-                  : 'bg-white'
-                }`}
-            >
-              <CardContent className="p-4">
-                {/* Package Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <Package className="h-5 w-5 text-blue-600" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{pkg.customerName}</h3>
-                        <Badge variant="outline" className="text-xs">
-                          {pkg.orderNumber}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600">{pkg.customerEmail}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={pkg.status === 'completed' ? 'default' : 'secondary'}>
-                      {progress.totalScanned}/{progress.totalNeeded}
-                    </Badge>
-                    <Button
-                      size="sm"
-                      variant={pkg.status === 'completed' ? 'destructive' : 'default'}
-                      onClick={() => togglePackageStatus(pkg.id)}
-                    >
-                      {pkg.status === 'completed' ? 'Reset' : 'Complete'}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Shipping Address */}
-                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="h-4 w-4 text-gray-600" />
-                    <span className="text-sm font-medium text-gray-800">Shipping Address</span>
-                  </div>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {formatAddress(pkg.shippingAddress)}
-                  </p>
-                  {pkg.shippingAddress?.phone && (
-                    <p className="text-xs text-gray-500 mt-1">📞 {pkg.shippingAddress.phone}</p>
-                  )}
-                </div>
-
-                {/* Progress Bar */}
-                <div className="mb-4">
-                  <Progress value={progress.percentage} className="h-2" />
-                </div>
-
-                {/* Package Items */}
-                <div className="space-y-2">
-                  {pkg.items.map(item => (
-                    <div
-                      key={item.sku}
-                      className={`flex items-center gap-3 p-2 rounded-lg ${item.scanned >= item.needed ? 'bg-green-100' : 'bg-gray-50'
-                        }`}
-                    >
-                      {/* Product Image */}
-                      <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                        {item.image ? (
-                          <Image
-                            src={item.image}
-                            alt={item.name}
-                            width={40}
-                            height={40}
-                            className="w-full h-full object-cover"
-                            onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
-                            <Package className="h-4 w-4" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          {item.scanned >= item.needed ? (
-                            <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                          ) : (
-                            <div className="h-4 w-4 border-2 border-gray-300 rounded-full flex-shrink-0" />
+                              )}
+                            </div>
                           )}
-                          <span
-                            className={`font-medium text-sm truncate ${item.scanned >= item.needed
-                              ? 'text-green-800 line-through'
-                              : 'text-gray-900'
-                              }`}
-                          >
-                            {item.name}
-                          </span>
                         </div>
-                        <div className="text-xs text-gray-500 ml-6">SKU: {item.sku}</div>
+                        <div className="ml-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={dismissFeedback}
+                            className="px-3 py-1 text-sm"
+                          >
+                            Close
+                          </Button>
+                        </div>
                       </div>
-                      <Badge
-                        variant={item.scanned >= item.needed ? 'default' : 'secondary'}
-                        className="ml-2"
-                      >
-                        {item.scanned}/{item.needed}
-                      </Badge>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Summary */}
-      {totalPackages > 0 && (
-        <Card className="mt-6">
+        {/* Progress Overview */}
+        <Card className="mb-6">
           <CardContent className="p-4">
-            <div className="flex justify-between items-center text-sm">
-              <span>Total Packages: {totalPackages}</span>
-              <span className="text-green-600">Completed: {completedPackages}</span>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Packages Progress</span>
+              <span className="text-sm text-gray-600">
+                {completedPackages}/{totalPackages}
+              </span>
             </div>
-            {completedPackages === totalPackages && (
-              <div className="mt-2 text-center">
-                <Badge className="bg-green-600">🎉 All Packages Done!</Badge>
+            <Progress
+              value={totalPackages > 0 ? (completedPackages / totalPackages) * 100 : 0}
+              className="h-3"
+            />
+            {completedPackages === totalPackages && totalPackages > 0 && (
+              <div className="mt-3 text-center">
+                <Badge className="bg-green-600">All Packages Complete!</Badge>
               </div>
             )}
           </CardContent>
         </Card>
-      )}
 
-      {packages.length === 0 && !loading && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No packages found for this date</p>
-            <Button onClick={() => router.push('/')} className="mt-4" variant="outline">
-              Back to Home
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+        {/* Packages List */}
+        <div className="space-y-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+          {packages.map(pkg => {
+            const progress = getPackageProgress(pkg);
+            const estimatedWeight = calculatePackageWeight(pkg);
+            return (
+              <Card
+                key={pkg.id}
+                className={`${
+                  pkg.status === 'completed'
+                    ? 'bg-green-50 border-green-200'
+                    : 'bg-white border-gray-200'
+                } transition-all duration-200`}
+              >
+                <CardContent className="p-4">
+                  {/* Package Header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-blue-600" />
+                      <span className="font-semibold text-blue-800">#</span>
+                      <span className="font-semibold text-blue-800">{pkg.orderNumber}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={pkg.status === 'completed' ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {pkg.status === 'completed' ? 'Complete' : 'In Progress'}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => resetPackage(pkg.id)}
+                        className="h-6 w-6 p-0"
+                        title="Reset Package"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Customer Info */}
+                  <div className="mb-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <User className="h-3 w-3 text-gray-500" />
+                      <span className="font-medium text-sm">{pkg.customerName}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-3 w-3 text-gray-500 mt-0.5" />
+                      <span className="text-xs text-gray-600 leading-tight">
+                        {formatAddress(pkg.shippingAddress)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Package className="h-3 w-3 text-gray-500" />
+                      <span className="text-xs text-gray-600">
+                        Est. Weight: {estimatedWeight.toFixed(1)}kg
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                      <span>Progress</span>
+                      <span>
+                        {progress.scanned}/{progress.total}
+                      </span>
+                    </div>
+                    <Progress value={progress.percentage} className="h-2" />
+                  </div>
+
+                  {/* Items */}
+                  <div className="space-y-2">
+                    {pkg.items.map(item => (
+                      <div
+                        key={item.sku}
+                        className={`flex items-center gap-3 p-2 rounded-lg ${
+                          item.scanned >= item.needed
+                            ? 'bg-green-100 border border-green-200'
+                            : 'bg-gray-50 border border-gray-200'
+                        }`}
+                      >
+                        {/* Product Image - smaller on mobile, larger on desktop */}
+                        <div className="w-8 h-8 md:w-12 md:h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                          {item.image ? (
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              width={48}
+                              height={48}
+                              className="w-full h-full object-cover"
+                              onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                              <Package className="h-4 w-4 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="flex-1 min-w-0">
+                          <h4
+                            className={`font-medium text-xs md:text-sm leading-tight mb-1 ${
+                              item.scanned >= item.needed
+                                ? 'text-green-800 line-through'
+                                : 'text-gray-900'
+                            }`}
+                          >
+                            {item.name}
+                          </h4>
+                          <p className="text-xs text-gray-500">SKU: {item.sku}</p>
+                        </div>
+
+                        {/* Quantity Status */}
+                        <div className="flex-shrink-0 text-right">
+                          <Badge
+                            variant={item.scanned >= item.needed ? 'default' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {item.scanned}/{item.needed}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Empty State */}
+        {packages.length === 0 && !loading && (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-gray-600 mb-4">No packages found for this date</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
-} 
+}

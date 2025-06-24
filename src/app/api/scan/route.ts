@@ -37,10 +37,9 @@ export async function POST(request: Request): Promise<NextResponse<ScanResponse>
     }
 
     // Get orders for the specified date
-    const yesterday = new Date(date);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const startDate = yesterday.toISOString().split('T')[0];
-    const endDate = date;
+    const selectedDate = date;
+    const startDate = selectedDate;
+    const endDate = selectedDate;
 
     const ordersResult = await getOrdersByDateRange(startDate, endDate);
 

@@ -70,8 +70,13 @@ export async function GET() {
     // Debug environment variables (without exposing secrets)
     const envDebug = {
       woocommerceUrl: process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WOOCOMMERCE_URL,
-      hasWooCommerceKey: !!(process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_KEY),
-      hasWooCommerceSecret: !!(process.env.WOOCOMMERCE_CONSUMER_SECRET || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_SECRET),
+      hasWooCommerceKey: !!(
+        process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_KEY
+      ),
+      hasWooCommerceSecret: !!(
+        process.env.WOOCOMMERCE_CONSUMER_SECRET ||
+        process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_SECRET
+      ),
       nodeEnv: process.env.NODE_ENV,
       vercelEnv: process.env.VERCEL_ENV,
     };

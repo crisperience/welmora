@@ -280,12 +280,14 @@ export async function generateDailySnapshot(
       };
     }
 
-    // Aggregate products from all orders
+    // Aggregate products from all orders and collect product IDs
     const productMap = new Map<string, ShoppingItem>();
+    const productIds = new Set<number>();
 
     ordersResult.data.forEach((order: WooCommerceOrder) => {
       order.line_items.forEach((item: WooCommerceLineItem) => {
         const sku = item.sku || `product-${item.product_id}`;
+        productIds.add(item.product_id);
 
         if (productMap.has(sku)) {
           const existing = productMap.get(sku)!;
@@ -297,14 +299,70 @@ export async function generateDailySnapshot(
             quantity: item.quantity,
             price: parseFloat(item.price),
             image: item.image?.src,
+            category: 'Loading...', // Will be updated below
+            weight: 0, // Will be updated below
           });
+        }
+      });
+    });
+
+    // Fetch product details to get categories and weights
+    const productDetails = new Map<number, { category?: string; weight?: number }>();
+
+    if (productIds.size > 0) {
+      try {
+        // Fetch products in batches to get category and weight info
+        const productIdsArray = Array.from(productIds);
+        const batchSize = 20;
+
+        for (let i = 0; i < productIdsArray.length; i += batchSize) {
+          const batch = productIdsArray.slice(i, i + batchSize);
+          const response = await WooCommerce.get('products', {
+            include: batch.join(','),
+            per_page: batchSize,
+          });
+
+          if (isArrayData(response.data)) {
+            response.data.forEach((product: unknown) => {
+              const prod = product as {
+                id: number;
+                categories?: Array<{ name: string }>;
+                weight?: string;
+              };
+              const primaryCategory = prod.categories?.[0]?.name || 'Uncategorized';
+              const weight = parseFloat(prod.weight || '0') || 0;
+
+              productDetails.set(prod.id, {
+                category: primaryCategory,
+                weight: weight,
+              });
+            });
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to fetch product details:', error);
+      }
+    }
+
+    // Update products with category and weight information
+    const productsArray = Array.from(productMap.values());
+
+    ordersResult.data.forEach((order: WooCommerceOrder) => {
+      order.line_items.forEach((item: WooCommerceLineItem) => {
+        const sku = item.sku || `product-${item.product_id}`;
+        const product = productMap.get(sku);
+        const details = productDetails.get(item.product_id);
+
+        if (product && details) {
+          product.category = details.category || 'Uncategorized';
+          product.weight = details.weight || 0;
         }
       });
     });
 
     const snapshot: DailySnapshot = {
       date,
-      products: Array.from(productMap.values()),
+      products: productsArray,
       totalOrders: ordersResult.data.length,
       generatedAt: new Date().toISOString(),
     };
@@ -349,8 +407,12 @@ export async function getPackagesForDate(
       // Format shipping address - use shipping if available, otherwise use billing
       const hasShippingAddress = order.shipping?.address_1 && order.shipping?.city;
       const shippingAddress = {
-        first_name: hasShippingAddress ? (order.shipping?.first_name || order.billing.first_name) : order.billing.first_name,
-        last_name: hasShippingAddress ? (order.shipping?.last_name || order.billing.last_name) : order.billing.last_name,
+        first_name: hasShippingAddress
+          ? order.shipping?.first_name || order.billing.first_name
+          : order.billing.first_name,
+        last_name: hasShippingAddress
+          ? order.shipping?.last_name || order.billing.last_name
+          : order.billing.last_name,
         company: hasShippingAddress ? order.shipping?.company : order.billing.company,
         address_1: hasShippingAddress ? order.shipping?.address_1 : order.billing.address_1,
         address_2: hasShippingAddress ? order.shipping?.address_2 : order.billing.address_2,
@@ -578,10 +640,9 @@ export async function findProductByBarcode(
     const searchSku = welmoraSku || scannedCode;
 
     // Get orders for the specified date
-    const yesterday = new Date(date);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const startDate = yesterday.toISOString().split('T')[0];
-    const endDate = date;
+    const selectedDate = date;
+    const startDate = selectedDate;
+    const endDate = selectedDate;
 
     const ordersResult = await getOrdersByDateRange(startDate, endDate);
 

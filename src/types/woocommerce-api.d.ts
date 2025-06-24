@@ -59,6 +59,8 @@ export interface ShoppingItem {
   quantity: number;
   price?: number;
   image?: string;
+  category?: string;
+  weight?: number;
 }
 
 // Enhanced package types for packing workflow with shipping information

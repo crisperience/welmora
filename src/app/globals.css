@@ -76,6 +76,45 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  /* Colors */
+  --color-primary: #0ea5e9;
+  --color-primary-hover: #0284c7;
+  --color-success: #10b981;
+  --color-success-hover: #059669;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-error-hover: #dc2626;
+
+  /* Backgrounds */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-accent: #f1f5f9;
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+
+  /* Borders */
+  --border-primary: #e2e8f0;
+  --border-focus: #0ea5e9;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+
+  /* Mobile optimizations */
+  --touch-target: 44px; /* Minimum touch target */
+  --mobile-padding: 1rem;
+  --mobile-gap: 0.75rem;
 }
 
 .dark {
@@ -119,4 +158,123 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer components {
+  /* Mobile-first button styles */
+  .btn-primary {
+    @apply bg-[var(--color-primary)] text-white px-6 py-3 rounded-lg font-medium;
+    @apply hover:bg-[var(--color-primary-hover)] active:scale-95;
+    @apply transition-all duration-150 ease-in-out;
+    @apply shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)];
+    min-height: var(--touch-target);
+  }
+
+  .btn-success {
+    @apply bg-[var(--color-success)] text-white px-6 py-3 rounded-lg font-medium;
+    @apply hover:bg-[var(--color-success-hover)] active:scale-95;
+    @apply transition-all duration-150 ease-in-out;
+    min-height: var(--touch-target);
+  }
+
+  .btn-error {
+    @apply bg-[var(--color-error)] text-white px-6 py-3 rounded-lg font-medium;
+    @apply hover:bg-[var(--color-error-hover)] active:scale-95;
+    @apply transition-all duration-150 ease-in-out;
+    min-height: var(--touch-target);
+  }
+
+  /* Mobile-optimized cards */
+  .card {
+    @apply bg-[var(--bg-primary)] border border-[var(--border-primary)];
+    @apply rounded-lg shadow-[var(--shadow-sm)] p-4;
+  }
+
+  /* Mobile-optimized inputs */
+  .input {
+    @apply border border-[var(--border-primary)] rounded-lg px-4 py-3;
+    @apply focus:border-[var(--border-focus)] focus:outline-none;
+    @apply text-base; /* Prevents zoom on iOS */
+    min-height: var(--touch-target);
+  }
+
+  /* Quick action buttons */
+  .quick-action {
+    @apply bg-[var(--bg-accent)] border border-[var(--border-primary)];
+    @apply rounded-lg p-3 text-center font-medium;
+    @apply hover:bg-[var(--color-primary)] hover:text-white;
+    @apply active:scale-95 transition-all duration-150;
+    min-height: var(--touch-target);
+  }
+
+  /* Mobile-optimized list items */
+  .list-item {
+    @apply bg-[var(--bg-primary)] border border-[var(--border-primary)];
+    @apply rounded-lg p-4 mb-3 shadow-[var(--shadow-sm)];
+    @apply active:bg-[var(--bg-accent)] transition-colors duration-150;
+  }
+
+  /* Scanner feedback styles */
+  .scan-success {
+    @apply bg-[var(--color-success)] text-white px-4 py-2 rounded-lg;
+    @apply animate-pulse;
+  }
+
+  .scan-error {
+    @apply bg-[var(--color-error)] text-white px-4 py-2 rounded-lg;
+    @apply animate-pulse;
+  }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--mobile-padding);
+  }
+
+  .grid-mobile {
+    gap: var(--mobile-gap);
+  }
+
+  /* Larger touch targets for mobile */
+  .mobile-touch {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+/* Haptic feedback simulation */
+@keyframes haptic-light {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes haptic-medium {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(0.95);
+  }
+  75% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.haptic-light {
+  animation: haptic-light 0.1s ease-in-out;
+}
+
+.haptic-medium {
+  animation: haptic-medium 0.2s ease-in-out;
 }
