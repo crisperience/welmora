@@ -12,6 +12,7 @@ export default function HomePage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   const formatDateForUrl = (date: Date) => {
     // Use local date without timezone conversion to match API expectations
@@ -43,8 +44,10 @@ export default function HomePage() {
     }
   };
 
-  // Load saved selected date and order counts
+  // Set client flag and load saved selected date and order counts
   useEffect(() => {
+    setIsClient(true);
+
     // Load saved date from localStorage
     const savedDate = localStorage.getItem('welmora-selected-date');
     if (savedDate) {
@@ -54,6 +57,9 @@ export default function HomePage() {
         console.error('Invalid saved date:', e);
         localStorage.removeItem('welmora-selected-date');
       }
+    } else {
+      // Set default date if no saved date
+      setSelectedDate(new Date());
     }
 
     loadOrderCounts();
@@ -118,17 +124,23 @@ export default function HomePage() {
               <CardDescription>Choose date for orders</CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center pb-4">
-              <CalendarComponent
-                mode="single"
-                selected={selectedDate}
-                onSelect={date => {
-                  if (date) {
-                    setSelectedDate(date);
-                    triggerHapticFeedback('light');
-                  }
-                }}
-                className="rounded-md border"
-              />
+              {isClient ? (
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={date => {
+                    if (date) {
+                      setSelectedDate(date);
+                      triggerHapticFeedback('light');
+                    }
+                  }}
+                  className="rounded-md border"
+                />
+              ) : (
+                <div className="h-64 w-full flex items-center justify-center">
+                  <div className="animate-pulse">Loading calendar...</div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

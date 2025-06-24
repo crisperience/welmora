@@ -115,12 +115,6 @@
   --touch-target: 44px; /* Minimum touch target */
   --mobile-padding: 1rem;
   --mobile-gap: 0.75rem;
-
-  /* iOS Safe Area Support */
-  --safe-area-inset-top: env(safe-area-inset-top);
-  --safe-area-inset-right: env(safe-area-inset-right);
-  --safe-area-inset-bottom: env(safe-area-inset-bottom);
-  --safe-area-inset-left: env(safe-area-inset-left);
 }
 
 .dark {
@@ -160,21 +154,6 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-  }
-
-  /* iOS notch compatibility - apply to html element for proper coverage */
-  @supports (padding: env(safe-area-inset-top)) {
-    @media (max-width: 768px) {
-      html {
-        /* Key: Apply safe area to html element, not body */
-        min-height: calc(100% + env(safe-area-inset-top));
-        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
-          env(safe-area-inset-left);
-        /* Ensure background extends to notch area */
-        background: #ffffff; /* Use explicit white for notch area */
-        background-attachment: fixed;
-      }
-    }
   }
 
   body {
@@ -299,29 +278,4 @@
 
 .haptic-medium {
   animation: haptic-medium 0.2s ease-in-out;
-}
-
-/* iOS Safe Area Utilities - only apply on mobile devices */
-@media (max-width: 768px) {
-  /* Optional utility classes for specific use cases */
-  .safe-area-top {
-    padding-top: max(1rem, var(--safe-area-inset-top));
-  }
-
-  .safe-area-bottom {
-    padding-bottom: max(1rem, var(--safe-area-inset-bottom));
-  }
-
-  .safe-area-left {
-    padding-left: max(1rem, var(--safe-area-inset-left));
-  }
-
-  .safe-area-right {
-    padding-right: max(1rem, var(--safe-area-inset-right));
-  }
-
-  /* iOS status bar overlay protection */
-  .ios-status-bar-safe {
-    padding-top: max(1rem, calc(var(--safe-area-inset-top) + 0.5rem));
-  }
 }
