@@ -39,7 +39,7 @@ interface WooCommerceLineItem {
 /**
  * Handle WooCommerce order.created webhook
  * Generates ZIP with sticker PDFs and sends email
- * Uses SKU-only search since SKUs are unique identifiers
+ * Uses SKU-only search across entire bucket (ignores folder structure)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       itemCount: order.line_items.length,
     };
 
-    // Step 1: Extract SKUs from line items (no brand needed!)
+    // Step 1: Extract SKUs from line items (super simple!)
     console.log('Step 1: Extracting SKUs from line items...');
     const skuItems = order.line_items.map(item => ({
       sku: item.sku || `product-${item.product_id}`,
@@ -100,8 +100,8 @@ export async function POST(request: NextRequest) {
 
     console.log(`Found ${validSkus.length} valid SKUs out of ${skuItems.length} items`);
 
-    // Step 2: Generate ZIP with PDFs (SKU-only search)
-    console.log('Step 2: Generating ZIP file using SKU-only search...');
+    // Step 2: Generate ZIP with PDFs (bucket-wide SKU search)
+    console.log('Step 2: Generating ZIP file using bucket-wide SKU search...');
     const zipBuffer = await generateZipFromSkus(validSkus, order.id);
 
     console.log(`ZIP generated: ${zipBuffer.length} bytes`);

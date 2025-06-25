@@ -116,29 +116,27 @@ stickers/
 
 **Potvrđeno:** Folder se zove `stickers` (ne `sticker`)!
 
-## 🔍 SKU-Only Search Logic
+## 🔍 Ultra-Simple SKU Search Logic
 
-**Brandovi nisu potrebni!** SKU je jedinstven identifikator proizvoda.
+**Samo SKU, ništa drugo!** Folderi postoje samo za tvoju organizaciju.
 
-### **Jednostavno pretraživanje:**
+### **Super jednostavno pretraživanje:**
 
 ```javascript
-// Traži PDF po SKU-u kroz cijeli bucket
+// Traži SKU kroz cijeli bucket - ignorira folder strukturu
 const foundPath = await findPdfBySku('stickers', sku);
-// Rezultat: HR/Mueller/4058172628800.pdf (ili bilo koji drugi path)
+// Rezultat: bilo koji path gdje se nalazi taj SKU
 ```
 
-### **Automatska detekcija branda:**
-
-Kada se PDF pronađe, brand se automatski izvlači iz path-a:
+### **Bez brand logike:**
 
 ```
-Path: HR/Mueller/4058172628800.pdf
-→ Brand: Mueller
-→ Filename u ZIP-u: Mueller_4058172628800.pdf
+SKU: 4058172628800
+→ Pronađe bilo gdje: HR/Mueller/4058172628800.pdf
+→ Filename u ZIP-u: 4058172628800.pdf (samo SKU!)
 ```
 
-**Nema više složene brand detekcije - samo SKU! 🎯**
+**Maksimalno jednostavno - traži SKU kroz cijeli bucket! 🚀**
 
 ## 🚨 Error Handling
 

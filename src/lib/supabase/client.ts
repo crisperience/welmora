@@ -39,8 +39,8 @@ export async function downloadFileAsBuffer(bucket: string, path: string): Promis
 }
 
 /**
- * Search for PDF file by SKU across all folders in bucket
- * Searches through nested structure: HR/Brand/SKU.pdf
+ * Search for PDF file by SKU across entire bucket
+ * Ignores folder structure since each SKU is unique
  * 
  * @param bucket - Storage bucket name (e.g., 'stickers')
  * @param sku - Product SKU to search for
@@ -48,10 +48,10 @@ export async function downloadFileAsBuffer(bucket: string, path: string): Promis
  */
 export async function findPdfBySku(bucket: string, sku: string): Promise<string | null> {
   try {
-    console.log(`Searching for SKU ${sku} in bucket ${bucket} with structure HR/Brand/SKU.pdf`);
+    console.log(`Searching for SKU ${sku} across entire bucket ${bucket}`);
 
-    // Start recursive search from HR folder
-    const found = await findPdfBySkuRecursive(bucket, sku, 'HR');
+    // Search across entire bucket - much simpler!
+    const found = await searchEntireBucket(bucket, sku);
 
     if (found) {
       console.log(`✅ Found PDF for SKU ${sku}: ${found}`);
@@ -63,6 +63,71 @@ export async function findPdfBySku(bucket: string, sku: string): Promise<string 
 
   } catch (error) {
     console.error(`Exception searching for SKU ${sku}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Search entire bucket for a specific SKU file
+ * Much faster than recursive folder traversal
+ */
+async function searchEntireBucket(bucket: string, sku: string): Promise<string | null> {
+  try {
+    // Use Supabase's search functionality to find the file
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .list('', {
+        limit: 2000, // Increase limit to cover all files
+        search: sku,
+        sortBy: { column: 'name', order: 'asc' }
+      });
+
+    if (error) {
+      console.error(`Error searching bucket ${bucket} for SKU ${sku}:`, error);
+      return null;
+    }
+
+    if (!data || data.length === 0) {
+      console.log(`No files found for SKU ${sku} in bucket search`);
+
+      // Fallback: try recursive search if direct search fails
+      console.log(`Trying recursive search as fallback...`);
+      return await findPdfBySkuRecursive(bucket, sku, '');
+    }
+
+    // Look for exact match first: filename should be {sku}.pdf
+    const exactMatch = data.find(file =>
+      file.name === `${sku}.pdf`
+    );
+
+    if (exactMatch) {
+      console.log(`Found exact match: ${exactMatch.name}`);
+      return exactMatch.name;
+    }
+
+    // Look for file that ends with /{sku}.pdf (in any subfolder)
+    const pathMatch = data.find(file =>
+      file.name.endsWith(`/${sku}.pdf`)
+    );
+
+    if (pathMatch) {
+      console.log(`Found path match: ${pathMatch.name}`);
+      return pathMatch.name;
+    }
+
+    // Fallback: any file containing the SKU and ending with .pdf
+    const partialMatch = data.find(file =>
+      file.name.includes(sku) && file.name.endsWith('.pdf')
+    );
+
+    if (partialMatch) {
+      console.log(`Found partial match: ${partialMatch.name}`);
+      return partialMatch.name;
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error in bucket search for SKU ${sku}:`, error);
     return null;
   }
 }

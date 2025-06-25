@@ -7,7 +7,7 @@ interface SkuItem {
 
 /**
  * Generate ZIP file containing sticker PDFs ONLY for products in the specific order
- * Uses SKU-only search since SKUs are unique identifiers
+ * Uses SKU-only search across entire bucket (ignores folder structure)
  * 
  * @param skuItems - Array of SKUs from the order's line_items
  * @param orderId - Order ID for naming the ZIP file
@@ -20,7 +20,7 @@ export async function generateZipFromSkus(
   const zip = new JSZip();
   let addedFiles = 0;
 
-  console.log(`Generating ZIP for order ${orderId} with ${skuItems.length} specific products from this order`);
+  console.log(`Generating ZIP for order ${orderId} with ${skuItems.length} SKUs (searching entire bucket)`);
 
   for (const { sku } of skuItems) {
     if (!sku) {
@@ -31,18 +31,15 @@ export async function generateZipFromSkus(
     try {
       console.log(`Searching for PDF for SKU: ${sku}`);
 
-      // Search for PDF by SKU across all folders
+      // Search for PDF by SKU across entire bucket (no folder structure needed)
       const foundPath = await findPdfBySku('stickers', sku);
 
       if (foundPath) {
         const pdfBuffer = await downloadFileAsBuffer('stickers', foundPath);
 
         if (pdfBuffer) {
-          // Extract brand from path: HR/Brand/SKU.pdf -> Brand
-          const pathParts = foundPath.split('/');
-          // Structure: HR/Brand/SKU.pdf, so brand is at index 1
-          const detectedBrand = pathParts.length >= 3 ? pathParts[1] : 'Unknown';
-          const fileName = `${detectedBrand}_${sku}.pdf`;
+          // Simple filename: just SKU.pdf (no brand needed)
+          const fileName = `${sku}.pdf`;
 
           zip.file(fileName, pdfBuffer);
           addedFiles++;
@@ -64,11 +61,11 @@ export async function generateZipFromSkus(
     console.warn(`No PDF files were added to ZIP for order ${orderId}`);
     zip.file(
       'README.txt',
-      `No sticker PDFs were found for order #${orderId}.\n\nSearched for the following SKUs:\n${skuItems.map(item => `- ${item.sku}`).join('\n')}\n\nThis may be because:\n- PDFs don't exist in Supabase storage for these SKUs\n- SKU names don't match exactly with PDF filenames\n- Files are not in the expected .pdf format\n\nNote: This ZIP only contains PDFs for products in this specific order.\nThe system searches for SKUs across all folders in the storage.`
+      `No sticker PDFs were found for order #${orderId}.\n\nSearched for the following SKUs:\n${skuItems.map(item => `- ${item.sku}`).join('\n')}\n\nThis may be because:\n- PDFs don't exist in Supabase storage for these SKUs\n- SKU names don't match exactly with PDF filenames\n- Files are not in the expected .pdf format\n\nNote: This ZIP only contains PDFs for products in this specific order.\nThe system searches across the entire bucket for each SKU.`
     );
   }
 
-  console.log(`ZIP generation completed for order ${orderId}: ${addedFiles} files added (SKU-based search)`);
+  console.log(`ZIP generation completed for order ${orderId}: ${addedFiles} files added (bucket-wide SKU search)`);
 
   // Generate ZIP buffer
   const zipBuffer = await zip.generateAsync({
