@@ -15,24 +15,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Welmora Logistics',
+  title: 'Welmora',
   description:
-    'Welmora Logistics Management System - Inventory, Order Management, and Price Comparison',
+    'Welmora - Inventory, Order Management, and Price Comparison',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Welmora Logistics',
+    title: 'Welmora',
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
     type: 'website',
-    siteName: 'Welmora Logistics',
-    title: 'Welmora Logistics',
+    siteName: 'Welmora',
+    title: 'Welmora',
     description:
-      'Welmora Logistics Management System - Inventory, Order Management, and Price Comparison',
+      'Welmora - Inventory, Order Management, and Price Comparison',
   },
   icons: {
     icon: '/Favicon Original.ico',
@@ -58,7 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Welmora Logistics" />
+        <meta name="apple-mobile-web-app-title" content="Welmora" />
         <meta name="format-detection" content="telephone=no" />
         <script
           dangerouslySetInnerHTML={{

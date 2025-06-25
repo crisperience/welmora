@@ -1,6 +1,6 @@
-# Welmora Logistics Management System
+# Welmora
 
-A comprehensive logistics management system for Welmora, featuring inventory management, order processing, and automated price comparison with major retailers.
+A comprehensive logistics management system featuring inventory management, order processing, and automated price comparison with major retailers.
 
 ## 🚀 Features
 

@@ -2,7 +2,7 @@
   "name": "welmora-logistics",
   "version": "1.0.0",
   "private": true,
-  "description": "Welmora Logistics Management System - Inventory, Order Management, and Price Comparison",
+  "description": "Welmora - Inventory, Order Management, and Price Comparison",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

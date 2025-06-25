@@ -1,7 +1,7 @@
 {
-  "name": "Welmora Logistics",
+  "name": "Welmora",
   "short_name": "Welmora",
-  "description": "Welmora Logistics Management System - Inventory, Order Management, and Price Comparison",
+  "description": "Welmora - Inventory, Order Management, and Price Comparison",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
