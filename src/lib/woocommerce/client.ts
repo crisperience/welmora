@@ -1,16 +1,7 @@
 import { DailySnapshot, Package, ShoppingItem } from '@/types/woocommerce-api';
 import WooCommerceRestApi from '@woocommerce/woocommerce-rest-api';
 
-// Debug environment variables
-console.log('WooCommerce Config:', {
-  url: process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WOOCOMMERCE_URL,
-  hasKey: !!(
-    process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_KEY
-  ),
-  hasSecret: !!(
-    process.env.WOOCOMMERCE_CONSUMER_SECRET || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_SECRET
-  ),
-});
+// WooCommerce configuration
 
 const WooCommerce = new WooCommerceRestApi({
   url:

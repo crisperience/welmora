@@ -1,13 +1,15 @@
 'use client';
 
+import { useDateContext } from '@/components/DateContext';
 import BarcodeScanner from '@/components/scanner/BarcodeScanner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { PackageItem, Package as PackageType, ScanFeedback } from '@/types/woocommerce-api';
-import { ArrowLeft, CheckCircle, MapPin, Package, RotateCcw, Scan, User } from 'lucide-react';
+import { CheckCircle, MapPin, Package, RotateCcw, Scan, User } from 'lucide-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -15,14 +17,47 @@ import { useCallback, useEffect, useState } from 'react';
 export default function PackingPage() {
   const params = useParams();
   const router = useRouter();
+  const { selectedDate: globalDate, setSelectedDate: setGlobalDate } = useDateContext();
   const [packages, setPackages] = useState<PackageType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scannerActive, setScannerActive] = useState(false);
   const [scanFeedback, setScanFeedback] = useState<ScanFeedback | null>(null);
   const [manualSku, setManualSku] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   const date = Array.isArray(params.date) ? params.date[0] : params.date;
+
+  const formatDateForUrl = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Sync context <-> local state <-> URL
+  useEffect(() => {
+    if (date) {
+      setGlobalDate(date);
+      const [year, month, day] = date.split('-').map(Number);
+      setSelectedDate(new Date(year, month - 1, day));
+    }
+  }, [date, setGlobalDate]);
+
+  useEffect(() => {
+    if (globalDate && globalDate !== date) {
+      router.push(`/packing/${globalDate}`);
+    }
+  }, [globalDate, date, router]);
+
+  const handleDateChange = (newDate: Date | undefined) => {
+    if (newDate) {
+      setSelectedDate(newDate);
+      const formattedDate = formatDateForUrl(newDate);
+      setGlobalDate(formattedDate);
+      router.push(`/packing/${formattedDate}`);
+    }
+  };
 
   const fetchPackingData = useCallback(async () => {
     try {
@@ -46,26 +81,6 @@ export default function PackingPage() {
   // Load state from localStorage or fetch fresh data
   useEffect(() => {
     if (!date) return;
-
-    // TEMPORARILY DISABLE CACHE TO FORCE FRESH DATA
-    // const savedState = localStorage.getItem(`packing-${date}`);
-    // if (savedState) {
-    //   try {
-    //     const parsed = JSON.parse(savedState);
-    //     // Check if saved data is valid and from the same date
-    //     if (Array.isArray(parsed) && parsed.length > 0) {
-    //       setPackages(parsed);
-    //       setLoading(false);
-    //       return;
-    //     }
-    //   } catch (e) {
-    //     console.error('Failed to parse saved state:', e);
-    //     // Clear invalid saved state
-    //     localStorage.removeItem(`packing-${date}`);
-    //   }
-    // }
-
-    // Always fetch fresh data
     fetchPackingData();
   }, [date, fetchPackingData]);
 
@@ -333,10 +348,10 @@ export default function PackingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-full flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading packing data...</p>
         </div>
       </div>
     );
@@ -344,13 +359,10 @@ export default function PackingPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">Error: {error}</p>
-          <Button onClick={() => router.push('/')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       </div>
     );
@@ -360,20 +372,33 @@ export default function PackingPage() {
   const totalPackages = packages.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-6 max-w-md md:max-w-4xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={() => router.push('/')} className="mobile-touch">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex flex-col items-center">
-            <Package className="h-8 w-8 text-green-600 mb-2" />
-            <h1 className="text-xl font-bold">Packing</h1>
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="p-4 border-b bg-white">
+        <div className="flex flex-col items-center mb-4">
+          <div className="flex items-center gap-3">
+            <Package className="h-6 w-6 text-blue-600" />
+            <h1 className="text-2xl font-bold text-gray-900 text-center">Packing</h1>
           </div>
-          <div className="w-10" />
         </div>
+        {/* Calendar */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg text-center">Select Date</CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center pb-4">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateChange}
+              className="rounded-md border"
+            />
+          </CardContent>
+        </Card>
+      </div>
 
+      {/* Content */}
+      <div className="flex-1 overflow-auto p-4">
         {/* Scanner */}
         <Card className="mb-6">
           <CardContent className="p-4">

@@ -43,20 +43,64 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
         window.matchMedia('(display-mode: standalone)').matches ||
         (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 
-      // For PWA, we need to request camera permission explicitly first
+      // For PWA, we need to request camera permission explicitly first with better constraints
       if (isPWA) {
         try {
-          // Test camera access with basic constraints first
-          const testStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          // Use better constraints for mobile devices
+          const constraints = {
+            video: {
+              facingMode: 'environment', // Use back camera by default
+              width: { ideal: 1280, min: 640 },
+              height: { ideal: 720, min: 480 },
+              frameRate: { ideal: 30, min: 15 },
+            },
+            audio: false,
+          };
+
+          // Test camera access with enhanced constraints
+          const testStream = await navigator.mediaDevices.getUserMedia(constraints);
           testStream.getTracks().forEach(track => track.stop());
-        } catch {
-          throw new Error(
-            'Camera permission denied. Please allow camera access in your browser settings.'
-          );
+        } catch (cameraError) {
+          console.error('Camera permission error:', cameraError);
+
+          if (cameraError instanceof Error) {
+            if (cameraError.name === 'NotAllowedError') {
+              throw new Error(
+                'Camera access denied. Please allow camera access in your browser settings and try again.'
+              );
+            } else if (cameraError.name === 'NotFoundError') {
+              throw new Error(
+                'No camera found. Please check your device has a camera and try again.'
+              );
+            } else if (cameraError.name === 'NotReadableError') {
+              throw new Error(
+                'Camera is being used by another application. Please close other apps using the camera and try again.'
+              );
+            } else if (cameraError.name === 'OverconstrainedError') {
+              // Try with more basic constraints
+              try {
+                const basicConstraints = { video: true, audio: false };
+                const basicStream = await navigator.mediaDevices.getUserMedia(basicConstraints);
+                basicStream.getTracks().forEach(track => track.stop());
+              } catch {
+                throw new Error(
+                  'Camera access failed. Please check your device permissions and try again.'
+                );
+              }
+            } else {
+              throw new Error(
+                `Camera error: ${cameraError.message}. Please check your device settings.`
+              );
+            }
+          } else {
+            throw new Error(
+              'Camera access failed. Please check your device permissions and try again.'
+            );
+          }
         }
       }
 
-      // Start decoding with enhanced error handling
+      // Start decoding with enhanced error handling and better constraints
       await codeReader.decodeFromVideoDevice(
         null, // Use default camera
         videoRef.current,

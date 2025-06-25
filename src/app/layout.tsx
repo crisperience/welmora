@@ -1,3 +1,5 @@
+import BottomNavigation from '@/components/BottomNavigation';
+import { DateProvider } from '@/components/DateContext';
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -13,22 +15,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Welmora Scanner',
-  description: 'Inventory Management Scanner',
+  title: 'Welmora Logistics',
+  description:
+    'Welmora Logistics Management System - Inventory, Order Management, and Price Comparison',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Welmora Scanner',
+    title: 'Welmora Logistics',
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
     type: 'website',
-    siteName: 'Welmora Scanner',
-    title: 'Welmora Scanner',
-    description: 'Inventory Management Scanner',
+    siteName: 'Welmora Logistics',
+    title: 'Welmora Logistics',
+    description:
+      'Welmora Logistics Management System - Inventory, Order Management, and Price Comparison',
   },
   icons: {
     icon: '/Favicon Original.ico',
@@ -54,7 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Welmora Scanner" />
+        <meta name="apple-mobile-web-app-title" content="Welmora Logistics" />
         <meta name="format-detection" content="telephone=no" />
         <script
           dangerouslySetInnerHTML={{
@@ -102,7 +106,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <div className="flex flex-col h-screen">
+          <DateProvider>
+            <main className="flex-1">{children}</main>
+            <BottomNavigation />
+          </DateProvider>
+        </div>
+      </body>
     </html>
   );
 }

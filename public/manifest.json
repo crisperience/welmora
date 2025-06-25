@@ -1,13 +1,14 @@
 {
-  "name": "Welmora Scanner",
+  "name": "Welmora Logistics",
   "short_name": "Welmora",
-  "description": "Inventory Management Scanner for Welmora",
+  "description": "Welmora Logistics Management System - Inventory, Order Management, and Price Comparison",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "orientation": "portrait-primary",
-  "permissions": ["camera"],
+  "permissions": ["camera", "geolocation"],
+  "scope": "/",
   "icons": [
     {
       "src": "/welmora-logo.svg",
@@ -21,7 +22,7 @@
       "type": "image/x-icon"
     }
   ],
-  "categories": ["business", "productivity"],
+  "categories": ["business", "productivity", "shopping"],
   "lang": "en",
   "dir": "ltr"
 }
