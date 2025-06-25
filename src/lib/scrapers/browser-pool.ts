@@ -316,7 +316,9 @@ export class BrowserPool {
       const pageIndex = browserResource.pages.indexOf(pageResource);
       if (pageIndex !== -1) {
         browserResource.pages.splice(pageIndex, 1);
-        console.log(`Browser Pool: Page removed from pool (${browserResource.pages.length} remaining)`);
+        console.log(
+          `Browser Pool: Page removed from pool (${browserResource.pages.length} remaining)`
+        );
         break;
       }
     }

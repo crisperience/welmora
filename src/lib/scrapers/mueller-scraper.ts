@@ -12,8 +12,6 @@ export interface MuellerScraperConfig extends Partial<BaseScraperConfig> {
   searchTimeout?: number;
 }
 
-
-
 interface WooCommerceBrand {
   id: number;
   name: string;
@@ -84,8 +82,8 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
           let gtin = product.sku;
 
           // Check meta_data for GTIN
-          const gtinMeta = product.meta_data?.find(meta =>
-            meta.key === 'gtin' || meta.key === '_gtin' || meta.key === 'barcode'
+          const gtinMeta = product.meta_data?.find(
+            meta => meta.key === 'gtin' || meta.key === '_gtin' || meta.key === 'barcode'
           );
           if (gtinMeta) {
             gtin = gtinMeta.value;
@@ -226,7 +224,9 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
           productUrl.endsWith('/');
 
         if (isRealResult) {
-          console.log(`Mueller Scraper: Found real search result at position ${i + 1}: ${productUrl}`);
+          console.log(
+            `Mueller Scraper: Found real search result at position ${i + 1}: ${productUrl}`
+          );
           realResults.push({ tile, index: i, productUrl });
         }
       } catch (error) {
@@ -241,7 +241,9 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
 
     // If we have a GTIN, try to find the product URL that contains the GTIN
     if (gtin && realResults.length > 1) {
-      console.log(`Mueller Scraper: Multiple products found (${realResults.length}), searching for GTIN match: ${gtin}`);
+      console.log(
+        `Mueller Scraper: Multiple products found (${realResults.length}), searching for GTIN match: ${gtin}`
+      );
 
       // First try: Look for GTIN directly in the product URL
       for (const result of realResults) {
@@ -260,12 +262,16 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
             // More strict brand matching - brand should be a word boundary
             const brandRegex = new RegExp(`\\b${brand}\\b`, 'i');
             if (brandRegex.test(result.productUrl)) {
-              console.log(`Mueller Scraper: Found brand match "${brand}" in URL: ${result.productUrl}`);
+              console.log(
+                `Mueller Scraper: Found brand match "${brand}" in URL: ${result.productUrl}`
+              );
               return result.tile;
             }
           }
         }
-        console.log(`Mueller Scraper: No brand matches found in URLs for: ${brandMatches.join(', ')}`);
+        console.log(
+          `Mueller Scraper: No brand matches found in URLs for: ${brandMatches.join(', ')}`
+        );
       }
 
       // Second try: Check the HTML content of each product tile for GTIN
@@ -273,11 +279,16 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
         try {
           const tileHTML = await page.evaluate(el => el.outerHTML, result.tile);
           if (tileHTML.includes(gtin)) {
-            console.log(`Mueller Scraper: Found GTIN ${gtin} in product tile HTML at position ${result.index + 1}`);
+            console.log(
+              `Mueller Scraper: Found GTIN ${gtin} in product tile HTML at position ${result.index + 1}`
+            );
             return result.tile;
           }
         } catch (error) {
-          console.log(`Mueller Scraper: Error checking tile HTML for product ${result.index + 1}:`, error);
+          console.log(
+            `Mueller Scraper: Error checking tile HTML for product ${result.index + 1}:`,
+            error
+          );
         }
       }
 
@@ -294,7 +305,9 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
         for (const result of realResults) {
           try {
             // Extract product name from tile
-            const nameElements = await result.tile.$$('.product-tile_component_product-tile__product-name__xG25c, [class*="product-name"], h3, h4');
+            const nameElements = await result.tile.$$(
+              '.product-tile_component_product-tile__product-name__xG25c, [class*="product-name"], h3, h4'
+            );
             let productName = '';
 
             for (const nameElement of nameElements) {
@@ -308,28 +321,40 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
               }
             }
 
-            console.log(`Mueller Scraper: Checking product name: "${productName}" at position ${result.index + 1}`);
+            console.log(
+              `Mueller Scraper: Checking product name: "${productName}" at position ${result.index + 1}`
+            );
 
             // Check if product name contains all required search terms
             const nameWords = productName.toLowerCase();
-            const matchesAllTerms = searchTerms.every(term => nameWords.includes(term.toLowerCase()));
+            const matchesAllTerms = searchTerms.every(term =>
+              nameWords.includes(term.toLowerCase())
+            );
 
             if (matchesAllTerms) {
-              console.log(`Mueller Scraper: Found matching product by name for GTIN ${gtin} at position ${result.index + 1}`);
+              console.log(
+                `Mueller Scraper: Found matching product by name for GTIN ${gtin} at position ${result.index + 1}`
+              );
               return result.tile;
             }
-
           } catch (error) {
-            console.log(`Mueller Scraper: Error checking product name for ${result.index + 1}:`, error);
+            console.log(
+              `Mueller Scraper: Error checking product name for ${result.index + 1}:`,
+              error
+            );
           }
         }
       }
 
-      console.log(`Mueller Scraper: No exact GTIN match found in URLs or HTML, using first real result`);
+      console.log(
+        `Mueller Scraper: No exact GTIN match found in URLs or HTML, using first real result`
+      );
     }
 
     // Return first real result as fallback
-    console.log(`Mueller Scraper: Using first real search result at position ${realResults[0].index + 1}`);
+    console.log(
+      `Mueller Scraper: Using first real search result at position ${realResults[0].index + 1}`
+    );
     return realResults[0].tile;
   }
 
@@ -356,11 +381,19 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
       const linkElement = await tile.$('a[href^="/p/"]');
       if (linkElement) {
         const href = await page.evaluate(el => el.getAttribute('href'), linkElement);
-        if (href && href.startsWith('/p/') && href.endsWith('/') && !href.includes('itemId=') && !href.includes('/search/')) {
+        if (
+          href &&
+          href.startsWith('/p/') &&
+          href.endsWith('/') &&
+          !href.includes('itemId=') &&
+          !href.includes('/search/')
+        ) {
           productUrl = `https://www.mueller.de${href}`;
           console.log(`Mueller Scraper: Product URL: ${productUrl}`);
         } else {
-          console.log(`Mueller Scraper: Invalid product URL pattern: ${href} - must start with /p/ and end with /`);
+          console.log(
+            `Mueller Scraper: Invalid product URL pattern: ${href} - must start with /p/ and end with /`
+          );
           return { error: 'Invalid product URL pattern' };
         }
       } else {

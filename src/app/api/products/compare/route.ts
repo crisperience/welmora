@@ -242,14 +242,11 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({
           success: true,
-          message: 'Cache cleared successfully for both scrapers'
+          message: 'Cache cleared successfully for both scrapers',
         });
       } catch (error) {
         console.error('Error clearing cache:', error);
-        return NextResponse.json(
-          { error: 'Failed to clear cache' },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: 'Failed to clear cache' }, { status: 500 });
       }
     }
 
@@ -626,14 +623,11 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           success: true,
-          message: 'Cache cleared successfully for both scrapers'
+          message: 'Cache cleared successfully for both scrapers',
         });
       } catch (error) {
         console.error('Error clearing cache:', error);
-        return NextResponse.json(
-          { error: 'Failed to clear cache' },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: 'Failed to clear cache' }, { status: 500 });
       }
     }
 
