@@ -8,19 +8,18 @@ interface SkuItem {
 /**
  * Generate ZIP file containing sticker PDFs ONLY for products in the specific order
  * Uses SKU-only search across entire bucket (ignores folder structure)
- * 
+ *
  * @param skuItems - Array of SKUs from the order's line_items
  * @param orderId - Order ID for naming the ZIP file
  * @returns ZIP buffer containing only the PDFs for ordered products
  */
-export async function generateZipFromSkus(
-  skuItems: SkuItem[],
-  orderId: number
-): Promise<Buffer> {
+export async function generateZipFromSkus(skuItems: SkuItem[], orderId: number): Promise<Buffer> {
   const zip = new JSZip();
   let addedFiles = 0;
 
-  console.log(`Generating ZIP for order ${orderId} with ${skuItems.length} SKUs (searching entire bucket)`);
+  console.log(
+    `Generating ZIP for order ${orderId} with ${skuItems.length} SKUs (searching entire bucket)`
+  );
 
   for (const { sku } of skuItems) {
     if (!sku) {
@@ -44,14 +43,15 @@ export async function generateZipFromSkus(
           zip.file(fileName, pdfBuffer);
           addedFiles++;
 
-          console.log(`✅ Found and added: ${fileName} (${pdfBuffer.length} bytes) from ${foundPath}`);
+          console.log(
+            `✅ Found and added: ${fileName} (${pdfBuffer.length} bytes) from ${foundPath}`
+          );
         } else {
           console.log(`❌ Failed to download PDF from path: ${foundPath}`);
         }
       } else {
         console.log(`❌ PDF not found for SKU: ${sku}`);
       }
-
     } catch (error) {
       console.error(`Error processing SKU ${sku}:`, error);
     }
@@ -65,7 +65,9 @@ export async function generateZipFromSkus(
     );
   }
 
-  console.log(`ZIP generation completed for order ${orderId}: ${addedFiles} files added (bucket-wide SKU search)`);
+  console.log(
+    `ZIP generation completed for order ${orderId}: ${addedFiles} files added (bucket-wide SKU search)`
+  );
 
   // Generate ZIP buffer
   const zipBuffer = await zip.generateAsync({

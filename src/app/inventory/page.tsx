@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RefreshCw, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface InventoryItem {
   id: number;
@@ -27,36 +27,36 @@ export default function InventoryPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const loadInventory = async (search?: string, pageNum?: number) => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  const loadInventory = useCallback(async (search?: string, pageNum?: number) => {
+    setIsLoading(true);
+    setError(null);
 
-      const params = new URLSearchParams();
+    try {
+      const params = new URLSearchParams({
+        page: (pageNum || page).toString(),
+        per_page: '10',
+      });
+
       if (search) {
         params.append('search', search);
       }
-      params.append('page', (pageNum || page).toString());
-      params.append('per_page', '20');
 
       const response = await fetch(`/api/inventory?${params}`);
-      const result = await response.json();
+      const data = await response.json();
 
-      if (result.success) {
-        setInventory(result.data);
-        if (result.pagination) {
-          setTotalPages(result.pagination.totalPages);
-        }
-      } else {
-        setError(result.error || 'Failed to load inventory');
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load inventory');
       }
+
+      setInventory(data.products || []);
+      setTotalPages(data.totalPages || 1);
     } catch (err) {
-      setError('Failed to load inventory');
+      setError(err instanceof Error ? err.message : 'Failed to load inventory');
       console.error('Load inventory error:', err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page]);
 
   const refreshInventory = async () => {
     setIsRefreshing(true);
@@ -66,7 +66,7 @@ export default function InventoryPage() {
 
   const updateStock = async (sku: string, newQuantity: number) => {
     try {
-      const response = await fetch('/api/inventory', {
+      const response = await fetch('/api/products/update-stock', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,18 +74,17 @@ export default function InventoryPage() {
         body: JSON.stringify({
           sku,
           stock_quantity: newQuantity,
-          stock_status: newQuantity > 0 ? 'instock' : 'outofstock',
         }),
       });
 
-      const result = await response.json();
+      const data = await response.json();
 
-      if (result.success) {
-        // Refresh the inventory
-        await refreshInventory();
-      } else {
-        setError(result.error || 'Failed to update stock');
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update stock');
       }
+
+      // Refresh inventory after successful update
+      await loadInventory(searchTerm, page);
     } catch (err) {
       setError('Failed to update stock');
       console.error('Update stock error:', err);
@@ -94,7 +93,7 @@ export default function InventoryPage() {
 
   useEffect(() => {
     loadInventory();
-  }, []);
+  }, [loadInventory]);
 
   const handleSearch = () => {
     setPage(1);

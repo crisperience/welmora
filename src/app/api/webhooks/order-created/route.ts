@@ -76,7 +76,10 @@ export async function POST(request: NextRequest) {
       sku: item.sku || `product-${item.product_id}`,
     }));
 
-    console.log('Extracted SKUs:', skuItems.map(item => item.sku));
+    console.log(
+      'Extracted SKUs:',
+      skuItems.map(item => item.sku)
+    );
 
     // Filter out items without valid SKUs
     const validSkus = skuItems.filter(item => item.sku && !item.sku.startsWith('product-'));

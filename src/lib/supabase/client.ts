@@ -1,24 +1,41 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Lazy initialization to prevent build failures
+let supabaseInstance: ReturnType<typeof createClient> | null = null;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+function getSupabaseClient() {
+  if (!supabaseInstance) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Missing Supabase environment variables');
+    }
+
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+  }
+
+  return supabaseInstance;
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get(target, prop) {
+    const client = getSupabaseClient();
+    const value = client[prop as keyof typeof client];
+    return typeof value === 'function' ? value.bind(client) : value;
+  },
+});
 
 // Helper function to get public URL for storage objects
 export function getPublicUrl(bucket: string, path: string): string {
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  const { data } = getSupabaseClient().storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
 }
 
 // Helper function to download file as buffer
 export async function downloadFileAsBuffer(bucket: string, path: string): Promise<Buffer | null> {
   try {
-    const { data, error } = await supabase.storage.from(bucket).download(path);
+    const { data, error } = await getSupabaseClient().storage.from(bucket).download(path);
 
     if (error) {
       console.error(`Error downloading file ${path}:`, error);
@@ -41,7 +58,7 @@ export async function downloadFileAsBuffer(bucket: string, path: string): Promis
 /**
  * Search for PDF file by SKU across entire bucket
  * Ignores folder structure since each SKU is unique
- * 
+ *
  * @param bucket - Storage bucket name (e.g., 'stickers')
  * @param sku - Product SKU to search for
  * @returns Full path to the file if found, null if not found
@@ -60,7 +77,6 @@ export async function findPdfBySku(bucket: string, sku: string): Promise<string 
 
     console.log(`❌ No PDF file found for SKU ${sku}`);
     return null;
-
   } catch (error) {
     console.error(`Exception searching for SKU ${sku}:`, error);
     return null;
@@ -74,12 +90,12 @@ export async function findPdfBySku(bucket: string, sku: string): Promise<string 
 async function searchEntireBucket(bucket: string, sku: string): Promise<string | null> {
   try {
     // Use Supabase's search functionality to find the file
-    const { data, error } = await supabase.storage
-      .from(bucket)
+    const { data, error } = await getSupabaseClient()
+      .storage.from(bucket)
       .list('', {
         limit: 2000, // Increase limit to cover all files
         search: sku,
-        sortBy: { column: 'name', order: 'asc' }
+        sortBy: { column: 'name', order: 'asc' },
       });
 
     if (error) {
@@ -96,9 +112,7 @@ async function searchEntireBucket(bucket: string, sku: string): Promise<string |
     }
 
     // Look for exact match first: filename should be {sku}.pdf
-    const exactMatch = data.find(file =>
-      file.name === `${sku}.pdf`
-    );
+    const exactMatch = data.find(file => file.name === `${sku}.pdf`);
 
     if (exactMatch) {
       console.log(`Found exact match: ${exactMatch.name}`);
@@ -106,9 +120,7 @@ async function searchEntireBucket(bucket: string, sku: string): Promise<string |
     }
 
     // Look for file that ends with /{sku}.pdf (in any subfolder)
-    const pathMatch = data.find(file =>
-      file.name.endsWith(`/${sku}.pdf`)
-    );
+    const pathMatch = data.find(file => file.name.endsWith(`/${sku}.pdf`));
 
     if (pathMatch) {
       console.log(`Found path match: ${pathMatch.name}`);
@@ -116,9 +128,7 @@ async function searchEntireBucket(bucket: string, sku: string): Promise<string |
     }
 
     // Fallback: any file containing the SKU and ending with .pdf
-    const partialMatch = data.find(file =>
-      file.name.includes(sku) && file.name.endsWith('.pdf')
-    );
+    const partialMatch = data.find(file => file.name.includes(sku) && file.name.endsWith('.pdf'));
 
     if (partialMatch) {
       console.log(`Found partial match: ${partialMatch.name}`);
@@ -144,11 +154,11 @@ export async function findPdfBySkuRecursive(
   try {
     console.log(`Searching in folder: ${folder}`);
 
-    const { data, error } = await supabase.storage
-      .from(bucket)
+    const { data, error } = await getSupabaseClient()
+      .storage.from(bucket)
       .list(folder, {
         limit: 1000,
-        sortBy: { column: 'name', order: 'asc' }
+        sortBy: { column: 'name', order: 'asc' },
       });
 
     if (error) {
@@ -164,9 +174,7 @@ export async function findPdfBySkuRecursive(
     console.log(`Found ${data.length} items in folder ${folder}`);
 
     // Check files in current folder - look for exact SKU.pdf match
-    const pdfFile = data.find(item =>
-      item.name === `${sku}.pdf`
-    );
+    const pdfFile = data.find(item => item.name === `${sku}.pdf`);
 
     if (pdfFile) {
       const fullPath = folder ? `${folder}/${pdfFile.name}` : pdfFile.name;
@@ -175,11 +183,12 @@ export async function findPdfBySkuRecursive(
     }
 
     // Get all subfolders (items without file extensions)
-    const subFolders = data.filter(item =>
-      !item.name.includes('.') && item.name !== '.'
-    );
+    const subFolders = data.filter(item => !item.name.includes('.') && item.name !== '.');
 
-    console.log(`Found ${subFolders.length} subfolders in ${folder}:`, subFolders.map(f => f.name));
+    console.log(
+      `Found ${subFolders.length} subfolders in ${folder}:`,
+      subFolders.map(f => f.name)
+    );
 
     // Recursively search each subfolder
     for (const subFolder of subFolders) {
