@@ -38,9 +38,10 @@ export async function generateZipFromSkus(
         const pdfBuffer = await downloadFileAsBuffer('stickers', foundPath);
 
         if (pdfBuffer) {
-          // Extract brand from path for filename, or use "Unknown"
+          // Extract brand from path: HR/Brand/SKU.pdf -> Brand
           const pathParts = foundPath.split('/');
-          const detectedBrand = pathParts.length > 2 ? pathParts[1] : 'Unknown';
+          // Structure: HR/Brand/SKU.pdf, so brand is at index 1
+          const detectedBrand = pathParts.length >= 3 ? pathParts[1] : 'Unknown';
           const fileName = `${detectedBrand}_${sku}.pdf`;
 
           zip.file(fileName, pdfBuffer);

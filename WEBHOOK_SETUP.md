@@ -100,7 +100,7 @@ curl https://welmora.ch/api/webhooks/order-created
 
 ## 📁 Supabase Storage Struktura
 
-Bucket `stickers` mora imati strukturu:
+Bucket `stickers` ima strukturu:
 
 ```
 stickers/
@@ -113,6 +113,8 @@ stickers/
     Rossmann/
       1234567890123.pdf
 ```
+
+**Potvrđeno:** Folder se zove `stickers` (ne `sticker`)!
 
 ## 🔍 SKU-Only Search Logic
 

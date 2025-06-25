@@ -40,57 +40,25 @@ export async function downloadFileAsBuffer(bucket: string, path: string): Promis
 
 /**
  * Search for PDF file by SKU across all folders in bucket
- * This bypasses the need to know the exact brand/folder structure
+ * Searches through nested structure: HR/Brand/SKU.pdf
  * 
- * @param bucket - Storage bucket name
+ * @param bucket - Storage bucket name (e.g., 'stickers')
  * @param sku - Product SKU to search for
  * @returns Full path to the file if found, null if not found
  */
 export async function findPdfBySku(bucket: string, sku: string): Promise<string | null> {
   try {
-    console.log(`Searching for SKU ${sku} across all folders in bucket ${bucket}`);
+    console.log(`Searching for SKU ${sku} in bucket ${bucket} with structure HR/Brand/SKU.pdf`);
 
-    // Search for the SKU in the entire bucket
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .list('', {
-        limit: 1000, // Adjust if you have more files
-        search: sku,
-        sortBy: { column: 'name', order: 'asc' }
-      });
+    // Start recursive search from HR folder
+    const found = await findPdfBySkuRecursive(bucket, sku, 'HR');
 
-    if (error) {
-      console.error(`Error searching for SKU ${sku}:`, error);
-      return null;
+    if (found) {
+      console.log(`✅ Found PDF for SKU ${sku}: ${found}`);
+      return found;
     }
 
-    if (!data || data.length === 0) {
-      console.log(`No files found for SKU ${sku}`);
-      return null;
-    }
-
-    // Look for exact match: {sku}.pdf
-    const exactMatch = data.find(file =>
-      file.name === `${sku}.pdf` ||
-      file.name.endsWith(`/${sku}.pdf`)
-    );
-
-    if (exactMatch) {
-      console.log(`Found exact match: ${exactMatch.name}`);
-      return exactMatch.name;
-    }
-
-    // If no exact match, try partial match
-    const partialMatch = data.find(file =>
-      file.name.includes(sku) && file.name.endsWith('.pdf')
-    );
-
-    if (partialMatch) {
-      console.log(`Found partial match: ${partialMatch.name}`);
-      return partialMatch.name;
-    }
-
-    console.log(`No PDF file found containing SKU ${sku}`);
+    console.log(`❌ No PDF file found for SKU ${sku}`);
     return null;
 
   } catch (error) {
@@ -101,7 +69,7 @@ export async function findPdfBySku(bucket: string, sku: string): Promise<string 
 
 /**
  * Recursively search through all subfolders for a file
- * This is a more thorough search if the simple search doesn't work
+ * Searches through structure: HR/Brand/SKU.pdf
  */
 export async function findPdfBySkuRecursive(
   bucket: string,
@@ -109,6 +77,8 @@ export async function findPdfBySkuRecursive(
   folder: string = ''
 ): Promise<string | null> {
   try {
+    console.log(`Searching in folder: ${folder}`);
+
     const { data, error } = await supabase.storage
       .from(bucket)
       .list(folder, {
@@ -116,26 +86,38 @@ export async function findPdfBySkuRecursive(
         sortBy: { column: 'name', order: 'asc' }
       });
 
-    if (error || !data) {
+    if (error) {
+      console.error(`Error listing folder ${folder}:`, error);
       return null;
     }
 
-    // Check files in current folder
+    if (!data) {
+      console.log(`No data returned for folder ${folder}`);
+      return null;
+    }
+
+    console.log(`Found ${data.length} items in folder ${folder}`);
+
+    // Check files in current folder - look for exact SKU.pdf match
     const pdfFile = data.find(item =>
-      !item.id && // It's a file, not a folder
       item.name === `${sku}.pdf`
     );
 
     if (pdfFile) {
       const fullPath = folder ? `${folder}/${pdfFile.name}` : pdfFile.name;
-      console.log(`Found PDF recursively: ${fullPath}`);
+      console.log(`✅ Found PDF: ${fullPath}`);
       return fullPath;
     }
 
-    // Recursively search subfolders
-    const folders = data.filter(item => item.id === null && !item.name.includes('.'));
+    // Get all subfolders (items without file extensions)
+    const subFolders = data.filter(item =>
+      !item.name.includes('.') && item.name !== '.'
+    );
 
-    for (const subFolder of folders) {
+    console.log(`Found ${subFolders.length} subfolders in ${folder}:`, subFolders.map(f => f.name));
+
+    // Recursively search each subfolder
+    for (const subFolder of subFolders) {
       const subPath = folder ? `${folder}/${subFolder.name}` : subFolder.name;
       const found = await findPdfBySkuRecursive(bucket, sku, subPath);
       if (found) {
@@ -145,7 +127,7 @@ export async function findPdfBySkuRecursive(
 
     return null;
   } catch (error) {
-    console.error(`Error in recursive search for ${sku}:`, error);
+    console.error(`Error in recursive search for ${sku} in folder ${folder}:`, error);
     return null;
   }
 }
