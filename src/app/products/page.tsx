@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { formatPriceWithConversion, getChfToEurRate } from '@/lib/currency';
-import { FileSpreadsheet, Search, X } from 'lucide-react';
+import { FileSpreadsheet, Scale, Search, X } from 'lucide-react';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -21,6 +21,8 @@ interface ProductComparison {
   dmLastUpdated?: string;
   muellerPrice?: number;
   muellerStock?: number;
+  muellerProductUrl?: string;
+  muellerLastUpdated?: string;
   needsUpdate: boolean;
   image?: string;
 }
@@ -98,6 +100,21 @@ export default function ProductsPage() {
     return stock > 0 ? 'In Stock' : 'Out of Stock';
   };
 
+  const getCheapestSource = (dmPrice?: number, muellerPrice?: number) => {
+    if (!dmPrice && !muellerPrice) return null;
+    if (!dmPrice) return 'mueller';
+    if (!muellerPrice) return 'dm';
+    if (dmPrice === muellerPrice) return null; // Same price - no winner
+    return dmPrice < muellerPrice ? 'dm' : 'mueller';
+  };
+
+  const getPriceColorClass = (source: 'dm' | 'mueller', cheapestSource: string | null) => {
+    if (cheapestSource === source) {
+      return 'text-green-600 font-bold'; // Green for cheapest
+    }
+    return 'text-gray-900'; // Default color
+  };
+
   // Handle stock status change for individual products
   const handleStockChange = async (productSku: string, newStatus: 'instock' | 'outofstock') => {
     try {
@@ -122,7 +139,7 @@ export default function ProductsPage() {
     }
   };
 
-  const exportToExcel = () => {
+  const exportToCSV = () => {
     const headers = [
       'SKU',
       'Name',
@@ -163,7 +180,10 @@ export default function ProductsPage() {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b bg-white">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4 text-center">Products</h1>
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Scale className="h-6 w-6 text-blue-600" />
+          <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+        </div>
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -184,14 +204,14 @@ export default function ProductsPage() {
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={exportToExcel}
+              onClick={exportToCSV}
               disabled={isPageLoading}
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
             >
               <FileSpreadsheet className="h-4 w-4" />
-              Excel
+              CSV
             </Button>
           </div>
         </div>
@@ -228,62 +248,102 @@ export default function ProductsPage() {
                 <CardContent className="p-3">
                   <h3 className="font-semibold text-sm mb-1 line-clamp-2">{product.name}</h3>
                   <p className="text-xs text-gray-600 mb-2">SKU: {product.sku}</p>
-                  {/* Welmora */}
-                  <div className="mb-2">
-                    <h4 className="font-medium text-gray-900 text-xs mb-1">Welmora.ch</h4>
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1">
-                        <span className="text-sm font-semibold">
-                          {formatPrice(product.welmoraPrice)}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <select
-                          value={product.welmoraStock > 0 ? 'instock' : 'outofstock'}
-                          onChange={e =>
-                            handleStockChange(
-                              product.sku,
-                              e.target.value as 'instock' | 'outofstock'
-                            )
-                          }
-                          className={`text-xs px-2 py-1 rounded border ${getStockColor(product.welmoraStock)} border-current`}
-                        >
-                          <option value="instock">In Stock</option>
-                          <option value="outofstock">Out of Stock</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                  {/* DM */}
-                  <div className="mb-2">
-                    <h4 className="font-medium text-gray-900 text-xs mb-1">DM</h4>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-semibold">
-                        {product.dmPrice ? formatPrice(product.dmPrice, 'EUR') : 'N/A'}
-                      </span>
-                      {product.dmProductUrl && (
-                        <a
-                          href={product.dmProductUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded border border-blue-200 transition-colors whitespace-nowrap"
-                        >
-                          Check Availability
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  {/* Müller */}
-                  <div className="mb-2">
-                    <h4 className="font-medium text-gray-900 text-xs mb-1">Müller</h4>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-semibold">
-                        {product.muellerPrice ? formatPrice(product.muellerPrice, 'EUR') : 'N/A'}
-                      </span>
-                      {/* Future: Add Müller product URL when available */}
-                      <span className="text-xs text-gray-400">Coming Soon</span>
-                    </div>
-                  </div>
+
+                  {/* Calculate cheapest source for this product */}
+                  {(() => {
+                    const cheapestSource = getCheapestSource(product.dmPrice, product.muellerPrice);
+
+                    return (
+                      <>
+                        {/* Welmora */}
+                        <div className="mb-2">
+                          <h4 className="font-medium text-gray-900 text-xs mb-1">Welmora.ch</h4>
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="flex-1">
+                              <span className="text-sm font-semibold">
+                                {formatPrice(product.welmoraPrice)}
+                              </span>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <select
+                                value={product.welmoraStock > 0 ? 'instock' : 'outofstock'}
+                                onChange={e =>
+                                  handleStockChange(
+                                    product.sku,
+                                    e.target.value as 'instock' | 'outofstock'
+                                  )
+                                }
+                                className={`text-xs px-2 py-1 rounded border ${getStockColor(product.welmoraStock)} border-current`}
+                              >
+                                <option value="instock">In Stock</option>
+                                <option value="outofstock">Out of Stock</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        {/* DM */}
+                        <div className="mb-2">
+                          <h4 className="font-medium text-gray-900 text-xs mb-1">DM</h4>
+                          <div className="flex justify-between items-center">
+                            <span
+                              className={`text-sm font-semibold ${getPriceColorClass('dm', cheapestSource)}`}
+                            >
+                              {product.dmPrice ? formatPrice(product.dmPrice, 'EUR') : 'N/A'}
+                            </span>
+                            {product.dmProductUrl && (
+                              <a
+                                href={product.dmProductUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded border border-blue-200 transition-colors whitespace-nowrap flex items-center gap-1"
+                              >
+                                <Image
+                                  src="/logo_dm.png"
+                                  alt="DM"
+                                  width={16}
+                                  height={16}
+                                  className="object-contain"
+                                />
+                                Check Stock
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                        {/* Müller */}
+                        <div className="mb-2">
+                          <h4 className="font-medium text-gray-900 text-xs mb-1">Müller</h4>
+                          <div className="flex justify-between items-center">
+                            <span
+                              className={`text-sm font-semibold ${getPriceColorClass('mueller', cheapestSource)}`}
+                            >
+                              {product.muellerPrice
+                                ? formatPrice(product.muellerPrice, 'EUR')
+                                : 'N/A'}
+                            </span>
+                            {product.muellerProductUrl ? (
+                              <a
+                                href={product.muellerProductUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded border border-blue-200 transition-colors whitespace-nowrap flex items-center gap-1"
+                              >
+                                <Image
+                                  src="/logo_mueller.png"
+                                  alt="Müller"
+                                  width={16}
+                                  height={16}
+                                  className="object-contain"
+                                />
+                                Check Stock
+                              </a>
+                            ) : (
+                              <span className="text-xs text-gray-400">N/A</span>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             ))}

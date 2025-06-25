@@ -1,114 +1,46 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
+import { Page } from 'puppeteer';
+import { BaseScraper } from './base-scraper';
 
 interface DMScraperConfig {
   email: string;
   password: string;
 }
 
-interface DMProductData {
+export interface DMProductData {
   price?: number;
-  stock?: number;
-  availability?: string;
   productUrl?: string;
   error?: string;
 }
 
-export class DMScraper {
-  private config: DMScraperConfig;
-  private browser: Browser | null = null;
-  private page: Page | null = null;
+export class DMScraper extends BaseScraper<DMProductData> {
+  private dmConfig: DMScraperConfig;
 
   constructor(config: DMScraperConfig) {
-    this.config = config;
+    super({
+      poolKey: 'dm-scraper',
+      cacheEnabled: true,
+      cacheTTL: 30 * 60 * 1000, // 30 minutes
+      maxRetries: 3,
+      retryDelay: 1000,
+      timeout: 30000,
+    });
+    this.dmConfig = config;
   }
 
-  async initialize(): Promise<void> {
-    console.log('Initializing DM scraper with Puppeteer...');
+  protected async performScraping(page: Page, gtin: string): Promise<DMProductData> {
+    console.log(`Searching DM for GTIN: ${gtin}`);
 
-    // Launch local browser with anti-detection measures
-    this.browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      ],
-    });
+    // Setup page optimizations
+    await this.setupPage(page);
 
-    this.page = await this.browser.newPage();
-
-    // Advanced anti-detection measures
-    await this.page.evaluateOnNewDocument(() => {
-      // Remove webdriver property completely
-      Object.defineProperty(navigator, 'webdriver', {
-        get: () => undefined,
-      });
-
-      // Mock chrome object
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).chrome = {
-        runtime: {},
-        loadTimes: function () { },
-        csi: function () { },
-        app: {},
-      };
-
-      // Mock plugins with realistic data
-      Object.defineProperty(navigator, 'plugins', {
-        get: () => [
-          {
-            0: {
-              type: 'application/x-google-chrome-pdf',
-              suffixes: 'pdf',
-              description: 'Portable Document Format',
-              enabledPlugin: Plugin,
-            },
-            description: 'Portable Document Format',
-            filename: 'internal-pdf-viewer',
-            length: 1,
-            name: 'Chrome PDF Plugin',
-          },
-        ],
-      });
-
-      // Mock languages realistically
-      Object.defineProperty(navigator, 'languages', {
-        get: () => ['de-DE', 'de', 'en-US', 'en'],
-      });
-
-      // Mock platform
-      Object.defineProperty(navigator, 'platform', {
-        get: () => 'MacIntel',
-      });
-
-      // Mock hardware concurrency
-      Object.defineProperty(navigator, 'hardwareConcurrency', {
-        get: () => 8,
-      });
-
-      // Mock device memory
-      Object.defineProperty(navigator, 'deviceMemory', {
-        get: () => 8,
-      });
-    });
-
-    // Set realistic user agent
-    await this.page.setUserAgent(
+    // Set realistic user agent and headers
+    await page.setUserAgent(
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     );
 
-    // Set realistic viewport
-    await this.page.setViewport({ width: 1366, height: 768 });
+    await page.setViewport({ width: 1366, height: 768 });
 
-    // Set realistic headers
-    await this.page.setExtraHTTPHeaders({
+    await page.setExtraHTTPHeaders({
       Accept:
         'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
       'Accept-Language': 'de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -123,50 +55,29 @@ export class DMScraper {
       'Cache-Control': 'max-age=0',
     });
 
-    console.log('Puppeteer browser initialized successfully');
+    // Navigate to DM search page
+    await page.goto(`https://www.dm.de/search?query=${gtin}`, {
+      waitUntil: 'networkidle2',
+      timeout: 30000,
+    });
+
+    console.log('Search page loaded, extracting product data...');
+
+    // Extract product data from search results
+    return await this.extractProductData(page, gtin);
   }
 
-  async searchProduct(gtin: string): Promise<DMProductData> {
+  private async extractProductData(page: Page, gtin: string): Promise<DMProductData> {
     try {
-      if (!this.page) {
-        throw new Error('Scraper not initialized');
-      }
-
-      console.log(`Searching DM for GTIN: ${gtin}`);
-
-      // Navigate to DM search page
-      await this.page.goto(`https://www.dm.de/search?query=${gtin}`, {
-        waitUntil: 'networkidle2',
-        timeout: 30000,
-      });
-
-      console.log('Search page loaded, extracting product data...');
-
-      // Extract product data from search results
-      return await this.extractProductData(gtin);
-    } catch (error) {
-      console.error(`Search failed for GTIN ${gtin}:`, error);
-      return { error: error instanceof Error ? error.message : 'Search failed' };
-    }
-  }
-
-  private async extractProductData(gtin: string): Promise<DMProductData> {
-    try {
-      if (!this.page) {
-        throw new Error('Page not initialized');
-      }
-
       let price: number | undefined;
-      let stock: number | undefined;
-      let availability: string | undefined;
       let productUrl: string | undefined;
 
       // Wait for search results to load
-      await this.page.waitForSelector('body', { timeout: 10000 });
+      await page.waitForSelector('body', { timeout: 10000 });
       console.log('Page loaded, looking for product cards...');
 
       // Look for product cards in search results
-      const productCards = await this.page.$$('[data-dmid="product-card"]');
+      const productCards = await page.$$('[data-dmid="product-card"]');
       console.log(`Found ${productCards.length} product cards with [data-dmid="product-card"]`);
 
       // If no cards found, try alternative selectors
@@ -181,7 +92,7 @@ export class DMScraper {
         ];
 
         for (const selector of altSelectors) {
-          const altCards = await this.page.$$(selector);
+          const altCards = await page.$$(selector);
           console.log(`Found ${altCards.length} elements with selector: ${selector}`);
           if (altCards.length > 0) {
             productCards.push(...altCards);
@@ -197,10 +108,6 @@ export class DMScraper {
         // Extract product URL from first card
         try {
           console.log('Attempting to extract product URL from card...');
-
-          // First, let's see the HTML structure of the card
-          const cardHTML = await this.page.evaluate(el => el.outerHTML, firstCard);
-          console.log('Card HTML structure:', cardHTML.substring(0, 1000) + '...');
 
           const linkSelectors = [
             'a[href*=".html"]', // This should catch the main product link
@@ -222,17 +129,18 @@ export class DMScraper {
             console.log(`Found ${linkElements.length} links with selector: ${selector}`);
 
             for (const linkElement of linkElements) {
-              const href = await this.page.evaluate(el => el.getAttribute('href'), linkElement);
-              const linkText = await this.page.evaluate(el => el.textContent?.trim(), linkElement);
-              const className = await this.page.evaluate(el => el.className, linkElement);
+              const href = await page.evaluate(el => el.getAttribute('href'), linkElement);
+              const linkText = await page.evaluate(el => el.textContent?.trim(), linkElement);
+              const className = await page.evaluate(el => el.className, linkElement);
               console.log(`Checking href: ${href} (text: "${linkText}", class: "${className}")`);
 
               // DM product URLs: /product-name-p{GTIN}.html
-              if (href && (
-                href.includes('.html') ||
-                (href.startsWith('/') && href.includes('-p' + gtin)) ||
-                href.includes('p' + gtin + '.html')
-              )) {
+              if (
+                href &&
+                (href.includes('.html') ||
+                  (href.startsWith('/') && href.includes('-p' + gtin)) ||
+                  href.includes('p' + gtin + '.html'))
+              ) {
                 productUrl = href.startsWith('/') ? `https://www.dm.de${href}` : href;
                 console.log(`✓ Found product URL in HTML: ${productUrl}`);
                 break;
@@ -249,8 +157,8 @@ export class DMScraper {
             console.log(`Found ${allLinks.length} total links in card`);
 
             for (const link of allLinks) {
-              const href = await this.page.evaluate(el => el.getAttribute('href'), link);
-              const linkText = await this.page.evaluate(el => el.textContent?.trim(), link);
+              const href = await page.evaluate(el => el.getAttribute('href'), link);
+              const linkText = await page.evaluate(el => el.textContent?.trim(), link);
               console.log(`All links check - href: ${href} (text: "${linkText}")`);
 
               if (href && (href.includes(gtin) || href.includes('.html'))) {
@@ -272,16 +180,16 @@ export class DMScraper {
         if (productUrl && productUrl.includes('.html')) {
           try {
             console.log(`Navigating directly to product URL: ${productUrl}`);
-            await this.page.goto(productUrl, {
+            await page.goto(productUrl, {
               waitUntil: 'networkidle2',
               timeout: 10000,
             });
-            console.log(`✓ Successfully navigated to product page: ${this.page.url()}`);
+            console.log(`✓ Successfully navigated to product page: ${page.url()}`);
 
             // Extract price from product page
-            const priceElement = await this.page.$('[data-dmid="price-localized"]');
+            const priceElement = await page.$('[data-dmid="price-localized"]');
             if (priceElement) {
-              const priceText = await this.page.evaluate(el => el.textContent, priceElement);
+              const priceText = await page.evaluate(el => el.textContent, priceElement);
               if (priceText) {
                 const priceMatch = priceText.match(/(\d+[,.]?\d*)/);
                 if (priceMatch) {
@@ -290,43 +198,6 @@ export class DMScraper {
                 }
               }
             }
-
-            // Extract stock from product page
-            const stockSelectors = [
-              '[data-dmid="availability"]',
-              '.availability',
-              '.stock-info',
-              '.product-availability',
-              '[data-dmid="overview-availability-container"]',
-            ];
-
-            for (const selector of stockSelectors) {
-              const stockElement = await this.page.$(selector);
-              if (stockElement) {
-                const stockText = await this.page.evaluate(el => el.textContent, stockElement);
-                if (stockText) {
-                  console.log(`Stock text from ${selector}: ${stockText}`);
-                  // Look for numbers in parentheses like (101)
-                  const stockMatch = stockText.match(/\((\d+)\)/);
-                  if (stockMatch) {
-                    stock = parseInt(stockMatch[1]);
-                    availability = `${stock} items available`;
-                    console.log(`✓ Extracted stock from product page: ${stock}`);
-                    break;
-                  }
-
-                  // Check for availability status
-                  if (stockText.includes('Lieferbar') || stockText.includes('Verfügbar')) {
-                    availability = 'Available';
-                  } else if (stockText.includes('Nicht verfügbar') || stockText.includes('Ausverkauft')) {
-                    availability = 'Out of stock';
-                  } else {
-                    availability = stockText.trim();
-                  }
-                }
-              }
-            }
-
           } catch (error) {
             console.log('Failed to navigate directly to product URL:', error);
           }
@@ -337,14 +208,18 @@ export class DMScraper {
             await firstCard.click();
 
             // Wait for product page to load with shorter timeout
-            await this.page.waitForNavigation({
+            await page.waitForNavigation({
               waitUntil: 'networkidle2',
               timeout: 10000,
             });
 
             // Capture the product URL after navigation
-            const currentUrl = this.page.url();
-            if (currentUrl && currentUrl !== `https://www.dm.de/search?query=${gtin}` && !currentUrl.includes('search?query=')) {
+            const currentUrl = page.url();
+            if (
+              currentUrl &&
+              currentUrl !== `https://www.dm.de/search?query=${gtin}` &&
+              !currentUrl.includes('search?query=')
+            ) {
               productUrl = currentUrl;
               console.log(`✓ Captured actual product URL after navigation: ${productUrl}`);
             } else {
@@ -357,9 +232,9 @@ export class DMScraper {
         }
       } else {
         // Try to extract directly from current page if it's already a product page
-        const priceElement = await this.page.$('[data-dmid="price-localized"]');
+        const priceElement = await page.$('[data-dmid="price-localized"]');
         if (priceElement) {
-          const priceText = await this.page.evaluate(el => el.textContent, priceElement);
+          const priceText = await page.evaluate(el => el.textContent, priceElement);
           if (priceText) {
             const priceMatch = priceText.match(/(\d+[,.]?\d*)/);
             if (priceMatch) {
@@ -371,15 +246,14 @@ export class DMScraper {
 
       const result: DMProductData = {
         price,
-        availability,
-        productUrl: productUrl || this.page.url(),
-        stock,
+        productUrl: productUrl || page.url(),
       };
 
       // Only log successful extractions briefly
       if (price) {
-        const urlType = productUrl && !productUrl.includes('search?query=') ? 'product page' : 'search page';
-        console.log(`✓ Found product: €${price}${stock ? ` (${stock} in stock)` : ''} - URL: ${urlType}`);
+        const urlType =
+          productUrl && !productUrl.includes('search?query=') ? 'product page' : 'search page';
+        console.log(`✓ Found product: €${price} - URL: ${urlType}`);
       } else {
         console.log('✗ Product not found on DM');
       }
@@ -389,7 +263,7 @@ export class DMScraper {
       console.error('Data extraction error:', error);
       return {
         error: error instanceof Error ? error.message : 'Data extraction failed',
-        productUrl: this.page?.url() || '',
+        productUrl: page?.url() || '',
       };
     }
   }
@@ -397,27 +271,16 @@ export class DMScraper {
   async scrapeProduct(gtin: string): Promise<DMProductData> {
     try {
       console.log(`Starting DM scraper for GTIN: ${gtin} (no login required)`);
+      const result = await this.scrape(gtin);
 
-      await this.initialize();
-      const result = await this.searchProduct(gtin);
+      if (result.error) {
+        return { error: result.error };
+      }
 
-      return result;
+      return result.data || { error: 'No data returned' };
     } catch (error) {
       console.error('Scraper error:', error);
       return { error: error instanceof Error ? error.message : 'Scraping failed' };
-    } finally {
-      await this.cleanup();
-    }
-  }
-
-  async cleanup(): Promise<void> {
-    if (this.page) {
-      await this.page.close();
-      this.page = null;
-    }
-    if (this.browser) {
-      await this.browser.close();
-      this.browser = null;
     }
   }
 }

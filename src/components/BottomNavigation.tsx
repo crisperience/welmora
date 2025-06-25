@@ -1,6 +1,6 @@
 'use client';
 
-import { Package, PackageOpen, ShoppingCart } from 'lucide-react';
+import { PackageOpen, Scale, ShoppingCart } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useDateContext } from './DateContext';
 
@@ -32,10 +32,11 @@ export default function BottomNavigation() {
         {/* Shopping Button - 33% */}
         <button
           onClick={() => handleNavigation('/shopping')}
-          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer ${isActive('/shopping')
+          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer ${
+            isActive('/shopping')
               ? 'bg-blue-50 text-blue-600 border-t-2 border-blue-600'
               : 'text-gray-600 hover:bg-gray-50'
-            }`}
+          }`}
         >
           <ShoppingCart className="h-6 w-6 mb-1" />
           <span className="text-xs font-medium">Shopping</span>
@@ -44,10 +45,11 @@ export default function BottomNavigation() {
         {/* Packing Button - 33% */}
         <button
           onClick={() => handleNavigation('/packing')}
-          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer ${isActive('/packing')
+          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer ${
+            isActive('/packing')
               ? 'bg-blue-50 text-blue-600 border-t-2 border-blue-600'
               : 'text-gray-600 hover:bg-gray-50'
-            }`}
+          }`}
         >
           <PackageOpen className="h-6 w-6 mb-1" />
           <span className="text-xs font-medium">Packing</span>
@@ -56,12 +58,13 @@ export default function BottomNavigation() {
         {/* Products Button - 33% */}
         <button
           onClick={() => handleNavigation('/products')}
-          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer ${isActive('/products')
+          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer ${
+            isActive('/products')
               ? 'bg-blue-50 text-blue-600 border-t-2 border-blue-600'
               : 'text-gray-600 hover:bg-gray-50'
-            }`}
+          }`}
         >
-          <Package className="h-6 w-6 mb-1" />
+          <Scale className="h-6 w-6 mb-1" />
           <span className="text-xs font-medium">Products</span>
         </button>
       </div>

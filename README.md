@@ -9,7 +9,7 @@ A comprehensive logistics management system for Welmora, featuring inventory man
 - **📊 Price Comparison** - Automated scraping from DM and Müller retailers
 - **📱 PWA Support** - Install as mobile app with camera scanning
 - **🔄 Automated Updates** - Weekly price and stock updates via cron jobs
-- **📈 Export Capabilities** - CSV and Excel export for data analysis
+- **📈 Export Capabilities** - CSV and CSV export for data analysis
 
 ## 🛠️ Tech Stack
 
