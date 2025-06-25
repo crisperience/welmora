@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Lazy initialization to prevent build failures
 let supabaseInstance: ReturnType<typeof createClient> | null = null;
+let supabaseServiceInstance: ReturnType<typeof createClient> | null = null;
 
 function getSupabaseClient() {
   if (!supabaseInstance) {
@@ -16,6 +17,22 @@ function getSupabaseClient() {
   }
 
   return supabaseInstance;
+}
+
+// Service role client for server-side operations (Storage, etc.)
+function getSupabaseServiceClient() {
+  if (!supabaseServiceInstance) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing Supabase service role environment variables');
+    }
+
+    supabaseServiceInstance = createClient(supabaseUrl, supabaseServiceKey);
+  }
+
+  return supabaseServiceInstance;
 }
 
 export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
@@ -35,7 +52,7 @@ export function getPublicUrl(bucket: string, path: string): string {
 // Helper function to download file as buffer
 export async function downloadFileAsBuffer(bucket: string, path: string): Promise<Buffer | null> {
   try {
-    const { data, error } = await getSupabaseClient().storage.from(bucket).download(path);
+    const { data, error } = await getSupabaseServiceClient().storage.from(bucket).download(path);
 
     if (error) {
       console.error(`Error downloading file ${path}:`, error);
@@ -90,7 +107,7 @@ export async function findPdfBySku(bucket: string, sku: string): Promise<string 
 async function searchEntireBucket(bucket: string, sku: string): Promise<string | null> {
   try {
     // Use Supabase's search functionality to find the file
-    const { data, error } = await getSupabaseClient()
+    const { data, error } = await getSupabaseServiceClient()
       .storage.from(bucket)
       .list('', {
         limit: 2000, // Increase limit to cover all files
@@ -154,7 +171,7 @@ export async function findPdfBySkuRecursive(
   try {
     console.log(`Searching in folder: ${folder}`);
 
-    const { data, error } = await getSupabaseClient()
+    const { data, error } = await getSupabaseServiceClient()
       .storage.from(bucket)
       .list(folder, {
         limit: 1000,
