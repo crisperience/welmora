@@ -1,5 +1,6 @@
 import { BatchItem, BatchProcessor } from '@/lib/scrapers/batch-processor';
 import { createDMScraper } from '@/lib/scrapers/dm-scraper';
+import { createMetroScraper } from '@/lib/scrapers/metro-scraper';
 import { createMuellerScraper } from '@/lib/scrapers/mueller-scraper';
 import WooCommerce from '@/lib/woocommerce/client';
 import { NextRequest, NextResponse } from 'next/server';
@@ -36,6 +37,29 @@ async function scrapeDM(gtin: string): Promise<{ price?: number; productUrl?: st
     };
   } catch (error) {
     console.error(`DM scraping failed for ${gtin}:`, error);
+    return { price: undefined };
+  }
+}
+
+// Metro scraping function using GTIN/EAN
+async function scrapeMetro(gtin: string): Promise<{ price?: number; productUrl?: string }> {
+  try {
+    console.log(`Scraping Metro for GTIN: ${gtin}`);
+    const scraper = createMetroScraper();
+    const result = await scraper.scrapeProduct(gtin);
+
+    if (result.error) {
+      console.error(`Metro scraping error for ${gtin}:`, result.error);
+      return { price: undefined };
+    }
+
+    console.log(`Metro scraping result for ${gtin}:`, result);
+    return {
+      price: result.price,
+      productUrl: result.productUrl,
+    };
+  } catch (error) {
+    console.error(`Metro scraping failed for ${gtin}:`, error);
     return { price: undefined };
   }
 }
@@ -208,6 +232,11 @@ export async function GET(request: NextRequest) {
       const muellerUrl = metaData.find(meta => meta.key === '_mueller_url')?.value;
       const muellerLastUpdated = metaData.find(meta => meta.key === '_mueller_last_updated')?.value;
 
+      // Extract Metro data from meta fields
+      const metroPrice = metaData.find(meta => meta.key === '_metro_price')?.value;
+      const metroUrl = metaData.find(meta => meta.key === '_metro_url')?.value;
+      const metroLastUpdated = metaData.find(meta => meta.key === '_metro_last_updated')?.value;
+
       return {
         sku: product.sku || '',
         gtin: gtin || '',
@@ -223,6 +252,10 @@ export async function GET(request: NextRequest) {
         muellerStock: undefined, // Not storing stock data yet
         muellerProductUrl: muellerUrl || undefined,
         muellerLastUpdated: muellerLastUpdated || undefined,
+        metroPrice: metroPrice ? parseFloat(metroPrice) : undefined,
+        metroStock: undefined, // Not storing stock data yet
+        metroProductUrl: metroUrl || undefined,
+        metroLastUpdated: metroLastUpdated || undefined,
         needsUpdate: false, // Will be set when scraping is done
         image: product.images?.[0]?.src || undefined,
       };
@@ -230,9 +263,10 @@ export async function GET(request: NextRequest) {
 
     if (action === 'clear_cache') {
       try {
-        // Clear caches for both scrapers
+        // Clear caches for all scrapers
         const dmScraper = createDMScraper();
         const muellerScraper = createMuellerScraper();
+        const metroScraper = createMetroScraper();
 
         if (typeof dmScraper.clearCache === 'function') {
           await dmScraper.clearCache();
@@ -240,12 +274,15 @@ export async function GET(request: NextRequest) {
         if (typeof muellerScraper.clearCache === 'function') {
           await muellerScraper.clearCache();
         }
+        if (typeof metroScraper.clearCache === 'function') {
+          await metroScraper.clearCache();
+        }
 
-        console.log('Cache cleared for both DM and Mueller scrapers');
+        console.log('Cache cleared for DM, Mueller, and Metro scrapers');
 
         return NextResponse.json({
           success: true,
-          message: 'Cache cleared successfully for both scrapers',
+          message: 'Cache cleared successfully for all scrapers',
         });
       } catch (error) {
         console.error('Error clearing cache:', error);
@@ -577,6 +614,157 @@ export async function GET(request: NextRequest) {
           saveErrors: errors,
         },
         resourceStats: stats,
+        results,
+      });
+    }
+
+    if (action === 'scrape_all_metro') {
+      console.log('Starting Metro scraping for all products...');
+
+      // Fetch ALL products using pagination
+      let allProducts: WooCommerceProduct[] = [];
+      let page = 1;
+      let hasMorePages = true;
+
+      while (hasMorePages) {
+        console.log(`Fetching page ${page} of products...`);
+        const response = await api.get('products', {
+          per_page: 100,
+          status: 'publish',
+          page: page,
+        });
+        const pageProducts = response.data as WooCommerceProduct[];
+
+        if (pageProducts.length === 0) {
+          hasMorePages = false;
+        } else {
+          allProducts = [...allProducts, ...pageProducts];
+          page++;
+
+          // Stop if we got less than per_page (last page)
+          if (pageProducts.length < 100) {
+            hasMorePages = false;
+          }
+        }
+      }
+
+      console.log(`Found ${allProducts.length} total products to scrape`);
+
+      const results = [];
+      let scraped = 0;
+      let skipped = 0;
+      let errors = 0;
+      let saved = 0;
+
+      // Process products one by one to avoid overwhelming the system
+      for (const product of allProducts) {
+        const gtin = product.sku;
+
+        // Only scrape if we have a valid GTIN (13 digits)
+        if (gtin && gtin.length === 13 && /^\d+$/.test(gtin)) {
+          try {
+            console.log(`Scraping ${scraped + 1}/${allProducts.length}: ${product.name} (${gtin})`);
+            const metroData = await scrapeMetro(gtin);
+
+            const result: {
+              sku: string;
+              gtin: string;
+              name: string;
+              metroPrice?: number;
+              metroStock?: number;
+              metroProductUrl?: string;
+              found: boolean;
+              saved: boolean;
+              error?: string;
+            } = {
+              sku: product.sku,
+              gtin,
+              name: product.name,
+              metroPrice: metroData.price,
+              metroStock: undefined,
+              metroProductUrl: metroData.productUrl,
+              found: !!metroData.price,
+              saved: false,
+            };
+
+            // If we found Metro data, save it to WooCommerce metadata
+            // Only save if we have valid data (price and/or real product URL)
+            if (
+              metroData.price ||
+              (metroData.productUrl &&
+                !metroData.productUrl.includes('search?') &&
+                metroData.productUrl.includes('/shop/pv/'))
+            ) {
+              try {
+                console.log(`Saving Metro data to WooCommerce for ${product.name}...`);
+
+                // Prepare meta data to save
+                const metaData = [];
+
+                if (metroData.price) {
+                  metaData.push({ key: '_metro_price', value: metroData.price.toString() });
+                }
+
+                // Only save actual product URLs, not search URLs
+                if (
+                  metroData.productUrl &&
+                  !metroData.productUrl.includes('search?') &&
+                  metroData.productUrl.includes('/shop/pv/')
+                ) {
+                  metaData.push({ key: '_metro_url', value: metroData.productUrl });
+                }
+
+                // Always save last updated timestamp
+                metaData.push({ key: '_metro_last_updated', value: new Date().toISOString() });
+
+                // Update product with meta data
+                const updateData = {
+                  meta_data: metaData,
+                };
+
+                await api.put(`products/${product.id}`, updateData);
+                result.saved = true;
+                saved++;
+                console.log(`✓ Saved Metro data for ${product.name}`);
+              } catch (saveError) {
+                console.error(`Failed to save Metro data for ${product.name}:`, saveError);
+                result.error = saveError instanceof Error ? saveError.message : 'Save failed';
+              }
+            }
+
+            results.push(result);
+            scraped++;
+
+            // Add small delay between requests
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          } catch (error) {
+            console.error(`Error scraping Metro for ${product.name}:`, error);
+            errors++;
+            results.push({
+              sku: product.sku,
+              gtin,
+              name: product.name,
+              found: false,
+              saved: false,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            });
+          }
+        } else {
+          console.log(`Skipping ${product.name} - invalid GTIN: ${gtin}`);
+          skipped++;
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Metro scraping completed',
+        stats: {
+          total: allProducts.length,
+          scraped,
+          skipped,
+          errors,
+          saved,
+        },
         results,
       });
     }
@@ -611,9 +799,10 @@ export async function POST(request: NextRequest) {
 
     if (action === 'clear_cache') {
       try {
-        // Clear caches for both scrapers
+        // Clear caches for all scrapers
         const dmScraper = createDMScraper();
         const muellerScraper = createMuellerScraper();
+        const metroScraper = createMetroScraper();
 
         if (typeof dmScraper.clearCache === 'function') {
           await dmScraper.clearCache();
@@ -621,12 +810,15 @@ export async function POST(request: NextRequest) {
         if (typeof muellerScraper.clearCache === 'function') {
           await muellerScraper.clearCache();
         }
+        if (typeof metroScraper.clearCache === 'function') {
+          await metroScraper.clearCache();
+        }
 
-        console.log('Cache cleared for both DM and Mueller scrapers');
+        console.log('Cache cleared for DM, Mueller, and Metro scrapers');
 
         return NextResponse.json({
           success: true,
-          message: 'Cache cleared successfully for both scrapers',
+          message: 'Cache cleared successfully for all scrapers',
         });
       } catch (error) {
         console.error('Error clearing cache:', error);
@@ -958,6 +1150,157 @@ export async function POST(request: NextRequest) {
           saveErrors: errors,
         },
         resourceStats: stats,
+        results,
+      });
+    }
+
+    if (action === 'scrape_all_metro') {
+      console.log('Starting Metro scraping for all products...');
+
+      // Fetch ALL products using pagination
+      let allProducts: WooCommerceProduct[] = [];
+      let page = 1;
+      let hasMorePages = true;
+
+      while (hasMorePages) {
+        console.log(`Fetching page ${page} of products...`);
+        const response = await api.get('products', {
+          per_page: 100,
+          status: 'publish',
+          page: page,
+        });
+        const pageProducts = response.data as WooCommerceProduct[];
+
+        if (pageProducts.length === 0) {
+          hasMorePages = false;
+        } else {
+          allProducts = [...allProducts, ...pageProducts];
+          page++;
+
+          // Stop if we got less than per_page (last page)
+          if (pageProducts.length < 100) {
+            hasMorePages = false;
+          }
+        }
+      }
+
+      console.log(`Found ${allProducts.length} total products to scrape`);
+
+      const results = [];
+      let scraped = 0;
+      let skipped = 0;
+      let errors = 0;
+      let saved = 0;
+
+      // Process products one by one to avoid overwhelming the system
+      for (const product of allProducts) {
+        const gtin = product.sku;
+
+        // Only scrape if we have a valid GTIN (13 digits)
+        if (gtin && gtin.length === 13 && /^\d+$/.test(gtin)) {
+          try {
+            console.log(`Scraping ${scraped + 1}/${allProducts.length}: ${product.name} (${gtin})`);
+            const metroData = await scrapeMetro(gtin);
+
+            const result: {
+              sku: string;
+              gtin: string;
+              name: string;
+              metroPrice?: number;
+              metroStock?: number;
+              metroProductUrl?: string;
+              found: boolean;
+              saved: boolean;
+              error?: string;
+            } = {
+              sku: product.sku,
+              gtin,
+              name: product.name,
+              metroPrice: metroData.price,
+              metroStock: undefined,
+              metroProductUrl: metroData.productUrl,
+              found: !!metroData.price,
+              saved: false,
+            };
+
+            // If we found Metro data, save it to WooCommerce metadata
+            // Only save if we have valid data (price and/or real product URL)
+            if (
+              metroData.price ||
+              (metroData.productUrl &&
+                !metroData.productUrl.includes('search?') &&
+                metroData.productUrl.includes('/shop/pv/'))
+            ) {
+              try {
+                console.log(`Saving Metro data to WooCommerce for ${product.name}...`);
+
+                // Prepare meta data to save
+                const metaData = [];
+
+                if (metroData.price) {
+                  metaData.push({ key: '_metro_price', value: metroData.price.toString() });
+                }
+
+                // Only save actual product URLs, not search URLs
+                if (
+                  metroData.productUrl &&
+                  !metroData.productUrl.includes('search?') &&
+                  metroData.productUrl.includes('/shop/pv/')
+                ) {
+                  metaData.push({ key: '_metro_url', value: metroData.productUrl });
+                }
+
+                // Always save last updated timestamp
+                metaData.push({ key: '_metro_last_updated', value: new Date().toISOString() });
+
+                // Update product with meta data
+                const updateData = {
+                  meta_data: metaData,
+                };
+
+                await api.put(`products/${product.id}`, updateData);
+                result.saved = true;
+                saved++;
+                console.log(`✓ Saved Metro data for ${product.name}`);
+              } catch (saveError) {
+                console.error(`Failed to save Metro data for ${product.name}:`, saveError);
+                result.error = saveError instanceof Error ? saveError.message : 'Save failed';
+              }
+            }
+
+            results.push(result);
+            scraped++;
+
+            // Add small delay between requests
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          } catch (error) {
+            console.error(`Error scraping Metro for ${product.name}:`, error);
+            errors++;
+            results.push({
+              sku: product.sku,
+              gtin,
+              name: product.name,
+              found: false,
+              saved: false,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            });
+          }
+        } else {
+          console.log(`Skipping ${product.name} - invalid GTIN: ${gtin}`);
+          skipped++;
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Metro scraping completed',
+        stats: {
+          total: allProducts.length,
+          scraped,
+          skipped,
+          errors,
+          saved,
+        },
         results,
       });
     }

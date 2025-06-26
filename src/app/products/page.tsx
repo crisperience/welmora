@@ -24,6 +24,10 @@ interface ProductComparison {
   muellerStock?: number;
   muellerProductUrl?: string;
   muellerLastUpdated?: string;
+  metroPrice?: number;
+  metroStock?: number;
+  metroProductUrl?: string;
+  metroLastUpdated?: string;
   needsUpdate: boolean;
   image?: string;
 }
@@ -120,15 +124,28 @@ export default function ProductsPage() {
     }
   };
 
-  const getCheapestSource = (dmPrice?: number, muellerPrice?: number) => {
-    if (!dmPrice && !muellerPrice) return null;
-    if (!dmPrice) return 'mueller';
-    if (!muellerPrice) return 'dm';
-    if (dmPrice === muellerPrice) return null;
-    return dmPrice < muellerPrice ? 'dm' : 'mueller';
+  const getCheapestSource = (dmPrice?: number, muellerPrice?: number, metroPrice?: number) => {
+    const prices = [
+      { source: 'dm', price: dmPrice },
+      { source: 'mueller', price: muellerPrice },
+      { source: 'metro', price: metroPrice },
+    ].filter(item => item.price !== undefined) as { source: string; price: number }[];
+
+    if (prices.length === 0) return null;
+    if (prices.length === 1) return prices[0].source;
+
+    const cheapest = prices.reduce((min, current) =>
+      current.price < min.price ? current : min
+    );
+
+    // Check if there are multiple sources with the same cheapest price
+    const cheapestCount = prices.filter(p => p.price === cheapest.price).length;
+    if (cheapestCount > 1) return null; // Multiple sources have same price
+
+    return cheapest.source;
   };
 
-  const getPriceColorClass = (source: 'dm' | 'mueller', cheapestSource: string | null) => {
+  const getPriceColorClass = (source: 'dm' | 'mueller' | 'metro', cheapestSource: string | null) => {
     if (cheapestSource === source) {
       return 'text-green-600 font-bold';
     }
@@ -214,6 +231,8 @@ export default function ProductsPage() {
       'DM Status',
       'Müller Cijena',
       'Müller Status',
+      'Metro Cijena',
+      'Metro Status',
     ];
 
     const csvContent = [
@@ -228,6 +247,8 @@ export default function ProductsPage() {
           product.dmStock !== undefined ? getStockStatus(product.dmStock) : '',
           product.muellerPrice || '',
           product.muellerStock !== undefined ? getStockStatus(product.muellerStock) : '',
+          product.metroPrice || '',
+          product.metroStock !== undefined ? getStockStatus(product.metroStock) : '',
         ].join(',')
       ),
     ].join('\n');
@@ -316,7 +337,7 @@ export default function ProductsPage() {
 
                   {/* Calculate cheapest source for this product */}
                   {(() => {
-                    const cheapestSource = getCheapestSource(product.dmPrice, product.muellerPrice);
+                    const cheapestSource = getCheapestSource(product.dmPrice, product.muellerPrice, product.metroPrice);
 
                     return (
                       <>
@@ -414,6 +435,32 @@ export default function ProductsPage() {
                                   height={16}
                                   className="object-contain"
                                 />
+                                Provjeri zalihe
+                              </a>
+                            ) : (
+                              <span className="text-xs text-gray-400">N/A</span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Metro */}
+                        <div className="mb-2">
+                          <h4 className="font-medium text-gray-900 text-xs mb-1">Metro</h4>
+                          <div className="flex justify-between items-center">
+                            <span
+                              className={`text-sm font-semibold ${getPriceColorClass('metro', cheapestSource)}`}
+                            >
+                              {product.metroPrice
+                                ? formatPrice(product.metroPrice, 'EUR')
+                                : 'N/A'}
+                            </span>
+                            {product.metroProductUrl ? (
+                              <a
+                                href={product.metroProductUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 py-1 rounded border border-amber-200 transition-colors whitespace-nowrap flex items-center gap-1"
+                              >
+                                <span className="font-semibold text-blue-600">M</span>
                                 Provjeri zalihe
                               </a>
                             ) : (
