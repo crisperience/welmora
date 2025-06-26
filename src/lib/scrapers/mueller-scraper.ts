@@ -444,12 +444,12 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
 
         // Extract price from product page with updated selectors
         const productPagePriceSelectors = [
-          '.h1.h2-desktop-only.product-price_component_product-price__main-price-accent__zHz13',
+          'span.h1.h2-desktop-only', // Main price selector based on actual HTML structure
           '.product-price_component_product-price__main-price-accent__zHz13',
           '[class*="main-price-accent"]',
           '[class*="product-price__main-price"]',
-          '.h1.h2-desktop-only',
           '[class*="product-price"]',
+          '.h1', // Fallback to just h1 class
         ];
 
         for (const selector of productPagePriceSelectors) {
@@ -484,10 +484,12 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
           );
           // Fallback to search result price if product page fails
           const priceSelectors = [
+            'span.h1.h2-desktop-only', // Main price selector
             '.product-price_component_product-price__main-price-accent__zHz13',
             '.h4.bold',
             '[class*="main-price"]',
             '[class*="product-price"]',
+            '.h1', // Fallback to just h1 class
           ];
 
           // Go back to search results
@@ -523,10 +525,12 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
         console.log(`Mueller Scraper: Error navigating to product page: ${error}`);
         // If navigation fails, try to extract price from search result as fallback
         const priceSelectors = [
+          'span.h1.h2-desktop-only', // Main price selector
           '.product-price_component_product-price__main-price-accent__zHz13',
           '.h4.bold',
           '[class*="main-price"]',
           '[class*="product-price"]',
+          '.h1', // Fallback to just h1 class
         ];
 
         for (const selector of priceSelectors) {
