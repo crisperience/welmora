@@ -72,7 +72,7 @@ export default function PackingPage() {
       // API directly returns array of packages
       setPackages(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Dogodila se greška');
     } finally {
       setLoading(false);
     }
@@ -131,7 +131,7 @@ export default function PackingPage() {
 
   const formatAddress = (address: PackageType['shippingAddress']) => {
     if (!address || !address.address_1) {
-      return 'Address not available';
+      return 'Adresa nije dostupna';
     }
     const parts = [
       address.address_1,
@@ -184,8 +184,8 @@ export default function PackingPage() {
         setScanFeedback({
           success: false,
           message: anyMatch
-            ? `Product "${code}" already complete in all packages`
-            : `Product "${code}" not found in any package for this date`,
+            ? `Proizvod "${code}" je već završen u svim paketima`
+            : `Proizvod "${code}" nije pronađen ni u jednom paketu za ovaj datum`,
           urgency: 'medium',
           sound: 'error',
         });
@@ -196,7 +196,7 @@ export default function PackingPage() {
       if (matchingPackages.length > 1) {
         setScanFeedback({
           success: false,
-          message: `Multiple customers need "${matchingPackages[0].item.name}" - Choose customer:`,
+          message: `Više kupaca treba "${matchingPackages[0].item.name}" - Odaberi kupca:`,
           urgency: 'high',
           sound: 'warning',
           multiplePackages: matchingPackages.map(mp => ({
@@ -227,7 +227,7 @@ export default function PackingPage() {
       if (foundItem.scanned >= foundItem.needed) {
         setScanFeedback({
           success: false,
-          message: `"${foundItem.name}" already complete for ${foundPackage.customerName}`,
+          message: `"${foundItem.name}" je već završen za ${foundPackage.customerName}`,
           packageInfo: {
             packageId: foundPackage.id,
             orderNumber: foundPackage.orderNumber,
@@ -286,10 +286,10 @@ export default function PackingPage() {
       setScanFeedback({
         success: true,
         message: packageComplete
-          ? `Package complete for ${foundPackage!.customerName}!`
+          ? `Paket završen za ${foundPackage!.customerName}!`
           : remainingForThisItem > 0
-            ? `Item added! ${remainingForThisItem} more "${foundItem!.name}" needed for ${foundPackage!.customerName}`
-            : `"${foundItem!.name}" complete for ${foundPackage!.customerName}!`,
+            ? `Stavka dodana! Još ${remainingForThisItem} "${foundItem!.name}" potrebno za ${foundPackage!.customerName}`
+            : `"${foundItem!.name}" završen za ${foundPackage!.customerName}!`,
         packageInfo: {
           packageId: foundPackage!.id,
           orderNumber: foundPackage!.orderNumber,
@@ -308,7 +308,7 @@ export default function PackingPage() {
       console.error('Error processing product:', error);
       setScanFeedback({
         success: false,
-        message: `Error processing "${code}". Please try again.`,
+        message: `Greška pri obradi "${code}". Molimo pokušajte ponovo.`,
         urgency: 'high',
         sound: 'error',
       });
@@ -351,7 +351,7 @@ export default function PackingPage() {
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading packing data...</p>
+          <p className="text-gray-600">Učitavam podatke za pakiranje...</p>
         </div>
       </div>
     );
@@ -361,8 +361,8 @@ export default function PackingPage() {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 mb-4">Error: {error}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
+          <p className="text-red-600 mb-4">Greška: {error}</p>
+          <Button onClick={() => window.location.reload()}>Pokušaj ponovo</Button>
         </div>
       </div>
     );
@@ -378,13 +378,13 @@ export default function PackingPage() {
         <div className="flex flex-col items-center mb-4">
           <div className="flex items-center gap-3">
             <Package className="h-6 w-6 text-amber-600" />
-            <h1 className="text-2xl font-bold text-gray-900 text-center">Packing</h1>
+            <h1 className="text-2xl font-bold text-gray-900 text-center">Pakiranje</h1>
           </div>
         </div>
         {/* Calendar */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg text-center">Select Date</CardTitle>
+            <CardTitle className="text-lg text-center">Odaberi datum</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center pb-4">
             <Calendar
@@ -409,7 +409,7 @@ export default function PackingPage() {
                 size="sm"
               >
                 <Scan className="mr-2 h-4 w-4" />
-                {scannerActive ? 'Stop Scanning' : 'Start Scanning'}
+                {scannerActive ? 'Zaustavi skeniranje' : 'Pokreni skeniranje'}
               </Button>
             </div>
 
@@ -426,14 +426,14 @@ export default function PackingPage() {
             {/* Manual SKU Entry */}
             <div className="flex gap-2 mb-4">
               <Input
-                placeholder="Enter SKU manually..."
+                placeholder="Upiši SKU ručno..."
                 value={manualSku}
                 onChange={e => setManualSku(e.target.value)}
                 onKeyPress={e => e.key === 'Enter' && handleManualEntry()}
                 className="flex-1"
               />
               <Button onClick={handleManualEntry} disabled={!manualSku.trim()}>
-                Add
+                Dodaj
               </Button>
             </div>
 
@@ -470,12 +470,11 @@ export default function PackingPage() {
                                 <div className="flex items-center gap-2 mb-3">
                                   <Package className="h-4 w-4 text-yellow-600" />
                                   <span className="font-semibold text-yellow-800">
-                                    Choose Package
+                                    Odaberi paket
                                   </span>
                                 </div>
                                 <p className="text-sm text-yellow-700 mb-3">
-                                  Multiple customers ordered this product. Click the package you
-                                  want to add it to:
+                                  Više kupaca je naručilo ovaj proizvod. Klikni na paket u koji ga želiš dodati:
                                 </p>
                                 <div className="space-y-2">
                                   {scanFeedback.multiplePackages.map(pkg => (
@@ -611,7 +610,7 @@ export default function PackingPage() {
                                     </span>
                                     {scanFeedback.packageInfo.remainingItems > 0 && (
                                       <Badge variant="outline" className="text-xs">
-                                        {scanFeedback.packageInfo.remainingItems} remaining
+                                        {scanFeedback.packageInfo.remainingItems} preostalo
                                       </Badge>
                                     )}
                                   </div>
@@ -627,7 +626,7 @@ export default function PackingPage() {
                             onClick={dismissFeedback}
                             className="px-3 py-1 text-sm"
                           >
-                            Close
+                            Zatvori
                           </Button>
                         </div>
                       </div>
@@ -643,7 +642,7 @@ export default function PackingPage() {
         <Card className="mb-6">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Packages Progress</span>
+              <span className="text-sm font-medium">Napredak paketa</span>
               <span className="text-sm text-gray-600">
                 {completedPackages}/{totalPackages}
               </span>
@@ -654,7 +653,7 @@ export default function PackingPage() {
             />
             {completedPackages === totalPackages && totalPackages > 0 && (
               <div className="mt-3 text-center">
-                <Badge className="bg-green-600">All Packages Complete!</Badge>
+                <Badge className="bg-green-600">Svi paketi završeni!</Badge>
               </div>
             )}
           </CardContent>
@@ -686,14 +685,14 @@ export default function PackingPage() {
                         variant={pkg.status === 'completed' ? 'default' : 'secondary'}
                         className="text-xs"
                       >
-                        {pkg.status === 'completed' ? 'Complete' : 'In Progress'}
+                        {pkg.status === 'completed' ? 'Završeno' : 'U tijeku'}
                       </Badge>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => resetPackage(pkg.id)}
                         className="h-6 w-6 p-0"
-                        title="Reset Package"
+                        title="Resetiraj paket"
                       >
                         <RotateCcw className="h-3 w-3" />
                       </Button>
@@ -715,7 +714,7 @@ export default function PackingPage() {
                     <div className="flex items-center gap-2 mt-1">
                       <Package className="h-3 w-3 text-gray-500" />
                       <span className="text-xs text-gray-600">
-                        Est. Weight: {estimatedWeight.toFixed(1)}kg
+                        Procj. težina: {estimatedWeight.toFixed(1)}kg
                       </span>
                     </div>
                   </div>
@@ -723,7 +722,7 @@ export default function PackingPage() {
                   {/* Progress */}
                   <div className="mb-3">
                     <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                      <span>Progress</span>
+                      <span>Napredak</span>
                       <span>
                         {progress.scanned}/{progress.total}
                       </span>
@@ -796,7 +795,7 @@ export default function PackingPage() {
         {packages.length === 0 && !loading && (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-gray-600 mb-4">No packages found for this date</p>
+              <p className="text-gray-600 mb-4">Nema paketa za ovaj datum</p>
             </CardContent>
           </Card>
         )}

@@ -180,7 +180,7 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
             {isInitializing ? (
               <>
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                Starting Camera...
+                Pokrećem kameru...
               </>
             ) : isActive ? (
               <>
@@ -190,7 +190,7 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
             ) : (
               <>
                 <Camera className="h-4 w-4" />
-                Start Scanner
+                Pokreni skener
               </>
             )}
           </Button>
@@ -255,10 +255,10 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
               <strong>Instructions:</strong>
             </p>
             <ul className="text-amber-500 text-xs mt-1 space-y-1">
-              <li>• Click &quot;Start Scanner&quot; to activate the camera</li>
-              <li>• Position the barcode or QR code in the scanning area</li>
-              <li>• The app will automatically detect and process the code</li>
-              <li>• For best results, ensure good lighting and hold device steady</li>
+              <li>• Klikni &quot;Pokreni skener&quot; za aktivaciju kamere</li>
+              <li>• Postavi barcode ili QR kod u područje skeniranja</li>
+              <li>• Aplikacija će automatski detektirati i obraditi kod</li>
+              <li>• Za najbolje rezultate, osiguraj dobro osvjetljenje i drži uređaj mirno</li>
             </ul>
           </div>
         )}

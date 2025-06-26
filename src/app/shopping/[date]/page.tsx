@@ -201,7 +201,7 @@ export default function ShoppingPage() {
 
             {completedItems === totalItems && totalItems > 0 && (
               <div className="mt-3 text-center">
-                <Badge className="bg-green-600">Shopping Complete!</Badge>
+                <Badge className="bg-green-600">Kupnja završena!</Badge>
               </div>
             )}
           </CardContent>
@@ -213,7 +213,7 @@ export default function ShoppingPage() {
             // Group items by category
             const groupedItems = shoppingList.reduce(
               (groups, item) => {
-                const category = item.category || 'Uncategorized';
+                const category = item.category || 'Bez kategorije';
                 if (!groups[category]) {
                   groups[category] = [];
                 }

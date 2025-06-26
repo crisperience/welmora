@@ -1,11 +1,11 @@
 'use client';
 
-import * as React from 'react';
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import * as React from 'react';
 import { DayButton, DayPicker, getDefaultClassNames } from 'react-day-picker';
 
-import { cn } from '@/lib/utils';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 function Calendar({
   className,
@@ -24,6 +24,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      locale={{ code: 'hr-HR' }}
       className={cn(
         'bg-background group/calendar p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
@@ -32,7 +33,9 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: date => date.toLocaleString('default', { month: 'short' }),
+        formatMonthDropdown: date => date.toLocaleString('hr-HR', { month: 'short' }),
+        formatWeekdayName: date => date.toLocaleString('hr-HR', { weekday: 'short' }),
+        formatCaption: date => date.toLocaleString('hr-HR', { month: 'long', year: 'numeric' }),
         ...formatters,
       }}
       classNames={{

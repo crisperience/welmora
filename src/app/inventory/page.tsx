@@ -46,13 +46,13 @@ export default function InventoryPage() {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to load inventory');
+          throw new Error(data.error || 'Neuspješno učitavanje zaliha');
         }
 
         setInventory(data.products || []);
         setTotalPages(data.totalPages || 1);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load inventory');
+        setError(err instanceof Error ? err.message : 'Neuspješno učitavanje zaliha');
         console.error('Load inventory error:', err);
       } finally {
         setIsLoading(false);
@@ -83,13 +83,13 @@ export default function InventoryPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to update stock');
+        throw new Error(data.error || 'Neuspješno ažuriranje zaliha');
       }
 
       // Refresh inventory after successful update
       await loadInventory(searchTerm, page);
     } catch (err) {
-      setError('Failed to update stock');
+      setError('Neuspješno ažuriranje zaliha');
       console.error('Update stock error:', err);
     }
   };
