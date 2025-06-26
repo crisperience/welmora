@@ -147,10 +147,10 @@ export default function ProductsPage() {
       prev.map(product =>
         product.sku === productSku
           ? {
-              ...product,
-              welmoraStock: getStockFromStatus(newStatus),
-              welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
-            }
+            ...product,
+            welmoraStock: getStockFromStatus(newStatus),
+            welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
+          }
           : product
       )
     );
@@ -211,7 +211,7 @@ export default function ProductsPage() {
           `"${product.name}"`,
           product.welmoraPrice,
           getStockStatus(product.welmoraStock) +
-            (product.welmoraBackorders === 'yes' ? ' (Backorder)' : ''),
+          (product.welmoraBackorders === 'yes' ? ' (Backorder)' : ''),
           product.dmPrice || '',
           product.dmStock !== undefined ? getStockStatus(product.dmStock) : '',
           product.muellerPrice || '',
@@ -331,11 +331,10 @@ export default function ProductsPage() {
                                     )
                                   }
                                   disabled={loadingItems.has(product.sku)}
-                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders))} ${
-                                    loadingItems.has(product.sku)
+                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders))} ${loadingItems.has(product.sku)
                                       ? 'opacity-50 cursor-not-allowed'
                                       : ''
-                                  }`}
+                                    }`}
                                 >
                                   <option value="instock">Dostupno</option>
                                   <option value="outofstock">Nedostupno</option>

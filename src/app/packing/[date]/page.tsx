@@ -398,7 +398,7 @@ export default function PackingPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-4 pb-20">
         {/* Scanner */}
         <Card className="mb-6">
           <CardContent className="p-4">
@@ -439,16 +439,14 @@ export default function PackingPage() {
 
             {scanFeedback && (
               <Card
-                className={`border-l-4 ${
-                  scanFeedback.success ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'
-                }`}
+                className={`border-l-4 ${scanFeedback.success ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'
+                  }`}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <div
-                      className={`p-2 rounded-full ${
-                        scanFeedback.success ? 'bg-green-100' : 'bg-red-100'
-                      }`}
+                      className={`p-2 rounded-full ${scanFeedback.success ? 'bg-green-100' : 'bg-red-100'
+                        }`}
                     >
                       {scanFeedback.success ? (
                         <CheckCircle className="h-5 w-5 text-green-600" />
@@ -460,9 +458,8 @@ export default function PackingPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <p
-                            className={`font-medium ${
-                              scanFeedback.success ? 'text-green-800' : 'text-red-800'
-                            }`}
+                            className={`font-medium ${scanFeedback.success ? 'text-green-800' : 'text-red-800'
+                              }`}
                           >
                             {scanFeedback.message}
                           </p>
@@ -671,11 +668,10 @@ export default function PackingPage() {
             return (
               <Card
                 key={pkg.id}
-                className={`${
-                  pkg.status === 'completed'
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-white border-gray-200'
-                } transition-all duration-200`}
+                className={`${pkg.status === 'completed'
+                  ? 'bg-green-50 border-green-200'
+                  : 'bg-white border-gray-200'
+                  } transition-all duration-200`}
               >
                 <CardContent className="p-4">
                   {/* Package Header */}
@@ -740,11 +736,10 @@ export default function PackingPage() {
                     {pkg.items.map(item => (
                       <div
                         key={item.sku}
-                        className={`flex items-center gap-3 p-2 rounded-lg ${
-                          item.scanned >= item.needed
-                            ? 'bg-green-100 border border-green-200'
-                            : 'bg-gray-50 border border-gray-200'
-                        }`}
+                        className={`flex items-center gap-3 p-2 rounded-lg ${item.scanned >= item.needed
+                          ? 'bg-green-100 border border-green-200'
+                          : 'bg-gray-50 border border-gray-200'
+                          }`}
                       >
                         {/* Product Image - smaller on mobile, larger on desktop */}
                         <div className="w-8 h-8 md:w-12 md:h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
@@ -769,11 +764,10 @@ export default function PackingPage() {
                         {/* Product Info */}
                         <div className="flex-1 min-w-0">
                           <h4
-                            className={`font-medium text-xs md:text-sm leading-tight mb-1 ${
-                              item.scanned >= item.needed
-                                ? 'text-green-800 line-through'
-                                : 'text-gray-900'
-                            }`}
+                            className={`font-medium text-xs md:text-sm leading-tight mb-1 ${item.scanned >= item.needed
+                              ? 'text-green-800 line-through'
+                              : 'text-gray-900'
+                              }`}
                           >
                             {item.name}
                           </h4>
