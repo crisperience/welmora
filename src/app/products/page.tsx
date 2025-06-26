@@ -134,9 +134,7 @@ export default function ProductsPage() {
     if (prices.length === 0) return null;
     if (prices.length === 1) return prices[0].source;
 
-    const cheapest = prices.reduce((min, current) =>
-      current.price < min.price ? current : min
-    );
+    const cheapest = prices.reduce((min, current) => (current.price < min.price ? current : min));
 
     // Check if there are multiple sources with the same cheapest price
     const cheapestCount = prices.filter(p => p.price === cheapest.price).length;
@@ -145,7 +143,10 @@ export default function ProductsPage() {
     return cheapest.source;
   };
 
-  const getPriceColorClass = (source: 'dm' | 'mueller' | 'metro', cheapestSource: string | null) => {
+  const getPriceColorClass = (
+    source: 'dm' | 'mueller' | 'metro',
+    cheapestSource: string | null
+  ) => {
     if (cheapestSource === source) {
       return 'text-green-600 font-bold';
     }
@@ -177,10 +178,10 @@ export default function ProductsPage() {
       prev.map(product =>
         product.sku === productSku
           ? {
-            ...product,
-            welmoraStock: getStockFromStatus(newStatus),
-            welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
-          }
+              ...product,
+              welmoraStock: getStockFromStatus(newStatus),
+              welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
+            }
           : product
       )
     );
@@ -337,7 +338,11 @@ export default function ProductsPage() {
 
                   {/* Calculate cheapest source for this product */}
                   {(() => {
-                    const cheapestSource = getCheapestSource(product.dmPrice, product.muellerPrice, product.metroPrice);
+                    const cheapestSource = getCheapestSource(
+                      product.dmPrice,
+                      product.muellerPrice,
+                      product.metroPrice
+                    );
 
                     return (
                       <>
@@ -364,10 +369,11 @@ export default function ProductsPage() {
                                     )
                                   }
                                   disabled={loadingItems.has(product.sku)}
-                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders))} ${loadingItems.has(product.sku)
-                                    ? 'opacity-50 cursor-not-allowed'
-                                    : ''
-                                    }`}
+                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders))} ${
+                                    loadingItems.has(product.sku)
+                                      ? 'opacity-50 cursor-not-allowed'
+                                      : ''
+                                  }`}
                                 >
                                   <option value="instock">Dostupno</option>
                                   <option value="outofstock">Nedostupno</option>
@@ -449,9 +455,7 @@ export default function ProductsPage() {
                             <span
                               className={`text-sm font-semibold ${getPriceColorClass('metro', cheapestSource)}`}
                             >
-                              {product.metroPrice
-                                ? formatPrice(product.metroPrice, 'EUR')
-                                : 'N/A'}
+                              {product.metroPrice ? formatPrice(product.metroPrice, 'EUR') : 'N/A'}
                             </span>
                             {product.metroProductUrl ? (
                               <a

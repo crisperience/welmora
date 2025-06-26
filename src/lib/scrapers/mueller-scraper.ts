@@ -193,7 +193,12 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
     productTiles: ElementHandle<Element>[],
     gtin?: string
   ): Promise<ElementHandle<Element> | null> {
-    const realResults: { tile: ElementHandle<Element>; index: number; productUrl: string }[] = [];
+    const realResults: {
+      tile: ElementHandle<Element>;
+      index: number;
+      productUrl: string;
+      productName?: string;
+    }[] = [];
 
     // First, collect all real search results (not sponsored)
     for (let i = 0; i < productTiles.length; i++) {
@@ -205,6 +210,19 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
         const productUrl = linkElement
           ? await page.evaluate(el => el.getAttribute('href'), linkElement)
           : '';
+
+        // Extract product name for better debugging
+        let productName = '';
+        try {
+          const nameElement = await tile.$(
+            '.product-tile_component_product-tile__product-name__xG25c'
+          );
+          if (nameElement) {
+            productName = await page.evaluate(el => el.textContent?.trim() || '', nameElement);
+          }
+        } catch {
+          // Continue without name
+        }
 
         // Check parent container to distinguish real vs recommended
         const parentElement = await page.evaluateHandle(el => el.parentElement, tile);
@@ -225,9 +243,13 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
 
         if (isRealResult) {
           console.log(
-            `Mueller Scraper: Found real search result at position ${i + 1}: ${productUrl}`
+            `Mueller Scraper: Found real search result at position ${i + 1}: "${productName}" - ${productUrl}`
           );
-          realResults.push({ tile, index: i, productUrl });
+          realResults.push({ tile, index: i, productUrl, productName });
+        } else {
+          console.log(
+            `Mueller Scraper: Skipped product at position ${i + 1}: "${productName}" - ${productUrl} (sponsored: ${isSponsored}, parent: ${parentHTML.substring(0, 100)})`
+          );
         }
       } catch (error) {
         console.log(`Mueller Scraper: Error checking product ${i + 1}:`, error);
@@ -238,6 +260,8 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
       console.log('Mueller Scraper: No real search results found');
       return null;
     }
+
+    console.log(`Mueller Scraper: Found ${realResults.length} real search results total`);
 
     // If we have a GTIN, try to find the product URL that contains the GTIN
     if (gtin && realResults.length > 1) {
@@ -275,12 +299,13 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
       }
 
       // Second try: Check the HTML content of each product tile for GTIN
+      console.log(`Mueller Scraper: Checking HTML content of each tile for GTIN ${gtin}...`);
       for (const result of realResults) {
         try {
           const tileHTML = await page.evaluate(el => el.outerHTML, result.tile);
           if (tileHTML.includes(gtin)) {
             console.log(
-              `Mueller Scraper: Found GTIN ${gtin} in product tile HTML at position ${result.index + 1}`
+              `Mueller Scraper: Found GTIN ${gtin} in product tile HTML at position ${result.index + 1}: "${result.productName}"`
             );
             return result.tile;
           }
@@ -308,7 +333,7 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
             const nameElements = await result.tile.$$(
               '.product-tile_component_product-tile__product-name__xG25c, [class*="product-name"], h3, h4'
             );
-            let productName = '';
+            let productName = result.productName || '';
 
             for (const nameElement of nameElements) {
               try {
@@ -347,13 +372,13 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
       }
 
       console.log(
-        `Mueller Scraper: No exact GTIN match found in URLs or HTML, using first real result`
+        `Mueller Scraper: No exact GTIN match found in URLs or HTML, using first real result: "${realResults[0].productName}"`
       );
     }
 
     // Return first real result as fallback
     console.log(
-      `Mueller Scraper: Using first real search result at position ${realResults[0].index + 1}`
+      `Mueller Scraper: Using first real search result at position ${realResults[0].index + 1}: "${realResults[0].productName}"`
     );
     return realResults[0].tile;
   }

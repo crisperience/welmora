@@ -1,4 +1,4 @@
-import { createMetroScraper } from '@/lib/scrapers/metro-scraper';
+import { createMetroGuestScraper } from '@/lib/scrapers/metro-scraper-guest';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Capture console logs
@@ -36,38 +36,30 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { gtin, testUrl } = body;
+    const { gtin } = body;
 
-    if (!gtin && !testUrl) {
-      return NextResponse.json({ error: 'GTIN or testUrl is required' }, { status: 400 });
+    if (!gtin) {
+      return NextResponse.json({ error: 'GTIN is required' }, { status: 400 });
     }
 
-    console.log(`Testing Metro scraper for GTIN: ${gtin} or URL: ${testUrl}`);
+    console.log(`Testing Metro Guest scraper for GTIN: ${gtin}`);
 
-    const scraper = createMetroScraper();
+    const scraper = createMetroGuestScraper();
+    const result = await scraper.scrapeProduct(gtin);
 
-    let result;
-    if (testUrl) {
-      // Test with a specific URL
-      result = await scraper.scrapeProduct('test');
-    } else {
-      result = await scraper.scrapeProduct(gtin);
-    }
-
-    console.log(`Metro test result for ${gtin || testUrl}:`, result);
+    console.log(`Metro Guest test result for ${gtin}:`, result);
 
     stopLogCapture();
 
     return NextResponse.json({
       success: true,
-      gtin: gtin || 'test',
-      testUrl,
+      gtin,
       result,
       debugLogs: capturedLogs,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Metro test error:', error);
+    console.error('Metro Guest test error:', error);
     stopLogCapture();
 
     return NextResponse.json(
@@ -87,14 +79,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const gtin = searchParams.get('gtin') || '4005900123456'; // Test with a common German product GTIN
+    const gtin = searchParams.get('gtin') || '7702018070794'; // Test with the original GTIN
 
-    console.log(`GET Metro test for GTIN: ${gtin}`);
+    console.log(`GET Metro Guest test for GTIN: ${gtin}`);
 
-    const scraper = createMetroScraper();
+    const scraper = createMetroGuestScraper();
     const result = await scraper.scrapeProduct(gtin);
 
-    console.log(`Metro GET test result for ${gtin}:`, result);
+    console.log(`Metro Guest GET test result for ${gtin}:`, result);
 
     stopLogCapture();
 
@@ -106,7 +98,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Metro GET test error:', error);
+    console.error('Metro Guest GET test error:', error);
     stopLogCapture();
 
     return NextResponse.json(
