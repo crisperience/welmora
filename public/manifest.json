@@ -1,7 +1,7 @@
 {
   "name": "Welmora",
   "short_name": "Welmora",
-  "description": "Welmora - Inventory, Order Management, and Price Comparison",
+  "description": "Welmora - Upravljanje zalihama, obradu narudžbi i usporedbu cijena",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -23,6 +23,6 @@
     }
   ],
   "categories": ["business", "productivity", "shopping"],
-  "lang": "en",
+  "lang": "hr",
   "dir": "ltr"
 }

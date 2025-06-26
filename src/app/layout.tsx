@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Welmora',
-  description: 'Welmora - Inventory, Order Management, and Price Comparison',
+  description: 'Welmora - Upravljanje zalihama, obradu narudžbi i usporedbu cijena',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'Welmora',
     title: 'Welmora',
-    description: 'Welmora - Inventory, Order Management, and Price Comparison',
+    description: 'Welmora - Upravljanje zalihama, obradu narudžbi i usporedbu cijena',
   },
   icons: {
     icon: '/Favicon Original.ico',

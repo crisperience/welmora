@@ -8,27 +8,31 @@ interface SkuItem {
 /**
  * Generate ZIP file containing sticker PDFs ONLY for products in the specific order
  * Uses SKU-only search across entire bucket (ignores folder structure)
+ * Preserves the original order from the WooCommerce order by using sequential prefixes
  *
  * @param skuItems - Array of SKUs from the order's line_items
  * @param orderId - Order ID for naming the ZIP file
- * @returns ZIP buffer containing only the PDFs for ordered products
+ * @returns ZIP buffer containing only the PDFs for ordered products in the correct order
  */
 export async function generateZipFromSkus(skuItems: SkuItem[], orderId: number): Promise<Buffer> {
   const zip = new JSZip();
   let addedFiles = 0;
 
   console.log(
-    `Generating ZIP for order ${orderId} with ${skuItems.length} SKUs (searching entire bucket)`
+    `Generating ZIP for order ${orderId} with ${skuItems.length} SKUs (preserving order)`
   );
 
-  for (const { sku } of skuItems) {
+  // Process SKUs in the exact order they appear in the order
+  for (let index = 0; index < skuItems.length; index++) {
+    const { sku } = skuItems[index];
+
     if (!sku) {
-      console.log(`Skipping item - no SKU found`);
+      console.log(`Skipping item ${index + 1} - no SKU found`);
       continue;
     }
 
     try {
-      console.log(`Searching for PDF for SKU: ${sku}`);
+      console.log(`Processing item ${index + 1}/${skuItems.length} - SKU: ${sku}`);
 
       // Search for PDF by SKU across entire bucket (no folder structure needed)
       const foundPath = await findPdfBySku('stickers', sku);
@@ -37,36 +41,35 @@ export async function generateZipFromSkus(skuItems: SkuItem[], orderId: number):
         const pdfBuffer = await downloadFileAsBuffer('stickers', foundPath);
 
         if (pdfBuffer) {
-          // Simple filename: just SKU.pdf (no brand needed)
-          const fileName = `${sku}.pdf`;
+          // Add sequential prefix to preserve order (001_, 002_, etc.)
+          const orderPrefix = String(index + 1).padStart(3, '0');
+          const fileName = `${orderPrefix}_${sku}.pdf`;
 
           zip.file(fileName, pdfBuffer);
           addedFiles++;
 
-          console.log(
-            `✅ Found and added: ${fileName} (${pdfBuffer.length} bytes) from ${foundPath}`
-          );
+          console.log(`✅ Added ${fileName} (${pdfBuffer.length} bytes) from ${foundPath}`);
         } else {
           console.log(`❌ Failed to download PDF from path: ${foundPath}`);
         }
       } else {
-        console.log(`❌ PDF not found for SKU: ${sku}`);
+        console.log(`❌ PDF not found for SKU: ${sku} (position ${index + 1})`);
       }
     } catch (error) {
-      console.error(`Error processing SKU ${sku}:`, error);
+      console.error(`Error processing SKU ${sku} at position ${index + 1}:`, error);
     }
   }
 
   if (addedFiles === 0) {
     console.warn(`No PDF files were added to ZIP for order ${orderId}`);
     zip.file(
-      'README.txt',
-      `No sticker PDFs were found for order #${orderId}.\n\nSearched for the following SKUs:\n${skuItems.map(item => `- ${item.sku}`).join('\n')}\n\nThis may be because:\n- PDFs don't exist in Supabase storage for these SKUs\n- SKU names don't match exactly with PDF filenames\n- Files are not in the expected .pdf format\n\nNote: This ZIP only contains PDFs for products in this specific order.\nThe system searches across the entire bucket for each SKU.`
+      '000_README.txt',
+      `Nema pronađenih PDF stickersa za narudžbu #${orderId}.\n\nTraženi SKU-ovi (po redoslijedu):\n${skuItems.map((item, idx) => `${idx + 1}. ${item.sku}`).join('\n')}\n\nMoguci razlozi:\n- PDF-ovi ne postoje u Supabase storage za ove SKU-ove\n- Nazivi SKU-ova se ne podudaraju točno s nazivima PDF datoteka\n- Datoteke nisu u očekivanom .pdf formatu\n\nNapomena: Ovaj ZIP sadrži samo PDF-ove za proizvode iz ove specifične narudžbe.\nSustav pretražuje cijeli bucket za svaki SKU i čuva redoslijed iz narudžbe.`
     );
   }
 
   console.log(
-    `ZIP generation completed for order ${orderId}: ${addedFiles} files added (bucket-wide SKU search)`
+    `ZIP generation completed for order ${orderId}: ${addedFiles} files added (order preserved)`
   );
 
   // Generate ZIP buffer

@@ -15,6 +15,7 @@ interface ProductComparison {
   name: string;
   welmoraPrice: number;
   welmoraStock: number;
+  welmoraBackorders?: string;
   dmPrice?: number;
   dmStock?: number;
   dmProductUrl?: string;
@@ -32,6 +33,7 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [eurRate, setEurRate] = useState<number>(1.05); // Default fallback rate
+  const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
 
   const loadProducts = useCallback(async (search?: string) => {
     setIsPageLoading(true);
@@ -90,14 +92,21 @@ export default function ProductsPage() {
     return formatPriceWithConversion(price, currency, currency === 'CHF' ? eurRate : undefined);
   };
 
-  const getStockColor = (stock?: number) => {
-    if (stock === undefined) return 'bg-gray-100 text-gray-600';
-    if (stock === 0) return 'bg-orange-100 text-orange-700';
-    return 'bg-green-100 text-green-700';
+  const getStockColor = (status: 'instock' | 'outofstock' | 'backorder') => {
+    switch (status) {
+      case 'instock':
+        return 'bg-green-100 text-green-700 border-green-300';
+      case 'outofstock':
+        return 'bg-red-100 text-red-700 border-red-300';
+      case 'backorder':
+        return 'bg-orange-100 text-orange-700 border-orange-300';
+      default:
+        return 'bg-gray-100 text-gray-600 border-gray-300';
+    }
   };
 
   const getStockStatus = (stock: number) => {
-    return stock > 0 ? 'In Stock' : 'Out of Stock';
+    return stock > 0 ? 'Dostupno' : 'Nedostupno';
   };
 
   const getCheapestSource = (dmPrice?: number, muellerPrice?: number) => {
@@ -115,40 +124,94 @@ export default function ProductsPage() {
     return 'text-gray-900'; // Default color
   };
 
-  // Handle stock status change for individual products
-  const handleStockChange = async (productSku: string, newStatus: 'instock' | 'outofstock') => {
+  // Convert stock status to welmoraStock number for UI
+  const getStockFromStatus = (status: 'instock' | 'outofstock' | 'backorder'): number => {
+    return status === 'instock' ? 1 : 0;
+  };
+
+  // Convert welmoraStock number to status with backorder support
+  const getStatusFromStock = (stock: number, backorders?: string): 'instock' | 'outofstock' | 'backorder' => {
+    if (stock > 0) return 'instock';
+    if (backorders === 'yes') return 'backorder';
+    return 'outofstock';
+  };
+
+  // Optimistic updates for stock status changes
+  const handleStockChange = async (
+    productSku: string,
+    newStatus: 'instock' | 'outofstock' | 'backorder'
+  ) => {
+    // Store original state for rollback
+    const originalProduct = products.find(p => p.sku === productSku);
+    if (!originalProduct) return;
+
+    const originalStock = originalProduct.welmoraStock;
+
+    // 1. OPTIMISTIC UPDATE - immediately update UI
+    setProducts(prev =>
+      prev.map(product =>
+        product.sku === productSku
+          ? {
+            ...product,
+            welmoraStock: getStockFromStatus(newStatus),
+            welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no'
+          }
+          : product
+      )
+    );
+
+    // 2. Show loading state for this item
+    setLoadingItems(prev => new Set(prev).add(productSku));
+
     try {
+      // 3. Send API request in background
       const response = await fetch('/api/products/update-stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sku: productSku,
           stock_status: newStatus,
-          // Don't set stock_quantity, just change the status
         }),
       });
 
-      if (response.ok) {
-        // Reload products to show updated data
-        await loadProducts(searchTerm);
-      } else {
-        console.error('Failed to update stock status');
+      if (!response.ok) {
+        throw new Error('Failed to update stock status');
       }
+
+      // 4. Success - optimistic update was correct, no need to change UI
+      console.log(`✅ Stock status updated successfully for ${productSku}: ${newStatus}`);
     } catch (error) {
       console.error('Error updating stock status:', error);
+
+      // 5. ROLLBACK - revert to original state on error
+      setProducts(prev =>
+        prev.map(product =>
+          product.sku === productSku ? { ...product, welmoraStock: originalStock } : product
+        )
+      );
+
+      // Show error message (optional)
+      alert('Greška pri ažuriranju statusa zaliha. Pokušajte ponovo.');
+    } finally {
+      // 6. Remove loading state
+      setLoadingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(productSku);
+        return newSet;
+      });
     }
   };
 
   const exportToCSV = () => {
     const headers = [
       'SKU',
-      'Name',
-      'Welmora Price',
-      'Welmora Stock Status',
-      'DM Price',
-      'DM Stock Status',
-      'Mueller Price',
-      'Mueller Stock Status',
+      'Naziv',
+      'Welmora Cijena',
+      'Welmora Status',
+      'DM Cijena',
+      'DM Status',
+      'Müller Cijena',
+      'Müller Status',
     ];
 
     const csvContent = [
@@ -158,7 +221,7 @@ export default function ProductsPage() {
           product.sku,
           `"${product.name}"`,
           product.welmoraPrice,
-          getStockStatus(product.welmoraStock),
+          getStockStatus(product.welmoraStock) + (product.welmoraBackorders === 'yes' ? ' (Backorder)' : ''),
           product.dmPrice || '',
           product.dmStock !== undefined ? getStockStatus(product.dmStock) : '',
           product.muellerPrice || '',
@@ -171,7 +234,7 @@ export default function ProductsPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `welmora-products-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `welmora-proizvodi-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -181,14 +244,14 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="p-4 border-b bg-white">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <Scale className="h-6 w-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+          <Scale className="h-6 w-6 text-amber-600" />
+          <h1 className="text-2xl font-bold text-gray-900">Proizvodi</h1>
         </div>
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search products by name, SKU, or GTIN..."
+              placeholder="Pretraži proizvode po nazivu, SKU ili GTIN..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="pl-10 pr-10"
@@ -223,11 +286,11 @@ export default function ProductsPage() {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <Progress value={undefined} className="w-64 mb-4" />
-              <p className="text-gray-600">Loading products...</p>
+              <p className="text-gray-600">Učitavam proizvode...</p>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
             {products.map(product => (
               <Card key={product.sku} className="overflow-hidden">
                 <div className="aspect-square relative bg-gray-100">
@@ -237,11 +300,11 @@ export default function ProductsPage() {
                       alt={product.name}
                       fill
                       className="object-cover"
-                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 16vw"
+                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-400 text-xs">
-                      No Image
+                      Nema slike
                     </div>
                   )}
                 </div>
@@ -265,19 +328,31 @@ export default function ProductsPage() {
                               </span>
                             </div>
                             <div className="flex flex-col items-end gap-1">
-                              <select
-                                value={product.welmoraStock > 0 ? 'instock' : 'outofstock'}
-                                onChange={e =>
-                                  handleStockChange(
-                                    product.sku,
-                                    e.target.value as 'instock' | 'outofstock'
-                                  )
-                                }
-                                className={`text-xs px-2 py-1 rounded border ${getStockColor(product.welmoraStock)} border-current`}
-                              >
-                                <option value="instock">In Stock</option>
-                                <option value="outofstock">Out of Stock</option>
-                              </select>
+                              <div className="relative">
+                                <select
+                                  value={getStatusFromStock(product.welmoraStock, product.welmoraBackorders)}
+                                  onChange={e =>
+                                    handleStockChange(
+                                      product.sku,
+                                      e.target.value as 'instock' | 'outofstock' | 'backorder'
+                                    )
+                                  }
+                                  disabled={loadingItems.has(product.sku)}
+                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders))} ${loadingItems.has(product.sku)
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : ''
+                                    }`}
+                                >
+                                  <option value="instock">Dostupno</option>
+                                  <option value="outofstock">Nedostupno</option>
+                                  <option value="backorder">Po narudžbi</option>
+                                </select>
+                                {loadingItems.has(product.sku) && (
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-amber-500"></div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -295,7 +370,7 @@ export default function ProductsPage() {
                                 href={product.dmProductUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded border border-blue-200 transition-colors whitespace-nowrap flex items-center gap-1"
+                                className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 py-1 rounded border border-amber-200 transition-colors whitespace-nowrap flex items-center gap-1"
                               >
                                 <Image
                                   src="/logo_dm.png"
@@ -304,7 +379,7 @@ export default function ProductsPage() {
                                   height={16}
                                   className="object-contain"
                                 />
-                                Check Stock
+                                Provjeri zalihe
                               </a>
                             )}
                           </div>
@@ -325,7 +400,7 @@ export default function ProductsPage() {
                                 href={product.muellerProductUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded border border-blue-200 transition-colors whitespace-nowrap flex items-center gap-1"
+                                className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 py-1 rounded border border-amber-200 transition-colors whitespace-nowrap flex items-center gap-1"
                               >
                                 <Image
                                   src="/logo_mueller.png"
@@ -334,7 +409,7 @@ export default function ProductsPage() {
                                   height={16}
                                   className="object-contain"
                                 />
-                                Check Stock
+                                Provjeri zalihe
                               </a>
                             ) : (
                               <span className="text-xs text-gray-400">N/A</span>

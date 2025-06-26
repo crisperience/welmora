@@ -139,8 +139,8 @@ export default function ShoppingPage() {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading shopping data...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Učitavam podatke za kupnju...</p>
         </div>
       </div>
     );
@@ -150,8 +150,8 @@ export default function ShoppingPage() {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 mb-4">Error: {error}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
+          <p className="text-red-600 mb-4">Greška: {error}</p>
+          <Button onClick={() => window.location.reload()}>Pokušaj ponovo</Button>
         </div>
       </div>
     );
@@ -163,14 +163,14 @@ export default function ShoppingPage() {
       <div className="p-4 border-b bg-white">
         <div className="flex flex-col items-center mb-4">
           <div className="flex items-center gap-3">
-            <ShoppingCart className="h-6 w-6 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900 text-center">Shopping</h1>
+            <ShoppingCart className="h-6 w-6 text-amber-600" />
+            <h1 className="text-2xl font-bold text-gray-900 text-center">Kupnja</h1>
           </div>
         </div>
         {/* Calendar */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg text-center">Select Date</CardTitle>
+            <CardTitle className="text-lg text-center">Odaberi datum</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center pb-4">
             <Calendar
@@ -189,7 +189,7 @@ export default function ShoppingPage() {
         <Card className="mb-6">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Progress</span>
+              <span className="text-sm font-medium">Napredak</span>
               <span className="text-sm text-gray-600">
                 {completedItems}/{totalItems}
               </span>
@@ -229,8 +229,8 @@ export default function ShoppingPage() {
             return sortedCategories.map(category => (
               <div key={category} className="space-y-2">
                 {/* Category Header */}
-                <div className="sticky top-0 bg-blue-100 border border-blue-200 rounded-lg px-3 py-2 z-10 shadow-sm">
-                  <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wide">
+                <div className="sticky top-0 bg-amber-100 border border-amber-200 rounded-lg px-3 py-2 z-10 shadow-sm">
+                  <h3 className="text-sm font-bold text-amber-800 uppercase tracking-wide">
                     {category}
                   </h3>
                 </div>

@@ -34,12 +34,12 @@ export default function BottomNavigation() {
           onClick={() => handleNavigation('/shopping')}
           className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer ${
             isActive('/shopping')
-              ? 'bg-blue-50 text-blue-600 border-t-2 border-blue-600'
+              ? 'bg-amber-50 text-amber-600 border-t-2 border-amber-600'
               : 'text-gray-600 hover:bg-gray-50'
           }`}
         >
           <ShoppingCart className="h-6 w-6 mb-1" />
-          <span className="text-xs font-medium">Shopping</span>
+          <span className="text-xs font-medium">Kupnja</span>
         </button>
 
         {/* Packing Button - 33% */}
@@ -47,12 +47,12 @@ export default function BottomNavigation() {
           onClick={() => handleNavigation('/packing')}
           className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer ${
             isActive('/packing')
-              ? 'bg-blue-50 text-blue-600 border-t-2 border-blue-600'
+              ? 'bg-amber-50 text-amber-600 border-t-2 border-amber-600'
               : 'text-gray-600 hover:bg-gray-50'
           }`}
         >
           <PackageOpen className="h-6 w-6 mb-1" />
-          <span className="text-xs font-medium">Packing</span>
+          <span className="text-xs font-medium">Pakiranje</span>
         </button>
 
         {/* Products Button - 33% */}
@@ -60,12 +60,12 @@ export default function BottomNavigation() {
           onClick={() => handleNavigation('/products')}
           className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer ${
             isActive('/products')
-              ? 'bg-blue-50 text-blue-600 border-t-2 border-blue-600'
+              ? 'bg-amber-50 text-amber-600 border-t-2 border-amber-600'
               : 'text-gray-600 hover:bg-gray-50'
           }`}
         >
           <Scale className="h-6 w-6 mb-1" />
-          <span className="text-xs font-medium">Products</span>
+          <span className="text-xs font-medium">Proizvodi</span>
         </button>
       </div>
     </div>

@@ -11,6 +11,8 @@ interface WooCommerceProduct {
   price: string;
   stock_quantity: number | null;
   stock_status: string;
+  backorders: string;
+  manage_stock: boolean;
   images: Array<{ src: string }>;
   meta_data?: Array<{ key: string; value: string }>;
 }
@@ -212,6 +214,7 @@ export async function GET(request: NextRequest) {
         name: product.name || '',
         welmoraPrice: parseFloat(product.price) || 0,
         welmoraStock: product.stock_status === 'instock' ? product.stock_quantity || 999 : 0,
+        welmoraBackorders: product.backorders || 'no',
         dmPrice: dmPrice ? parseFloat(dmPrice) : undefined,
         dmStock: undefined, // Not storing stock data yet
         dmProductUrl: dmUrl || undefined,

@@ -250,11 +250,11 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
 
         {/* Instructions */}
         {!isActive && !error && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-600 text-sm">
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-amber-600 text-sm">
               <strong>Instructions:</strong>
             </p>
-            <ul className="text-blue-500 text-xs mt-1 space-y-1">
+            <ul className="text-amber-500 text-xs mt-1 space-y-1">
               <li>• Click &quot;Start Scanner&quot; to activate the camera</li>
               <li>• Position the barcode or QR code in the scanning area</li>
               <li>• The app will automatically detect and process the code</li>

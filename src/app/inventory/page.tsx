@@ -127,36 +127,36 @@ export default function InventoryPage() {
 
   const getStockStatusBadge = (status: string, quantity: number) => {
     if (status === 'outofstock' || quantity === 0) {
-      return <Badge variant="destructive">Out of Stock</Badge>;
+      return <Badge variant="destructive">Nedostupno</Badge>;
     } else if (quantity <= 5) {
-      return <Badge variant="secondary">Low Stock</Badge>;
+      return <Badge variant="secondary">Malo zaliha</Badge>;
     } else {
-      return <Badge variant="default">In Stock</Badge>;
+      return <Badge variant="default">Dostupno</Badge>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100 p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Inventory Management</h1>
-          <p className="text-gray-600">Manage product stock and pricing</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Upravljanje zalihama</h1>
+          <p className="text-gray-600">Upravljaj zalihama proizvoda i cijenama</p>
         </div>
 
         {/* Search and Controls */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Search & Controls</CardTitle>
-            <CardDescription>Search inventory or refresh data</CardDescription>
+            <CardTitle>Pretraga i kontrole</CardTitle>
+            <CardDescription>Pretraži zalihe ili osvježi podatke</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex gap-2">
               <div className="flex-1">
-                <Label htmlFor="search-inventory">Search Products</Label>
+                <Label htmlFor="search-inventory">Pretraži proizvode</Label>
                 <Input
                   id="search-inventory"
-                  placeholder="Search by name or SKU..."
+                  placeholder="Pretraži po nazivu ili SKU..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   onKeyPress={e => e.key === 'Enter' && handleSearch()}
@@ -165,7 +165,7 @@ export default function InventoryPage() {
               <div className="flex items-end gap-2">
                 <Button onClick={handleSearch} disabled={isLoading}>
                   <Search className="h-4 w-4 mr-2" />
-                  Search
+                  Pretraži
                 </Button>
                 <Button variant="outline" onClick={refreshInventory} disabled={isRefreshing}>
                   <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -189,8 +189,8 @@ export default function InventoryPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2">Loading inventory...</span>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+                <span className="ml-2">Učitavam zalihe...</span>
               </div>
             </CardContent>
           </Card>
@@ -213,16 +213,16 @@ export default function InventoryPage() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {/* Stock Information */}
                     <div className="space-y-2">
-                      <h4 className="font-semibold text-blue-600">Stock</h4>
+                      <h4 className="font-semibold text-amber-600">Zalihe</h4>
                       <div className="text-sm">
-                        <div>Quantity: {item.stock_quantity}</div>
+                        <div>Količina: {item.stock_quantity}</div>
                         <div>Status: {item.stock_status}</div>
                       </div>
                     </div>
 
                     {/* Price Information */}
                     <div className="space-y-2">
-                      <h4 className="font-semibold text-green-600">Price</h4>
+                      <h4 className="font-semibold text-green-600">Cijena</h4>
                       <div className="text-sm">
                         <div>{formatPrice(item.price)}</div>
                       </div>
@@ -230,7 +230,7 @@ export default function InventoryPage() {
 
                     {/* Last Updated */}
                     <div className="space-y-2">
-                      <h4 className="font-semibold text-gray-600">Last Updated</h4>
+                      <h4 className="font-semibold text-gray-600">Zadnje ažuriranje</h4>
                       <div className="text-sm">
                         <div>{formatDate(item.last_updated)}</div>
                       </div>
@@ -238,14 +238,14 @@ export default function InventoryPage() {
 
                     {/* Actions */}
                     <div className="space-y-2">
-                      <h4 className="font-semibold text-gray-600">Actions</h4>
+                      <h4 className="font-semibold text-gray-600">Akcije</h4>
                       <div className="space-y-2">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => updateStock(item.sku, item.stock_quantity + 1)}
                         >
-                          +1 Stock
+                          +1 Zaliha
                         </Button>
                         <Button
                           size="sm"
@@ -254,7 +254,7 @@ export default function InventoryPage() {
                             updateStock(item.sku, Math.max(0, item.stock_quantity - 1))
                           }
                         >
-                          -1 Stock
+                          -1 Zaliha
                         </Button>
                       </div>
                     </div>
@@ -267,8 +267,8 @@ export default function InventoryPage() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-center py-8 text-gray-500">
-                    No inventory items found. Try searching for a specific product or check your
-                    connection.
+                    Nema pronađenih stavki zaliha. Pokušaj pretražiti određeni proizvod ili provjeri
+                    konekciju.
                   </div>
                 </CardContent>
               </Card>
@@ -286,17 +286,17 @@ export default function InventoryPage() {
                   onClick={() => handlePageChange(page - 1)}
                   disabled={page <= 1}
                 >
-                  Previous
+                  Prethodna
                 </Button>
                 <span className="px-4 py-2">
-                  Page {page} of {totalPages}
+                  Stranica {page} od {totalPages}
                 </span>
                 <Button
                   variant="outline"
                   onClick={() => handlePageChange(page + 1)}
                   disabled={page >= totalPages}
                 >
-                  Next
+                  Sljedeća
                 </Button>
               </div>
             </CardContent>

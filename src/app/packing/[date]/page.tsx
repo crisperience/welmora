@@ -65,7 +65,7 @@ export default function PackingPage() {
       const response = await fetch(`/api/packing/${date}?t=${Date.now()}`);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch packing data');
+        throw new Error('Neuspješno dohvaćanje podataka za pakiranje');
       }
 
       const data = await response.json();
@@ -350,7 +350,7 @@ export default function PackingPage() {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading packing data...</p>
         </div>
       </div>
@@ -377,7 +377,7 @@ export default function PackingPage() {
       <div className="p-4 border-b bg-white">
         <div className="flex flex-col items-center mb-4">
           <div className="flex items-center gap-3">
-            <Package className="h-6 w-6 text-blue-600" />
+            <Package className="h-6 w-6 text-amber-600" />
             <h1 className="text-2xl font-bold text-gray-900 text-center">Packing</h1>
           </div>
         </div>
@@ -575,9 +575,9 @@ export default function PackingPage() {
                               <div className="bg-white p-3 rounded-lg border">
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="flex items-center gap-2">
-                                    <Package className="h-4 w-4 text-blue-600" />
-                                    <span className="font-semibold text-blue-800">
-                                      <span className="font-semibold text-blue-800">#</span>
+                                    <Package className="h-4 w-4 text-amber-600" />
+                                    <span className="font-semibold text-amber-800">
+                                      <span className="font-semibold text-amber-800">#</span>
                                       {scanFeedback.packageInfo.orderNumber}
                                     </span>
                                   </div>
@@ -681,9 +681,9 @@ export default function PackingPage() {
                   {/* Package Header */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-blue-600" />
-                      <span className="font-semibold text-blue-800">#</span>
-                      <span className="font-semibold text-blue-800">{pkg.orderNumber}</span>
+                      <Package className="h-4 w-4 text-amber-600" />
+                      <span className="font-semibold text-amber-800">#</span>
+                      <span className="font-semibold text-amber-800">{pkg.orderNumber}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge
