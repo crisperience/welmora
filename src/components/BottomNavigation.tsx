@@ -16,10 +16,8 @@ export default function BottomNavigation() {
 
   const handleNavigation = (path: string) => {
     if (path === '/shopping') {
-      // Navigate to the currently selected date's shopping page
       router.push(`/shopping/${selectedDate}`);
     } else if (path === '/packing') {
-      // Navigate to the currently selected date's packing page
       router.push(`/packing/${selectedDate}`);
     } else {
       router.push(path);

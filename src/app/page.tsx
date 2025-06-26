@@ -7,7 +7,6 @@ export default function OrdersPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to today's shopping page
     const today = new Date().toISOString().split('T')[0];
     router.push(`/shopping/${today}`);
   }, [router]);

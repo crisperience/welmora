@@ -32,7 +32,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<ProductComparison[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isPageLoading, setIsPageLoading] = useState(false);
-  const [eurRate, setEurRate] = useState<number>(1.05); // Default fallback rate
+  const [eurRate, setEurRate] = useState<number>(1.05);
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
 
   const loadProducts = useCallback(async (search?: string) => {
@@ -64,7 +64,6 @@ export default function ProductsPage() {
         setEurRate(rate);
       } catch (error) {
         console.error('Failed to fetch EUR rate:', error);
-        // Keep default rate
       }
     };
 
@@ -75,11 +74,10 @@ export default function ProductsPage() {
     loadProducts();
   }, [loadProducts]);
 
-  // Auto-search when searchTerm changes with debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       loadProducts(searchTerm || undefined);
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => clearTimeout(timeoutId);
   }, [searchTerm, loadProducts]);
@@ -113,58 +111,53 @@ export default function ProductsPage() {
     if (!dmPrice && !muellerPrice) return null;
     if (!dmPrice) return 'mueller';
     if (!muellerPrice) return 'dm';
-    if (dmPrice === muellerPrice) return null; // Same price - no winner
+    if (dmPrice === muellerPrice) return null;
     return dmPrice < muellerPrice ? 'dm' : 'mueller';
   };
 
   const getPriceColorClass = (source: 'dm' | 'mueller', cheapestSource: string | null) => {
     if (cheapestSource === source) {
-      return 'text-green-600 font-bold'; // Green for cheapest
+      return 'text-green-600 font-bold';
     }
-    return 'text-gray-900'; // Default color
+    return 'text-gray-900';
   };
 
-  // Convert stock status to welmoraStock number for UI
   const getStockFromStatus = (status: 'instock' | 'outofstock' | 'backorder'): number => {
     return status === 'instock' ? 1 : 0;
   };
 
-  // Convert welmoraStock number to status with backorder support
-  const getStatusFromStock = (stock: number, backorders?: string): 'instock' | 'outofstock' | 'backorder' => {
+  const getStatusFromStock = (
+    stock: number,
+    backorders?: string
+  ): 'instock' | 'outofstock' | 'backorder' => {
     if (stock > 0) return 'instock';
     if (backorders === 'yes') return 'backorder';
     return 'outofstock';
   };
-
-  // Optimistic updates for stock status changes
   const handleStockChange = async (
     productSku: string,
     newStatus: 'instock' | 'outofstock' | 'backorder'
   ) => {
-    // Store original state for rollback
     const originalProduct = products.find(p => p.sku === productSku);
     if (!originalProduct) return;
 
     const originalStock = originalProduct.welmoraStock;
 
-    // 1. OPTIMISTIC UPDATE - immediately update UI
     setProducts(prev =>
       prev.map(product =>
         product.sku === productSku
           ? {
-            ...product,
-            welmoraStock: getStockFromStatus(newStatus),
-            welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no'
-          }
+              ...product,
+              welmoraStock: getStockFromStatus(newStatus),
+              welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
+            }
           : product
       )
     );
 
-    // 2. Show loading state for this item
     setLoadingItems(prev => new Set(prev).add(productSku));
 
     try {
-      // 3. Send API request in background
       const response = await fetch('/api/products/update-stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -178,22 +171,18 @@ export default function ProductsPage() {
         throw new Error('Failed to update stock status');
       }
 
-      // 4. Success - optimistic update was correct, no need to change UI
       console.log(`✅ Stock status updated successfully for ${productSku}: ${newStatus}`);
     } catch (error) {
       console.error('Error updating stock status:', error);
 
-      // 5. ROLLBACK - revert to original state on error
       setProducts(prev =>
         prev.map(product =>
           product.sku === productSku ? { ...product, welmoraStock: originalStock } : product
         )
       );
 
-      // Show error message (optional)
       alert('Greška pri ažuriranju statusa zaliha. Pokušajte ponovo.');
     } finally {
-      // 6. Remove loading state
       setLoadingItems(prev => {
         const newSet = new Set(prev);
         newSet.delete(productSku);
@@ -221,7 +210,8 @@ export default function ProductsPage() {
           product.sku,
           `"${product.name}"`,
           product.welmoraPrice,
-          getStockStatus(product.welmoraStock) + (product.welmoraBackorders === 'yes' ? ' (Backorder)' : ''),
+          getStockStatus(product.welmoraStock) +
+            (product.welmoraBackorders === 'yes' ? ' (Backorder)' : ''),
           product.dmPrice || '',
           product.dmStock !== undefined ? getStockStatus(product.dmStock) : '',
           product.muellerPrice || '',
@@ -330,7 +320,10 @@ export default function ProductsPage() {
                             <div className="flex flex-col items-end gap-1">
                               <div className="relative">
                                 <select
-                                  value={getStatusFromStock(product.welmoraStock, product.welmoraBackorders)}
+                                  value={getStatusFromStock(
+                                    product.welmoraStock,
+                                    product.welmoraBackorders
+                                  )}
                                   onChange={e =>
                                     handleStockChange(
                                       product.sku,
@@ -338,10 +331,11 @@ export default function ProductsPage() {
                                     )
                                   }
                                   disabled={loadingItems.has(product.sku)}
-                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders))} ${loadingItems.has(product.sku)
-                                    ? 'opacity-50 cursor-not-allowed'
-                                    : ''
-                                    }`}
+                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders))} ${
+                                    loadingItems.has(product.sku)
+                                      ? 'opacity-50 cursor-not-allowed'
+                                      : ''
+                                  }`}
                                 >
                                   <option value="instock">Dostupno</option>
                                   <option value="outofstock">Nedostupno</option>
