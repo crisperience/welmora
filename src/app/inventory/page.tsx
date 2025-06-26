@@ -27,36 +27,39 @@ export default function InventoryPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const loadInventory = useCallback(async (search?: string, pageNum?: number) => {
-    setIsLoading(true);
-    setError(null);
+  const loadInventory = useCallback(
+    async (search?: string, pageNum?: number) => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const params = new URLSearchParams({
-        page: (pageNum || page).toString(),
-        per_page: '10',
-      });
+      try {
+        const params = new URLSearchParams({
+          page: (pageNum || page).toString(),
+          per_page: '10',
+        });
 
-      if (search) {
-        params.append('search', search);
+        if (search) {
+          params.append('search', search);
+        }
+
+        const response = await fetch(`/api/inventory?${params}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load inventory');
+        }
+
+        setInventory(data.products || []);
+        setTotalPages(data.totalPages || 1);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load inventory');
+        console.error('Load inventory error:', err);
+      } finally {
+        setIsLoading(false);
       }
-
-      const response = await fetch(`/api/inventory?${params}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to load inventory');
-      }
-
-      setInventory(data.products || []);
-      setTotalPages(data.totalPages || 1);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load inventory');
-      console.error('Load inventory error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page]);
+    },
+    [page]
+  );
 
   const refreshInventory = async () => {
     setIsRefreshing(true);
