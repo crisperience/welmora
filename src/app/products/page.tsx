@@ -107,6 +107,19 @@ export default function ProductsPage() {
     return stock > 0 ? 'Dostupno' : 'Nedostupno';
   };
 
+  const getStockStatusForExport = (stock: number, backorders?: string) => {
+    const status = getStatusFromStock(stock, backorders);
+    switch (status) {
+      case 'instock':
+        return 'Dostupno';
+      case 'backorder':
+        return 'Po narudžbi';
+      case 'outofstock':
+      default:
+        return 'Nedostupno';
+    }
+  };
+
   const getCheapestSource = (dmPrice?: number, muellerPrice?: number) => {
     if (!dmPrice && !muellerPrice) return null;
     if (!dmPrice) return 'mueller';
@@ -210,8 +223,7 @@ export default function ProductsPage() {
           product.sku,
           `"${product.name}"`,
           product.welmoraPrice,
-          getStockStatus(product.welmoraStock) +
-          (product.welmoraBackorders === 'yes' ? ' (Backorder)' : ''),
+          getStockStatusForExport(product.welmoraStock, product.welmoraBackorders),
           product.dmPrice || '',
           product.dmStock !== undefined ? getStockStatus(product.dmStock) : '',
           product.muellerPrice || '',
@@ -332,8 +344,8 @@ export default function ProductsPage() {
                                   }
                                   disabled={loadingItems.has(product.sku)}
                                   className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders))} ${loadingItems.has(product.sku)
-                                      ? 'opacity-50 cursor-not-allowed'
-                                      : ''
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : ''
                                     }`}
                                 >
                                   <option value="instock">Dostupno</option>
