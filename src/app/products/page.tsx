@@ -16,6 +16,7 @@ interface ProductComparison {
   welmoraPrice: number;
   welmoraStock: number;
   welmoraBackorders?: string;
+  welmoraStockStatus?: string;
   dmPrice?: number;
   dmStock?: number;
   dmProductUrl?: string;
@@ -30,6 +31,7 @@ interface ProductComparison {
   metroLastUpdated?: string;
   needsUpdate: boolean;
   image?: string;
+  welmoraImage?: string;
 }
 
 export default function ProductsPage() {
@@ -138,8 +140,8 @@ export default function ProductsPage() {
     return stock > 0 ? 'Dostupno' : 'Nedostupno';
   };
 
-  const getStockStatusForExport = (stock: number, backorders?: string) => {
-    const status = getStatusFromStock(stock, backorders);
+  const getStockStatusForExport = (stock: number, backorders?: string, stockStatus?: string) => {
+    const status = getStatusFromStock(stock, backorders, stockStatus);
     switch (status) {
       case 'instock':
         return 'Dostupno';
@@ -172,8 +174,17 @@ export default function ProductsPage() {
 
   const getStatusFromStock = (
     stock: number,
-    backorders?: string
+    backorders?: string,
+    stockStatus?: string
   ): 'instock' | 'outofstock' | 'backorder' => {
+    // If WooCommerce explicitly sets stock status, use that
+    if (stockStatus) {
+      if (stockStatus === 'backorder') return 'backorder';
+      if (stockStatus === 'outofstock') return 'outofstock';
+      if (stockStatus === 'instock') return 'instock';
+    }
+
+    // Fallback to old logic
     if (stock > 0) return 'instock';
     if (backorders === 'yes') return 'backorder';
     return 'outofstock';
@@ -245,7 +256,7 @@ export default function ProductsPage() {
           product.sku,
           `"${product.name}"`,
           product.welmoraPrice,
-          getStockStatusForExport(product.welmoraStock, product.welmoraBackorders),
+          getStockStatusForExport(product.welmoraStock, product.welmoraBackorders, product.welmoraStockStatus),
           product.dmPrice || '',
           product.dmStock !== undefined ? getStockStatus(product.dmStock) : '',
         ].join(',')
@@ -330,9 +341,9 @@ export default function ProductsPage() {
             {products.map(product => (
               <Card key={product.sku} className="overflow-hidden">
                 <div className="aspect-square relative bg-gray-100">
-                  {product.image ? (
+                  {product.welmoraImage ? (
                     <Image
-                      src={product.image}
+                      src={product.welmoraImage}
                       alt={product.name}
                       fill
                       className="object-cover"
@@ -368,7 +379,8 @@ export default function ProductsPage() {
                                 <select
                                   value={getStatusFromStock(
                                     product.welmoraStock,
-                                    product.welmoraBackorders
+                                    product.welmoraBackorders,
+                                    product.welmoraStockStatus
                                   )}
                                   onChange={e =>
                                     handleStockChange(
@@ -377,7 +389,7 @@ export default function ProductsPage() {
                                     )
                                   }
                                   disabled={loadingItems.has(product.sku)}
-                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders))} ${loadingItems.has(product.sku)
+                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders, product.welmoraStockStatus))} ${loadingItems.has(product.sku)
                                     ? 'opacity-50 cursor-not-allowed'
                                     : ''
                                     }`}

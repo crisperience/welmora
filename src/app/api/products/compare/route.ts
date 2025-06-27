@@ -24,9 +24,9 @@ export async function GET(request: NextRequest) {
     const api = WooCommerce;
 
     console.log('WooCommerce Config:', {
-      url: process.env.WOOCOMMERCE_URL,
-      hasKey: !!process.env.WOOCOMMERCE_KEY,
-      hasSecret: !!process.env.WOOCOMMERCE_SECRET,
+      url: process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WOOCOMMERCE_URL,
+      hasKey: !!(process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_KEY),
+      hasSecret: !!(process.env.WOOCOMMERCE_CONSUMER_SECRET || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_SECRET),
     });
 
     // Handle cache clearing action
