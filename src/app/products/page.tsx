@@ -196,8 +196,6 @@ export default function ProductsPage() {
     const originalProduct = products.find(p => p.sku === productSku);
     if (!originalProduct) return;
 
-    const originalStock = originalProduct.welmoraStock;
-
     setProducts(prev =>
       prev.map(product =>
         product.sku === productSku
@@ -205,6 +203,7 @@ export default function ProductsPage() {
             ...product,
             welmoraStock: getStockFromStatus(newStatus),
             welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
+            welmoraStockStatus: newStatus, // Update the stock status field too
           }
           : product
       )
@@ -232,7 +231,14 @@ export default function ProductsPage() {
 
       setProducts(prev =>
         prev.map(product =>
-          product.sku === productSku ? { ...product, welmoraStock: originalStock } : product
+          product.sku === productSku
+            ? {
+              ...product,
+              welmoraStock: originalProduct.welmoraStock,
+              welmoraBackorders: originalProduct.welmoraBackorders,
+              welmoraStockStatus: originalProduct.welmoraStockStatus,
+            }
+            : product
         )
       );
 

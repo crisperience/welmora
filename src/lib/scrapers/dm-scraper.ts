@@ -51,7 +51,7 @@ export class DMScraper {
         // Extract product data
         const result = await this.extractProductData(page);
 
-        // Cache successful results
+        // Cache successful results (only if we found actual product data)
         if (result.price || result.productUrl) {
           this.setCache(gtin, result);
         }
@@ -228,11 +228,11 @@ export class DMScraper {
 
       const result: DMProductData = {
         price,
-        productUrl: productUrl || page.url(),
+        productUrl: productUrl, // Only return URL if we actually found a product
       };
 
-      if (price) {
-        console.log(`✓ Found product: €${price}`);
+      if (price || productUrl) {
+        console.log(`✓ Found product: €${price || 'N/A'} at ${productUrl || 'N/A'}`);
       } else {
         console.log('✗ Product not found on DM');
       }
@@ -242,7 +242,7 @@ export class DMScraper {
       console.error('Data extraction error:', error);
       return {
         error: error instanceof Error ? error.message : 'Data extraction failed',
-        productUrl: page?.url() || '',
+        // Don't return search URL on error
       };
     }
   }
