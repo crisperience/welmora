@@ -13,8 +13,7 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "weekly-update": "node -e \"require('./src/lib/scrapers/weekly-updater').triggerWeeklyUpdate()\""
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",

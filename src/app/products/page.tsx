@@ -38,6 +38,7 @@ export default function ProductsPage() {
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [eurRate, setEurRate] = useState<number>(1.05);
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
+  const [isUpdatingDMPrices, setIsUpdatingDMPrices] = useState(false);
 
   const loadProducts = useCallback(async (search?: string) => {
     setIsPageLoading(true);
@@ -88,6 +89,32 @@ export default function ProductsPage() {
 
   const handleClearSearch = () => {
     setSearchTerm('');
+  };
+
+  const handleUpdateDMPrices = async () => {
+    setIsUpdatingDMPrices(true);
+    try {
+      const response = await fetch('/api/products/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_dm_prices' }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`DM cijene uspješno ažurirane!\n\nUkupno: ${result.stats.total}\nAžurirano: ${result.stats.updated}\nPreskočeno: ${result.stats.skipped}\nGreške: ${result.stats.errors}`);
+        // Reload products to show updated data
+        await loadProducts(searchTerm || undefined);
+      } else {
+        alert('Greška pri ažuriranju DM cijena: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error updating DM prices:', error);
+      alert('Greška pri ažuriranju DM cijena');
+    } finally {
+      setIsUpdatingDMPrices(false);
+    }
   };
 
   const formatPrice = (price: number, currency: 'CHF' | 'EUR' = 'CHF') => {
@@ -209,14 +236,7 @@ export default function ProductsPage() {
   };
 
   const exportToCSV = () => {
-    const headers = [
-      'SKU',
-      'Naziv',
-      'Welmora Cijena',
-      'Welmora Status',
-      'DM Cijena',
-      'DM Status',
-    ];
+    const headers = ['SKU', 'Naziv', 'Welmora Cijena', 'Welmora Status', 'DM Cijena', 'DM Status'];
 
     const csvContent = [
       headers.join(','),
@@ -268,6 +288,20 @@ export default function ProductsPage() {
             )}
           </div>
           <div className="flex gap-2">
+            <Button
+              onClick={handleUpdateDMPrices}
+              disabled={isUpdatingDMPrices || isPageLoading}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              {isUpdatingDMPrices ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-500"></div>
+              ) : (
+                <Scale className="h-4 w-4" />
+              )}
+              {isUpdatingDMPrices ? 'Ažuriranje...' : 'Ažuriraj DM'}
+            </Button>
             <Button
               onClick={exportToCSV}
               disabled={isPageLoading}
@@ -366,7 +400,7 @@ export default function ProductsPage() {
                           <h4 className="font-medium text-gray-900 text-xs mb-1">DM</h4>
                           <div className="flex justify-between items-center">
                             <span
-                              className={`text-sm font-semibold ${getPriceColorClass('dm', cheapestSource)}`}
+                              className={`text-sm font-semibold whitespace-nowrap ${getPriceColorClass('dm', cheapestSource)}`}
                             >
                               {product.dmPrice ? formatPrice(product.dmPrice, 'EUR') : 'N/A'}
                             </span>
@@ -394,7 +428,9 @@ export default function ProductsPage() {
                           <div className="flex justify-between items-center">
                             <h4 className="font-medium text-gray-900 text-xs">Müller</h4>
                             {/* Show Müller search link for all products with valid SKU/GTIN */}
-                            {product.sku && product.sku.length === 13 && /^\d+$/.test(product.sku) ? (
+                            {product.sku &&
+                              (product.sku.length === 13 || product.sku.length === 12 || product.sku.length === 8) &&
+                              /^\d+$/.test(product.sku) ? (
                               <a
                                 href={`https://www.mueller.de/suche/?query=${product.sku}`}
                                 target="_blank"
@@ -421,7 +457,9 @@ export default function ProductsPage() {
                           <div className="flex justify-between items-center">
                             <h4 className="font-medium text-gray-900 text-xs">Metro</h4>
                             {/* Show Metro search link for all products with valid SKU/GTIN */}
-                            {product.sku && product.sku.length === 13 && /^\d+$/.test(product.sku) ? (
+                            {product.sku &&
+                              (product.sku.length === 13 || product.sku.length === 12 || product.sku.length === 8) &&
+                              /^\d+$/.test(product.sku) ? (
                               <a
                                 href={`https://produkte.metro.de/shop/search?q=${product.sku}`}
                                 target="_blank"
