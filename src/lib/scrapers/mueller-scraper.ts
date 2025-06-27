@@ -264,7 +264,7 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
     console.log(`Mueller Scraper: Found ${realResults.length} real search results total`);
 
     // If we have a GTIN, try to find the product URL that contains the GTIN
-    if (gtin && realResults.length > 1) {
+    if (gtin && realResults.length > 0) {
       console.log(
         `Mueller Scraper: Multiple products found (${realResults.length}), searching for GTIN match: ${gtin}`
       );
@@ -298,7 +298,7 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
         );
       }
 
-      // Second try: Check the HTML content of each product tile for GTIN
+      // Third try: Check the HTML content of each product tile for GTIN
       console.log(`Mueller Scraper: Checking HTML content of each tile for GTIN ${gtin}...`);
       for (const result of realResults) {
         try {
@@ -317,7 +317,7 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
         }
       }
 
-      // Third try: For known problematic GTINs, use product name matching
+      // Fourth try: For known problematic GTINs, use product name matching
       // Since Mueller search returns fuzzy results, we need to identify the correct product by name
       const knownProductMappings: Record<string, string[]> = {
         '8700216678384': ['ariel', 'colorwaschmittel', 'pods'], // Ariel Colorwaschmittel Pods
@@ -371,16 +371,81 @@ export class MuellerScraper extends BaseScraper<MuellerProductData> {
         }
       }
 
-      console.log(
-        `Mueller Scraper: No exact GTIN match found in URLs or HTML, using first real result: "${realResults[0].productName}"`
-      );
+      // Final validation: Check if the first result is actually related to our search
+      if (realResults.length > 0) {
+        const firstResult = realResults[0];
+        const productName = firstResult.productName || '';
+        const productUrl = firstResult.productUrl || '';
+
+        // Get the expected product name from our WooCommerce data
+        const expectedBrand = this.getBrandForGtin(gtin);
+
+        // If we have brand information, validate that the found product is from the same brand
+        if (expectedBrand) {
+          const brandInUrl = productUrl.toLowerCase().includes(expectedBrand.toLowerCase());
+          const brandInName = productName.toLowerCase().includes(expectedBrand.toLowerCase());
+
+          if (!brandInUrl && !brandInName) {
+            console.log(
+              `Mueller Scraper: First result "${productName}" (${productUrl}) does not match expected brand "${expectedBrand}" for GTIN ${gtin}. Rejecting to avoid incorrect mapping.`
+            );
+            return null;
+          }
+        }
+
+        // Additional validation: Check if the product seems completely unrelated
+        const suspiciousKeywords = [
+          'puzzle',
+          'spielzeug',
+          'toy',
+          'spiel',
+          'game',
+          'buch',
+          'book',
+          'elektronik',
+          'electronic',
+          'handy',
+          'phone',
+          'computer',
+          'laptop',
+          'kleidung',
+          'clothing',
+          'schuhe',
+          'shoes',
+          'schmuck',
+          'jewelry',
+          'möbel',
+          'furniture',
+          'deko',
+          'decoration',
+        ];
+
+        const lowerName = productName.toLowerCase();
+        const lowerUrl = productUrl.toLowerCase();
+
+        const hasSuspiciousKeywords = suspiciousKeywords.some(
+          keyword => lowerName.includes(keyword) || lowerUrl.includes(keyword)
+        );
+
+        if (hasSuspiciousKeywords) {
+          console.log(
+            `Mueller Scraper: First result "${productName}" (${productUrl}) contains suspicious keywords that suggest it's not a household/personal care product for GTIN ${gtin}. Rejecting to avoid incorrect mapping.`
+          );
+          return null;
+        }
+
+        console.log(
+          `Mueller Scraper: Using first real search result after validation: "${productName}" at position ${firstResult.index + 1}`
+        );
+        return firstResult.tile;
+      }
     }
 
-    // Return first real result as fallback
+    // If no GTIN provided or no matches found, return null to avoid incorrect mapping
     console.log(
-      `Mueller Scraper: Using first real search result at position ${realResults[0].index + 1}: "${realResults[0].productName}"`
+      'Mueller Scraper: No suitable product match found, returning null to avoid incorrect mapping'
     );
-    return realResults[0].tile;
+    return null;
   }
 
   private async extractProductData(

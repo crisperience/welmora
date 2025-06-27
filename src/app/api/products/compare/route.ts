@@ -64,30 +64,29 @@ async function scrapeMetro(gtin: string): Promise<{ price?: number; productUrl?:
   }
 }
 
-// Legacy function kept for backward compatibility if needed
-// async function scrapeMueller(
-//   gtin: string
-// ): Promise<{ price?: number; productUrl?: string }> {
-//   try {
-//     console.log(`Scraping Mueller for GTIN: ${gtin}`);
-//     const scraper = createMuellerScraperOptimized();
-//     const result = await scraper.scrapeProduct(gtin);
+// Mueller scraping function using GTIN/EAN
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function scrapeMueller(gtin: string): Promise<{ price?: number; productUrl?: string }> {
+  try {
+    console.log(`Scraping Mueller for GTIN: ${gtin}`);
+    const scraper = createMuellerScraper();
+    const result = await scraper.scrapeProduct(gtin);
 
-//     if (result.error) {
-//       console.error(`Mueller scraping error for ${gtin}:`, result.error);
-//       return { price: undefined };
-//     }
+    if (result.error) {
+      console.error(`Mueller scraping error for ${gtin}:`, result.error);
+      return { price: undefined };
+    }
 
-//     console.log(`Mueller scraping result for ${gtin}:`, result);
-//     return {
-//       price: result.price,
-//       productUrl: result.productUrl,
-//     };
-//   } catch (error) {
-//     console.error(`Mueller scraping failed for ${gtin}:`, error);
-//     return { price: undefined };
-//   }
-// }
+    console.log(`Mueller scraping result for ${gtin}:`, result);
+    return {
+      price: result.price,
+      productUrl: result.productUrl,
+    };
+  } catch (error) {
+    console.error(`Mueller scraping failed for ${gtin}:`, error);
+    return { price: undefined };
+  }
+}
 
 // Initialize WooCommerce API
 const api = WooCommerce;
@@ -1303,6 +1302,36 @@ export async function POST(request: NextRequest) {
         },
         results,
       });
+    }
+
+    if (action === 'scrape_single_mueller') {
+      const { gtin } = body;
+
+      if (!gtin) {
+        return NextResponse.json({ error: 'Missing gtin field' }, { status: 400 });
+      }
+
+      console.log(`Testing Mueller scraper for GTIN: ${gtin}`);
+
+      try {
+        const scraper = createMuellerScraper();
+        const result = await scraper.scrapeProduct(gtin);
+
+        console.log(`Mueller scraping result for ${gtin}:`, result);
+
+        return NextResponse.json({
+          success: true,
+          gtin,
+          result,
+        });
+      } catch (error) {
+        console.error(`Mueller scraping failed for ${gtin}:`, error);
+        return NextResponse.json({
+          success: false,
+          gtin,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
