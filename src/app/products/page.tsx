@@ -124,23 +124,9 @@ export default function ProductsPage() {
     }
   };
 
-  const getCheapestSource = (dmPrice?: number, muellerPrice?: number, metroPrice?: number) => {
-    const prices = [
-      { source: 'dm', price: dmPrice },
-      { source: 'mueller', price: muellerPrice },
-      { source: 'metro', price: metroPrice },
-    ].filter(item => item.price !== undefined) as { source: string; price: number }[];
-
-    if (prices.length === 0) return null;
-    if (prices.length === 1) return prices[0].source;
-
-    const cheapest = prices.reduce((min, current) => (current.price < min.price ? current : min));
-
-    // Check if there are multiple sources with the same cheapest price
-    const cheapestCount = prices.filter(p => p.price === cheapest.price).length;
-    if (cheapestCount > 1) return null; // Multiple sources have same price
-
-    return cheapest.source;
+  const getCheapestSource = (dmPrice?: number) => {
+    // Only compare DM prices since Mueller and Metro are now search-only
+    return dmPrice ? 'dm' : null;
   };
 
   const getPriceColorClass = (
@@ -230,10 +216,6 @@ export default function ProductsPage() {
       'Welmora Status',
       'DM Cijena',
       'DM Status',
-      'Müller Cijena',
-      'Müller Status',
-      'Metro Cijena',
-      'Metro Status',
     ];
 
     const csvContent = [
@@ -246,10 +228,6 @@ export default function ProductsPage() {
           getStockStatusForExport(product.welmoraStock, product.welmoraBackorders),
           product.dmPrice || '',
           product.dmStock !== undefined ? getStockStatus(product.dmStock) : '',
-          product.muellerPrice || '',
-          product.muellerStock !== undefined ? getStockStatus(product.muellerStock) : '',
-          product.metroPrice || '',
-          product.metroStock !== undefined ? getStockStatus(product.metroStock) : '',
         ].join(',')
       ),
     ].join('\n');
@@ -338,11 +316,7 @@ export default function ProductsPage() {
 
                   {/* Calculate cheapest source for this product */}
                   {(() => {
-                    const cheapestSource = getCheapestSource(
-                      product.dmPrice,
-                      product.muellerPrice,
-                      product.metroPrice
-                    );
+                    const cheapestSource = getCheapestSource(product.dmPrice);
 
                     return (
                       <>
@@ -417,21 +391,16 @@ export default function ProductsPage() {
                         </div>
                         {/* Müller */}
                         <div className="mb-2">
-                          <h4 className="font-medium text-gray-900 text-xs mb-1">Müller</h4>
                           <div className="flex justify-between items-center">
-                            <span
-                              className={`text-sm font-semibold ${getPriceColorClass('mueller', cheapestSource)}`}
-                            >
-                              {product.muellerPrice
-                                ? formatPrice(product.muellerPrice, 'EUR')
-                                : 'N/A'}
-                            </span>
-                            {product.muellerProductUrl ? (
+                            <h4 className="font-medium text-gray-900 text-xs">Müller</h4>
+                            {/* Show Müller search link for all products with valid SKU/GTIN */}
+                            {product.sku && product.sku.length === 13 && /^\d+$/.test(product.sku) ? (
                               <a
-                                href={product.muellerProductUrl}
+                                href={`https://www.mueller.de/suche/?query=${product.sku}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 py-1 rounded border border-amber-200 transition-colors whitespace-nowrap flex items-center gap-1"
+                                title={`Pretraži ${product.sku} na Müller`}
                               >
                                 <Image
                                   src="/logo_mueller.png"
@@ -449,13 +418,8 @@ export default function ProductsPage() {
                         </div>
                         {/* Metro */}
                         <div className="mb-2">
-                          <h4 className="font-medium text-gray-900 text-xs mb-1">Metro</h4>
                           <div className="flex justify-between items-center">
-                            <span
-                              className={`text-sm font-semibold ${getPriceColorClass('metro', cheapestSource)}`}
-                            >
-                              {product.metroPrice ? formatPrice(product.metroPrice, 'EUR') : 'N/A'}
-                            </span>
+                            <h4 className="font-medium text-gray-900 text-xs">Metro</h4>
                             {/* Show Metro search link for all products with valid SKU/GTIN */}
                             {product.sku && product.sku.length === 13 && /^\d+$/.test(product.sku) ? (
                               <a
@@ -465,7 +429,13 @@ export default function ProductsPage() {
                                 className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 py-1 rounded border border-amber-200 transition-colors whitespace-nowrap flex items-center gap-1"
                                 title={`Pretraži ${product.sku} na Metro`}
                               >
-                                <span className="font-semibold text-blue-600">M</span>
+                                <Image
+                                  src="/logo_metro.png"
+                                  alt="Metro"
+                                  width={16}
+                                  height={16}
+                                  className="object-contain"
+                                />
                                 Provjeri zalihe
                               </a>
                             ) : (
