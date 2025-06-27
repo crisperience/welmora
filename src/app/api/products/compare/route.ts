@@ -244,6 +244,96 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (action === 'clean_dm_data') {
+      console.log('Starting to clean all DM data from WooCommerce...');
+
+      // Fetch ALL products using pagination
+      let allProducts: WooCommerceProduct[] = [];
+      let page = 1;
+      let hasMorePages = true;
+
+      while (hasMorePages) {
+        console.log(`Fetching page ${page} of products...`);
+        const response = await api.get('products', {
+          per_page: 100,
+          status: 'publish',
+          page: page,
+        });
+        const pageProducts = response.data as WooCommerceProduct[];
+
+        if (pageProducts.length === 0) {
+          hasMorePages = false;
+        } else {
+          allProducts = [...allProducts, ...pageProducts];
+          page++;
+
+          // Stop if we got less than per_page (last page)
+          if (pageProducts.length < 100) {
+            hasMorePages = false;
+          }
+        }
+      }
+
+      console.log(`Found ${allProducts.length} total products to clean`);
+
+      let cleaned = 0;
+      let skipped = 0;
+      let errors = 0;
+
+      for (const product of allProducts) {
+        try {
+          const metaData = product.meta_data || [];
+
+          // Check if product has any DM data (especially search URLs)
+          const hasDMData = metaData.some(
+            meta =>
+              meta.key === '_dm_price' ||
+              meta.key === '_dm_url' ||
+              meta.key === '_dm_last_updated'
+          );
+
+          // Also check for search URLs specifically
+          const dmUrl = metaData.find(meta => meta.key === '_dm_url')?.value;
+          const hasSearchUrl = dmUrl && dmUrl.includes('search?query=');
+
+          if (hasDMData || hasSearchUrl) {
+            console.log(`Cleaning DM data for: ${product.name}${hasSearchUrl ? ' (had search URL)' : ''}`);
+
+            // Remove DM meta data by setting them to empty
+            const cleanMetaData = [
+              { key: '_dm_price', value: '' },
+              { key: '_dm_url', value: '' },
+              { key: '_dm_last_updated', value: '' },
+            ];
+
+            const updateData = {
+              meta_data: cleanMetaData,
+            };
+
+            await api.put(`products/${product.id}`, updateData);
+            cleaned++;
+            console.log(`✓ Cleaned DM data for ${product.name}`);
+          } else {
+            skipped++;
+          }
+        } catch (error) {
+          console.error(`Failed to clean DM data for ${product.name}:`, error);
+          errors++;
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'DM data cleaning completed',
+        stats: {
+          total: allProducts.length,
+          cleaned,
+          skipped,
+          errors,
+        },
+      });
+    }
+
     if (action === 'clean_mueller_data') {
       console.log('Starting to clean all Mueller data from WooCommerce...');
 

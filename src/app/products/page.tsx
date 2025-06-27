@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { formatPriceWithConversion, getChfToEurRate } from '@/lib/currency';
-import { FileSpreadsheet, Scale, Search, X } from 'lucide-react';
+import { FileSpreadsheet, Search, X } from 'lucide-react';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -40,8 +40,6 @@ export default function ProductsPage() {
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [eurRate, setEurRate] = useState<number>(1.05);
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
-  const [isUpdatingDMPrices, setIsUpdatingDMPrices] = useState(false);
-
   const loadProducts = useCallback(async (search?: string) => {
     setIsPageLoading(true);
     try {
@@ -93,31 +91,7 @@ export default function ProductsPage() {
     setSearchTerm('');
   };
 
-  const handleUpdateDMPrices = async () => {
-    setIsUpdatingDMPrices(true);
-    try {
-      const response = await fetch('/api/products/compare', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update_dm_prices' }),
-      });
 
-      const result = await response.json();
-
-      if (result.success) {
-        alert(`DM cijene uspješno ažurirane!\n\nUkupno: ${result.stats.total}\nAžurirano: ${result.stats.updated}\nPreskočeno: ${result.stats.skipped}\nGreške: ${result.stats.errors}`);
-        // Reload products to show updated data
-        await loadProducts(searchTerm || undefined);
-      } else {
-        alert('Greška pri ažuriranju DM cijena: ' + result.error);
-      }
-    } catch (error) {
-      console.error('Error updating DM prices:', error);
-      alert('Greška pri ažuriranju DM cijena');
-    } finally {
-      setIsUpdatingDMPrices(false);
-    }
-  };
 
   const formatPrice = (price: number, currency: 'CHF' | 'EUR' = 'CHF') => {
     return formatPriceWithConversion(price, currency, currency === 'CHF' ? eurRate : undefined);
@@ -283,7 +257,6 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="p-4 border-b bg-white">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <Scale className="h-6 w-6 text-amber-600" />
           <h1 className="text-2xl font-bold text-gray-900">Proizvodi</h1>
         </div>
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -305,20 +278,6 @@ export default function ProductsPage() {
             )}
           </div>
           <div className="flex gap-2">
-            <Button
-              onClick={handleUpdateDMPrices}
-              disabled={isUpdatingDMPrices || isPageLoading}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              {isUpdatingDMPrices ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-500"></div>
-              ) : (
-                <Scale className="h-4 w-4" />
-              )}
-              {isUpdatingDMPrices ? 'Ažuriranje...' : 'Ažuriraj DM'}
-            </Button>
             <Button
               onClick={exportToCSV}
               disabled={isPageLoading}
