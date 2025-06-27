@@ -178,10 +178,10 @@ export default function ProductsPage() {
       prev.map(product =>
         product.sku === productSku
           ? {
-              ...product,
-              welmoraStock: getStockFromStatus(newStatus),
-              welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
-            }
+            ...product,
+            welmoraStock: getStockFromStatus(newStatus),
+            welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
+          }
           : product
       )
     );
@@ -369,11 +369,10 @@ export default function ProductsPage() {
                                     )
                                   }
                                   disabled={loadingItems.has(product.sku)}
-                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders))} ${
-                                    loadingItems.has(product.sku)
-                                      ? 'opacity-50 cursor-not-allowed'
-                                      : ''
-                                  }`}
+                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders))} ${loadingItems.has(product.sku)
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : ''
+                                    }`}
                                 >
                                   <option value="instock">Dostupno</option>
                                   <option value="outofstock">Nedostupno</option>
@@ -457,12 +456,14 @@ export default function ProductsPage() {
                             >
                               {product.metroPrice ? formatPrice(product.metroPrice, 'EUR') : 'N/A'}
                             </span>
-                            {product.metroProductUrl ? (
+                            {/* Show Metro search link for all products with valid SKU/GTIN */}
+                            {product.sku && product.sku.length === 13 && /^\d+$/.test(product.sku) ? (
                               <a
-                                href={product.metroProductUrl}
+                                href={`https://produkte.metro.de/shop/search?q=${product.sku}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 py-1 rounded border border-amber-200 transition-colors whitespace-nowrap flex items-center gap-1"
+                                title={`Pretraži ${product.sku} na Metro`}
                               >
                                 <span className="font-semibold text-blue-600">M</span>
                                 Provjeri zalihe
