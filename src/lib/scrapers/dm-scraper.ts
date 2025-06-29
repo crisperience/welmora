@@ -166,62 +166,92 @@ export class DMScraper {
       }
 
       if (productCards.length > 0) {
-        const firstCard = productCards[0];
+        // Get the current URL to extract the searched GTIN
+        const currentUrl = page.url();
+        const gtinMatch = currentUrl.match(/query=(\d+)/);
+        const searchedGtin = gtinMatch ? gtinMatch[1] : null;
 
-        // Try to extract product URL from the card
-        const linkElement = await firstCard.$('a[href*=".html"]');
-        if (linkElement) {
-          const href = await page.evaluate(el => el.getAttribute('href'), linkElement);
-          if (href) {
-            productUrl = href.startsWith('/') ? `https://www.dm.de${href}` : href;
-            console.log(`✓ Found product URL: ${productUrl}`);
+        let validProduct = null;
+
+        // Check each product card for GTIN match
+        for (const card of productCards) {
+          const linkElement = await card.$('a[href*=".html"]');
+          if (linkElement) {
+            const href = await page.evaluate(el => el.getAttribute('href'), linkElement);
+            if (href) {
+              const fullUrl = href.startsWith('/') ? `https://www.dm.de${href}` : href;
+
+              // GTIN validation: check if URL contains the searched GTIN
+              if (searchedGtin && fullUrl.includes(searchedGtin)) {
+                console.log(`✓ Found GTIN match in URL: ${fullUrl}`);
+                validProduct = { card, url: fullUrl };
+                break;
+              } else if (searchedGtin) {
+                console.log(`⚠ Skipping product - GTIN ${searchedGtin} not found in URL: ${fullUrl}`);
+              }
+            }
           }
         }
 
-        // Try to extract price directly from the card text
-        const cardText = await page.evaluate(el => el.textContent || '', firstCard);
-        console.log(`Card text: ${cardText.substring(0, 100)}`);
-
-        // Look for price pattern in the card text (e.g., "3,55 €")
-        const priceMatch = cardText.match(/(\d+[,.]?\d*)\s*€/);
-        if (priceMatch) {
-          price = parseFloat(priceMatch[1].replace(',', '.'));
-          console.log(`✓ Extracted price from card: €${price}`);
+        // If no GTIN match found, fall back to first result (with warning)
+        if (!validProduct && productCards.length > 0) {
+          console.log(`⚠ No GTIN match found, returning empty result to avoid false matches`);
+          // Don't fall back to first result - return empty instead to avoid false matches
+          return {
+            price: undefined,
+            productUrl: undefined,
+          };
         }
 
-        // If we couldn't get price from card, try navigating to product page
-        if (!price && productUrl) {
-          try {
-            console.log('Navigating to product page for price...');
-            await page.goto(productUrl, {
-              waitUntil: 'networkidle2',
-              timeout: 10000,
-            });
+        if (validProduct) {
+          productUrl = validProduct.url;
+          console.log(`✓ Found product URL: ${productUrl}`);
 
-            // Try multiple price selectors on product page
-            const priceSelectors = [
-              '[data-dmid="price-localized"]',
-              '.price',
-              '[class*="price"]',
-              '.product-price',
-            ];
+          // Try to extract price directly from the card text
+          const cardText = await page.evaluate(el => el.textContent || '', validProduct.card);
+          console.log(`Card text: ${cardText.substring(0, 100)}`);
 
-            for (const selector of priceSelectors) {
-              const priceElement = await page.$(selector);
-              if (priceElement) {
-                const priceText = await page.evaluate(el => el.textContent, priceElement);
-                if (priceText) {
-                  const productPagePriceMatch = priceText.match(/(\d+[,.]?\d*)/);
-                  if (productPagePriceMatch) {
-                    price = parseFloat(productPagePriceMatch[1].replace(',', '.'));
-                    console.log(`✓ Extracted price from product page (${selector}): €${price}`);
-                    break;
+          // Look for price pattern in the card text (e.g., "3,55 €")
+          const priceMatch = cardText.match(/(\d+[,.]?\d*)\s*€/);
+          if (priceMatch) {
+            price = parseFloat(priceMatch[1].replace(',', '.'));
+            console.log(`✓ Extracted price from card: €${price}`);
+          }
+
+          // If we couldn't get price from card, try navigating to product page
+          if (!price && productUrl) {
+            try {
+              console.log('Navigating to product page for price...');
+              await page.goto(productUrl, {
+                waitUntil: 'networkidle2',
+                timeout: 10000,
+              });
+
+              // Try multiple price selectors on product page
+              const priceSelectors = [
+                '[data-dmid="price-localized"]',
+                '.price',
+                '[class*="price"]',
+                '.product-price',
+              ];
+
+              for (const selector of priceSelectors) {
+                const priceElement = await page.$(selector);
+                if (priceElement) {
+                  const priceText = await page.evaluate(el => el.textContent, priceElement);
+                  if (priceText) {
+                    const productPagePriceMatch = priceText.match(/(\d+[,.]?\d*)/);
+                    if (productPagePriceMatch) {
+                      price = parseFloat(productPagePriceMatch[1].replace(',', '.'));
+                      console.log(`✓ Extracted price from product page (${selector}): €${price}`);
+                      break;
+                    }
                   }
                 }
               }
+            } catch (error) {
+              console.log('Failed to navigate to product page:', error);
             }
-          } catch (error) {
-            console.log('Failed to navigate to product page:', error);
           }
         }
       }

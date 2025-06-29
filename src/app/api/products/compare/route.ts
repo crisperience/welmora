@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
 
     // Add search parameter if provided
     if (search) {
-      queryParams.sku = search;
+      queryParams.search = search;
     }
 
     console.log('Fetching products with params:', queryParams);
@@ -107,6 +107,66 @@ export async function GET(request: NextRequest) {
       `WooCommerce API call successful - fetched ${allProducts.length} products from ${page - 1} pages`
     );
     console.log(`Total fetched: ${allProducts.length} products from WooCommerce`);
+
+    // If search term is provided and WooCommerce search didn't find anything,
+    // try to filter all products on backend side for exact SKU matches
+    if (search && allProducts.length === 0) {
+      console.log(`No results from WooCommerce search, trying backend filtering for: ${search}`);
+
+      // Fetch all products without search filter
+      let allProductsForFiltering: WooCommerceProduct[] = [];
+      let filterPage = 1;
+      let hasMoreFilterPages = true;
+
+      while (hasMoreFilterPages) {
+        console.log(`Fetching page ${filterPage} for backend filtering...`);
+        const response = await api.get('products', {
+          per_page: 100,
+          status: 'publish',
+          orderby: 'title',
+          order: 'asc',
+          page: filterPage,
+        });
+        const pageProducts = response.data as WooCommerceProduct[];
+
+        if (pageProducts.length === 0) {
+          hasMoreFilterPages = false;
+        } else {
+          allProductsForFiltering = [...allProductsForFiltering, ...pageProducts];
+          filterPage++;
+
+          if (pageProducts.length < 100) {
+            hasMoreFilterPages = false;
+          }
+        }
+      }
+
+      // Filter products by name or SKU containing search term
+      const searchLower = search.toLowerCase();
+      console.log(`Searching for: "${searchLower}" in ${allProductsForFiltering.length} products`);
+
+      // Debug: log first few products to see their structure
+      console.log('Sample products:', allProductsForFiltering.slice(0, 3).map(p => ({
+        name: p.name,
+        sku: p.sku,
+        nameMatch: p.name.toLowerCase().includes(searchLower),
+        skuMatch: p.sku.toLowerCase().includes(searchLower)
+      })));
+
+      allProducts = allProductsForFiltering.filter(product => {
+        const nameMatch = product.name.toLowerCase().includes(searchLower);
+        const skuMatch = product.sku.toLowerCase().includes(searchLower);
+        const matches = nameMatch || skuMatch;
+
+        if (matches) {
+          console.log(`✓ Match found: ${product.name} (${product.sku}) - nameMatch: ${nameMatch}, skuMatch: ${skuMatch}`);
+        }
+
+        return matches;
+      });
+
+      console.log(`Backend filtering found ${allProducts.length} products matching: ${search}`);
+    }
 
     // Transform products for comparison
     const comparisonProducts = allProducts.map(product => {
