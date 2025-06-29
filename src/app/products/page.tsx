@@ -111,19 +111,19 @@ export default function ProductsPage() {
   };
 
   const getStockStatus = (stock: number) => {
-    return stock > 0 ? 'Dostupno' : 'Nedostupno';
+    return stock > 0 ? t('products.stockStatus.instock') : t('products.stockStatus.outofstock');
   };
 
   const getStockStatusForExport = (stock: number, backorders?: string, stockStatus?: string) => {
     const status = getStatusFromStock(stock, backorders, stockStatus);
     switch (status) {
       case 'instock':
-        return 'Dostupno';
+        return t('products.stockStatus.instock');
       case 'backorder':
-        return 'Po narudžbi';
+        return t('products.stockStatus.backorder');
       case 'outofstock':
       default:
-        return 'Nedostupno';
+        return t('products.stockStatus.outofstock');
     }
   };
 
@@ -174,11 +174,11 @@ export default function ProductsPage() {
       prev.map(product =>
         product.sku === productSku
           ? {
-              ...product,
-              welmoraStock: getStockFromStatus(newStatus),
-              welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
-              welmoraStockStatus: newStatus, // Update the stock status field too
-            }
+            ...product,
+            welmoraStock: getStockFromStatus(newStatus),
+            welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
+            welmoraStockStatus: newStatus, // Update the stock status field too
+          }
           : product
       )
     );
@@ -207,11 +207,11 @@ export default function ProductsPage() {
         prev.map(product =>
           product.sku === productSku
             ? {
-                ...product,
-                welmoraStock: originalProduct.welmoraStock,
-                welmoraBackorders: originalProduct.welmoraBackorders,
-                welmoraStockStatus: originalProduct.welmoraStockStatus,
-              }
+              ...product,
+              welmoraStock: originalProduct.welmoraStock,
+              welmoraBackorders: originalProduct.welmoraBackorders,
+              welmoraStockStatus: originalProduct.welmoraStockStatus,
+            }
             : product
         )
       );
@@ -358,11 +358,10 @@ export default function ProductsPage() {
                                     )
                                   }
                                   disabled={loadingItems.has(product.sku)}
-                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders, product.welmoraStockStatus))} ${
-                                    loadingItems.has(product.sku)
-                                      ? 'opacity-50 cursor-not-allowed'
-                                      : ''
-                                  }`}
+                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders, product.welmoraStockStatus))} ${loadingItems.has(product.sku)
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : ''
+                                    }`}
                                 >
                                   <option value="instock">
                                     {t('products.stockStatus.instock')}
@@ -406,7 +405,7 @@ export default function ProductsPage() {
                                   height={16}
                                   className="object-contain"
                                 />
-                                Provjeri zalihe
+                                {t('common.checkStock')}
                               </a>
                             )}
                           </div>
@@ -417,16 +416,16 @@ export default function ProductsPage() {
                             <h4 className="font-medium text-gray-900 text-xs">Müller</h4>
                             {/* Show Müller search link for all products with valid SKU/GTIN */}
                             {product.sku &&
-                            (product.sku.length === 13 ||
-                              product.sku.length === 12 ||
-                              product.sku.length === 8) &&
-                            /^\d+$/.test(product.sku) ? (
+                              (product.sku.length === 13 ||
+                                product.sku.length === 12 ||
+                                product.sku.length === 8) &&
+                              /^\d+$/.test(product.sku) ? (
                               <a
                                 href={`https://www.mueller.de/suche/?query=${product.sku}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 py-1 rounded border border-amber-200 transition-colors whitespace-nowrap flex items-center gap-1"
-                                title={`Pretraži ${product.sku} na Müller`}
+                                title={`${t('common.search')} ${product.sku} ${t('common.on')} Müller`}
                               >
                                 <Image
                                   src="/logo_mueller.png"
@@ -435,7 +434,7 @@ export default function ProductsPage() {
                                   height={16}
                                   className="object-contain"
                                 />
-                                Provjeri zalihe
+                                {t('common.checkStock')}
                               </a>
                             ) : (
                               <span className="text-xs text-gray-400">N/A</span>
@@ -448,16 +447,16 @@ export default function ProductsPage() {
                             <h4 className="font-medium text-gray-900 text-xs">Metro</h4>
                             {/* Show Metro search link for all products with valid SKU/GTIN */}
                             {product.sku &&
-                            (product.sku.length === 13 ||
-                              product.sku.length === 12 ||
-                              product.sku.length === 8) &&
-                            /^\d+$/.test(product.sku) ? (
+                              (product.sku.length === 13 ||
+                                product.sku.length === 12 ||
+                                product.sku.length === 8) &&
+                              /^\d+$/.test(product.sku) ? (
                               <a
                                 href={`https://produkte.metro.de/shop/search?q=${product.sku}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 py-1 rounded border border-amber-200 transition-colors whitespace-nowrap flex items-center gap-1"
-                                title={`Pretraži ${product.sku} na Metro`}
+                                title={`${t('common.search')} ${product.sku} ${t('common.on')} Metro`}
                               >
                                 <Image
                                   src="/logo_metro.png"
@@ -466,7 +465,7 @@ export default function ProductsPage() {
                                   height={16}
                                   className="object-contain"
                                 />
-                                Provjeri zalihe
+                                {t('common.checkStock')}
                               </a>
                             ) : (
                               <span className="text-xs text-gray-400">N/A</span>

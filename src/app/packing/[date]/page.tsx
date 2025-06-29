@@ -186,8 +186,8 @@ export default function PackingPage() {
         setScanFeedback({
           success: false,
           message: anyMatch
-            ? `Proizvod "${code}" je već završen u svim paketima`
-            : `Proizvod "${code}" nije pronađen ni u jednom paketu za ovaj datum`,
+            ? `${t('packing.productAlreadyComplete')} "${code}" ${t('packing.productAlreadyComplete')}`
+            : `${t('packing.productNotFound')} "${code}"`,
           urgency: 'medium',
           sound: 'error',
         });
@@ -198,7 +198,7 @@ export default function PackingPage() {
       if (matchingPackages.length > 1) {
         setScanFeedback({
           success: false,
-          message: `Više kupaca treba "${matchingPackages[0].item.name}" - Odaberi kupca:`,
+          message: `${t('packing.multipleCustomersNeed')} "${matchingPackages[0].item.name}" - ${t('packing.selectCustomer')}:`,
           urgency: 'high',
           sound: 'warning',
           multiplePackages: matchingPackages.map(mp => ({
@@ -229,7 +229,7 @@ export default function PackingPage() {
       if (foundItem.scanned >= foundItem.needed) {
         setScanFeedback({
           success: false,
-          message: `"${foundItem.name}" je već završen za ${foundPackage.customerName}`,
+          message: `"${foundItem.name}" ${t('packing.productAlreadyComplete')} ${foundPackage.customerName}`,
           packageInfo: {
             packageId: foundPackage.id,
             orderNumber: foundPackage.orderNumber,
@@ -288,10 +288,10 @@ export default function PackingPage() {
       setScanFeedback({
         success: true,
         message: packageComplete
-          ? `Paket završen za ${foundPackage!.customerName}!`
+          ? `${t('packing.packageCompleteFor')} ${foundPackage!.customerName}!`
           : remainingForThisItem > 0
-            ? `Stavka dodana! Još ${remainingForThisItem} "${foundItem!.name}" potrebno za ${foundPackage!.customerName}`
-            : `"${foundItem!.name}" završen za ${foundPackage!.customerName}!`,
+            ? `${t('packing.itemAdded')} ${remainingForThisItem} "${foundItem!.name}" ${t('packing.needed')} ${foundPackage!.customerName}`
+            : `"${foundItem!.name}" ${t('packing.itemCompleteFor')} ${foundPackage!.customerName}!`,
         packageInfo: {
           packageId: foundPackage!.id,
           orderNumber: foundPackage!.orderNumber,
@@ -310,7 +310,7 @@ export default function PackingPage() {
       console.error('Error processing product:', error);
       setScanFeedback({
         success: false,
-        message: `Greška pri obradi "${code}". Molimo pokušajte ponovo.`,
+        message: `${t('packing.processingError')} "${code}". ${t('packing.tryAgainPlease')}.`,
         urgency: 'high',
         sound: 'error',
       });
@@ -413,7 +413,7 @@ export default function PackingPage() {
                 size="sm"
               >
                 <Scan className="mr-2 h-4 w-4" />
-                {scannerActive ? 'Zaustavi skeniranje' : 'Pokreni skeniranje'}
+                {scannerActive ? t('scanner.stopScanning') : t('scanner.startScanning')}
               </Button>
             </div>
 
@@ -437,22 +437,20 @@ export default function PackingPage() {
                 className="flex-1"
               />
               <Button onClick={handleManualEntry} disabled={!manualSku.trim()}>
-                Dodaj
+                {t('common.add')}
               </Button>
             </div>
 
             {scanFeedback && (
               <Card
-                className={`border-l-4 ${
-                  scanFeedback.success ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'
-                }`}
+                className={`border-l-4 ${scanFeedback.success ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'
+                  }`}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <div
-                      className={`p-2 rounded-full ${
-                        scanFeedback.success ? 'bg-green-100' : 'bg-red-100'
-                      }`}
+                      className={`p-2 rounded-full ${scanFeedback.success ? 'bg-green-100' : 'bg-red-100'
+                        }`}
                     >
                       {scanFeedback.success ? (
                         <CheckCircle className="h-5 w-5 text-green-600" />
@@ -464,9 +462,8 @@ export default function PackingPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <p
-                            className={`font-medium ${
-                              scanFeedback.success ? 'text-green-800' : 'text-red-800'
-                            }`}
+                            className={`font-medium ${scanFeedback.success ? 'text-green-800' : 'text-red-800'
+                              }`}
                           >
                             {scanFeedback.message}
                           </p>
@@ -477,12 +474,11 @@ export default function PackingPage() {
                                 <div className="flex items-center gap-2 mb-3">
                                   <Package className="h-4 w-4 text-yellow-600" />
                                   <span className="font-semibold text-yellow-800">
-                                    Odaberi paket
+                                    {t('packing.selectPackage')}
                                   </span>
                                 </div>
                                 <p className="text-sm text-yellow-700 mb-3">
-                                  Više kupaca je naručilo ovaj proizvod. Klikni na paket u koji ga
-                                  želiš dodati:
+                                  {t('packing.multipleCustomersText')}
                                 </p>
                                 <div className="space-y-2">
                                   {scanFeedback.multiplePackages.map(pkg => (
@@ -546,8 +542,8 @@ export default function PackingPage() {
                                             setScanFeedback({
                                               success: true,
                                               message: isPackageComplete
-                                                ? `Package complete for ${pkg.customerName}!`
-                                                : `Added to ${pkg.customerName}'s package`,
+                                                ? `${t('packing.packageCompleteFor')} ${pkg.customerName}!`
+                                                : `${t('packing.addedToPackage')} ${pkg.customerName}`,
                                               urgency: isPackageComplete ? 'high' : 'low',
                                               sound: 'success',
                                             });
@@ -560,11 +556,11 @@ export default function PackingPage() {
                                         <div>
                                           <div className="font-medium">{pkg.customerName}</div>
                                           <div className="text-sm text-gray-600">
-                                            Order #{pkg.orderNumber}
+                                            {t('packing.orderNumber')} #{pkg.orderNumber}
                                           </div>
                                         </div>
                                         <Badge variant="outline" className="text-xs">
-                                          {pkg.remaining} needed
+                                          {pkg.remaining} {t('packing.needed')}
                                         </Badge>
                                       </div>
                                     </button>
@@ -591,8 +587,8 @@ export default function PackingPage() {
                                     }
                                   >
                                     {scanFeedback.packageInfo.isComplete
-                                      ? 'Complete'
-                                      : 'In Progress'}
+                                      ? t('packing.complete')
+                                      : t('packing.inProgress')}
                                   </Badge>
                                 </div>
 
@@ -611,14 +607,14 @@ export default function PackingPage() {
                                   </div>
                                   <div className="flex items-center justify-between">
                                     <span className="text-gray-600">
-                                      Items:{' '}
+                                      {t('packing.items')}:{' '}
                                       {scanFeedback.packageInfo.totalItems -
                                         scanFeedback.packageInfo.remainingItems}
                                       /{scanFeedback.packageInfo.totalItems}
                                     </span>
                                     {scanFeedback.packageInfo.remainingItems > 0 && (
                                       <Badge variant="outline" className="text-xs">
-                                        {scanFeedback.packageInfo.remainingItems} preostalo
+                                        {scanFeedback.packageInfo.remainingItems} {t('packing.remaining')}
                                       </Badge>
                                     )}
                                   </div>
@@ -634,7 +630,7 @@ export default function PackingPage() {
                             onClick={dismissFeedback}
                             className="px-3 py-1 text-sm"
                           >
-                            Zatvori
+                            {t('packing.close')}
                           </Button>
                         </div>
                       </div>
@@ -650,7 +646,7 @@ export default function PackingPage() {
         <Card className="mb-6">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Napredak paketa</span>
+              <span className="text-sm font-medium">{t('packing.packagesProgress')}</span>
               <span className="text-sm text-gray-600">
                 {completedPackages}/{totalPackages}
               </span>
@@ -661,7 +657,7 @@ export default function PackingPage() {
             />
             {completedPackages === totalPackages && totalPackages > 0 && (
               <div className="mt-3 text-center">
-                <Badge className="bg-green-600">Svi paketi završeni!</Badge>
+                <Badge className="bg-green-600">{t('packing.allPackagesComplete')}</Badge>
               </div>
             )}
           </CardContent>
@@ -675,11 +671,10 @@ export default function PackingPage() {
             return (
               <Card
                 key={pkg.id}
-                className={`${
-                  pkg.status === 'completed'
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-white border-gray-200'
-                } transition-all duration-200`}
+                className={`${pkg.status === 'completed'
+                  ? 'bg-green-50 border-green-200'
+                  : 'bg-white border-gray-200'
+                  } transition-all duration-200`}
               >
                 <CardContent className="p-4">
                   {/* Package Header */}
@@ -694,14 +689,14 @@ export default function PackingPage() {
                         variant={pkg.status === 'completed' ? 'default' : 'secondary'}
                         className="text-xs"
                       >
-                        {pkg.status === 'completed' ? 'Završeno' : 'U tijeku'}
+                        {pkg.status === 'completed' ? t('packing.packageComplete') : t('packing.inProgress')}
                       </Badge>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => resetPackage(pkg.id)}
                         className="h-6 w-6 p-0"
-                        title="Resetiraj paket"
+                        title={t('packing.resetPackage')}
                       >
                         <RotateCcw className="h-3 w-3" />
                       </Button>
@@ -723,7 +718,7 @@ export default function PackingPage() {
                     <div className="flex items-center gap-2 mt-1">
                       <Package className="h-3 w-3 text-gray-500" />
                       <span className="text-xs text-gray-600">
-                        Procj. težina: {estimatedWeight.toFixed(1)}kg
+                        {t('packing.estimatedWeight')}: {estimatedWeight.toFixed(1)}kg
                       </span>
                     </div>
                   </div>
@@ -731,7 +726,7 @@ export default function PackingPage() {
                   {/* Progress */}
                   <div className="mb-3">
                     <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                      <span>Napredak</span>
+                      <span>{t('packing.progress')}</span>
                       <span>
                         {progress.scanned}/{progress.total}
                       </span>
@@ -744,11 +739,10 @@ export default function PackingPage() {
                     {pkg.items.map(item => (
                       <div
                         key={item.sku}
-                        className={`flex items-center gap-3 p-2 rounded-lg ${
-                          item.scanned >= item.needed
-                            ? 'bg-green-100 border border-green-200'
-                            : 'bg-gray-50 border border-gray-200'
-                        }`}
+                        className={`flex items-center gap-3 p-2 rounded-lg ${item.scanned >= item.needed
+                          ? 'bg-green-100 border border-green-200'
+                          : 'bg-gray-50 border border-gray-200'
+                          }`}
                       >
                         {/* Product Image - smaller on mobile, larger on desktop */}
                         <div className="w-8 h-8 md:w-12 md:h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
@@ -773,11 +767,10 @@ export default function PackingPage() {
                         {/* Product Info */}
                         <div className="flex-1 min-w-0">
                           <h4
-                            className={`font-medium text-xs md:text-sm leading-tight mb-1 ${
-                              item.scanned >= item.needed
-                                ? 'text-green-800 line-through'
-                                : 'text-gray-900'
-                            }`}
+                            className={`font-medium text-xs md:text-sm leading-tight mb-1 ${item.scanned >= item.needed
+                              ? 'text-green-800 line-through'
+                              : 'text-gray-900'
+                              }`}
                           >
                             {item.name}
                           </h4>
