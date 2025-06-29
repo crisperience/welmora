@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import * as React from 'react';
 import { DayButton, DayPicker, getDefaultClassNames } from 'react-day-picker';
 
@@ -20,11 +21,15 @@ function Calendar({
   buttonVariant?: React.ComponentProps<typeof Button>['variant'];
 }) {
   const defaultClassNames = getDefaultClassNames();
+  const locale = useLocale();
+
+  // Map locale to proper format
+  const calendarLocale = locale === 'de' ? 'de-DE' : 'hr-HR';
 
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      locale={{ code: 'hr-HR' }}
+      locale={{ code: calendarLocale }}
       className={cn(
         'bg-background group/calendar p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
@@ -33,9 +38,10 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: date => date.toLocaleString('hr-HR', { month: 'short' }),
-        formatWeekdayName: date => date.toLocaleString('hr-HR', { weekday: 'short' }),
-        formatCaption: date => date.toLocaleString('hr-HR', { month: 'long', year: 'numeric' }),
+        formatMonthDropdown: date => date.toLocaleString(calendarLocale, { month: 'short' }),
+        formatWeekdayName: date => date.toLocaleString(calendarLocale, { weekday: 'short' }),
+        formatCaption: date =>
+          date.toLocaleString(calendarLocale, { month: 'long', year: 'numeric' }),
         ...formatters,
       }}
       classNames={{

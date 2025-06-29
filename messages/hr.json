@@ -1,0 +1,102 @@
+{
+  "common": {
+    "loading": "Učitavam...",
+    "error": "Greška",
+    "tryAgain": "Pokušaj ponovo",
+    "add": "Dodaj",
+    "checkStock": "Provjeri zalihe",
+    "noImage": "Nema slike"
+  },
+  "navigation": {
+    "shopping": "Kupnja",
+    "packing": "Pakiranje",
+    "products": "Proizvodi",
+    "inventory": "Inventura"
+  },
+  "app": {
+    "title": "Welmora",
+    "description": "Welmora - Upravljanje zalihama, obradu narudžbi i usporedbu cijena"
+  },
+  "shopping": {
+    "title": "Kupnja",
+    "selectDate": "Odaberi datum",
+    "loadingData": "Učitavam podatke za kupnju...",
+    "progress": "Napredak",
+    "noItemsForDate": "Nema stavaka za ovaj datum",
+    "completed": "Završeno",
+    "total": "Ukupno"
+  },
+  "packing": {
+    "title": "Pakiranje",
+    "selectDate": "Odaberi datum",
+    "loadingData": "Učitavam podatke za pakiranje...",
+    "enterSku": "Upiši SKU ručno...",
+    "noPackagesForDate": "Nema paketa za ovaj datum",
+    "packageComplete": "Paket završen",
+    "scanProduct": "Skeniraj proizvod",
+    "addToPackage": "Dodaj u paket",
+    "selectPackage": "Odaberi paket",
+    "multipleCustomers": "Više kupaca treba ovaj proizvod",
+    "resetPackage": "Resetiraj paket",
+    "customerInfo": "Informacije o kupcu",
+    "orderNumber": "Broj narudžbe",
+    "address": "Adresa",
+    "weight": "Težina",
+    "status": "Status"
+  },
+  "products": {
+    "title": "Proizvodi",
+    "searchPlaceholder": "Pretraži proizvode po nazivu, SKU ili GTIN...",
+    "loadingProducts": "Učitavam proizvode...",
+    "stockStatus": {
+      "instock": "Dostupno",
+      "outofstock": "Nedostupno",
+      "backorder": "Po narudžbi"
+    },
+    "updateStock": "Ažuriraj zalihe",
+    "price": "Cijena",
+    "stock": "Zalihe",
+    "category": "Kategorija"
+  },
+  "inventory": {
+    "title": "Inventura",
+    "scanToAdd": "Skeniraj za dodavanje",
+    "manualEntry": "Ručni unos",
+    "exportData": "Izvezi podatke"
+  },
+  "scanner": {
+    "title": "Barcode Scanner",
+    "startScanner": "Pokreni skener",
+    "stopScanner": "Zaustavi skener",
+    "initializingCamera": "Inicijalizacija kamere...",
+    "error": "Greška",
+    "troubleshooting": "Rješavanje problema",
+    "instructions": "Upute",
+    "lastScanned": "Zadnje skenirano",
+    "troubleshootingSteps": {
+      "cameraPermission": "Provjeri da li si dao dozvolu za kameru",
+      "cameraInUse": "Provjeri da li druga aplikacija koristi kameru",
+      "refreshPage": "Pokušaj osvježiti stranicu",
+      "httpsRequired": "Provjeri da koristiš HTTPS (potrebno za pristup kameri)"
+    },
+    "instructionSteps": {
+      "clickStart": "Klikni \"Pokreni skener\" za aktivaciju kamere",
+      "positionCode": "Postavi barcode ili QR kod u područje skeniranja",
+      "autoDetect": "Aplikacija će automatski detektirati i obraditi kod",
+      "goodLighting": "Za najbolje rezultate, osiguraj dobro osvjetljenje i drži uređaj mirno"
+    },
+    "startScanning": "Pokreni skeniranje",
+    "stopScanning": "Zaustavi skeniranje",
+    "enterManually": "Upiši ručno",
+    "scanBarcode": "Skeniraj barkod",
+    "scanInstructions": "Usmjeri kameru prema barkodu",
+    "cameraPermission": "Potrebna je dozvola za kameru",
+    "allowCamera": "Dozvoli kameru"
+  },
+  "feedback": {
+    "success": "Uspješno!",
+    "scanSuccess": "Kod je uspješno skeniran",
+    "updateSuccess": "Uspješno ažurirano",
+    "saveSuccess": "Uspješno spremljeno"
+  }
+}

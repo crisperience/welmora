@@ -1,0 +1,100 @@
+{
+  "common": {
+    "loading": "Lädt...",
+    "error": "Fehler",
+    "tryAgain": "Erneut versuchen",
+    "add": "Hinzufügen",
+    "checkStock": "Lager prüfen",
+    "noImage": "Kein Bild"
+  },
+  "navigation": {
+    "shopping": "Einkauf",
+    "packing": "Verpackung",
+    "products": "Produkte",
+    "inventory": "Inventar"
+  },
+  "app": {
+    "title": "Welmora",
+    "description": "Welmora - Lagerverwaltung, Auftragsbearbeitung und Preisvergleich"
+  },
+  "shopping": {
+    "title": "Einkauf",
+    "selectDate": "Datum auswählen",
+    "loadingData": "Einkaufsdaten werden geladen...",
+    "progress": "Fortschritt",
+    "noItemsForDate": "Keine Artikel für dieses Datum",
+    "completed": "Abgeschlossen",
+    "total": "Gesamt"
+  },
+  "packing": {
+    "title": "Verpackung",
+    "selectDate": "Datum auswählen",
+    "loadingData": "Verpackungsdaten werden geladen...",
+    "enterSku": "SKU manuell eingeben...",
+    "noPackagesForDate": "Keine Pakete für dieses Datum",
+    "packageComplete": "Paket vollständig",
+    "scanProduct": "Produkt scannen",
+    "addToPackage": "Zum Paket hinzufügen",
+    "selectPackage": "Paket auswählen",
+    "multipleCustomers": "Mehrere Kunden benötigen dieses Produkt",
+    "resetPackage": "Paket zurücksetzen",
+    "customerInfo": "Kundeninformationen",
+    "orderNumber": "Bestellnummer",
+    "address": "Adresse",
+    "weight": "Gewicht",
+    "status": "Status"
+  },
+  "products": {
+    "title": "Produkte",
+    "searchPlaceholder": "Produkte nach Name, SKU oder GTIN suchen...",
+    "loadingProducts": "Produkte werden geladen...",
+    "stockStatus": {
+      "instock": "Verfügbar",
+      "outofstock": "Nicht verfügbar",
+      "backorder": "Nachbestellt"
+    },
+    "updateStock": "Lager aktualisieren",
+    "price": "Preis",
+    "stock": "Lager",
+    "category": "Kategorie"
+  },
+  "inventory": {
+    "title": "Inventar",
+    "scanToAdd": "Zum Hinzufügen scannen",
+    "manualEntry": "Manuelle Eingabe",
+    "exportData": "Daten exportieren"
+  },
+  "scanner": {
+    "title": "Barcode Scanner",
+    "startScanning": "Scannen starten",
+    "stopScanning": "Scannen stoppen",
+    "enterManually": "Manuell eingeben",
+    "scanBarcode": "Barcode scannen",
+    "scanInstructions": "Kamera auf Barcode richten",
+    "cameraPermission": "Kameraberechtigung erforderlich",
+    "allowCamera": "Kamera erlauben",
+    "initializingCamera": "Kamera wird initialisiert...",
+    "error": "Fehler",
+    "troubleshooting": "Fehlerbehebung",
+    "instructions": "Anweisungen",
+    "lastScanned": "Zuletzt gescannt",
+    "troubleshootingSteps": {
+      "cameraPermission": "Stellen Sie sicher, dass Sie Kameraberechtigung erteilt haben",
+      "cameraInUse": "Prüfen Sie, ob eine andere App die Kamera verwendet",
+      "refreshPage": "Versuchen Sie, die Seite zu aktualisieren",
+      "httpsRequired": "Stellen Sie sicher, dass Sie HTTPS verwenden (für Kamerazugriff erforderlich)"
+    },
+    "instructionSteps": {
+      "clickStart": "Klicken Sie auf \"Scanner starten\", um die Kamera zu aktivieren",
+      "positionCode": "Positionieren Sie den Barcode oder QR-Code im Scanbereich",
+      "autoDetect": "Die App erkennt und verarbeitet den Code automatisch",
+      "goodLighting": "Für beste Ergebnisse sorgen Sie für gute Beleuchtung und halten Sie das Gerät ruhig"
+    }
+  },
+  "feedback": {
+    "success": "Erfolgreich!",
+    "scanSuccess": "Code erfolgreich gescannt",
+    "updateSuccess": "Erfolgreich aktualisiert",
+    "saveSuccess": "Erfolgreich gespeichert"
+  }
+}

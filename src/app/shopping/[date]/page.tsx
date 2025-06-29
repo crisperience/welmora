@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { DailySnapshot, ShoppingItem as WooShoppingItem } from '@/types/woocommerce-api';
 import { CheckCircle, ShoppingCart } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -27,6 +28,7 @@ export default function ShoppingPage() {
   const params = useParams();
   const router = useRouter();
   const { selectedDate: globalDate, setSelectedDate: setGlobalDate } = useDateContext();
+  const t = useTranslations();
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -140,7 +142,7 @@ export default function ShoppingPage() {
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Učitavam podatke za kupnju...</p>
+          <p className="text-gray-600">{t('shopping.loadingData')}</p>
         </div>
       </div>
     );
@@ -150,8 +152,10 @@ export default function ShoppingPage() {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 mb-4">Greška: {error}</p>
-          <Button onClick={() => window.location.reload()}>Pokušaj ponovo</Button>
+          <p className="text-red-600 mb-4">
+            {t('common.error')}: {error}
+          </p>
+          <Button onClick={() => window.location.reload()}>{t('common.tryAgain')}</Button>
         </div>
       </div>
     );
@@ -164,13 +168,13 @@ export default function ShoppingPage() {
         <div className="flex flex-col items-center mb-4">
           <div className="flex items-center gap-3">
             <ShoppingCart className="h-6 w-6 text-amber-600" />
-            <h1 className="text-2xl font-bold text-gray-900 text-center">Kupnja</h1>
+            <h1 className="text-2xl font-bold text-gray-900 text-center">{t('shopping.title')}</h1>
           </div>
         </div>
         {/* Calendar */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg text-center">Odaberi datum</CardTitle>
+            <CardTitle className="text-lg text-center">{t('shopping.selectDate')}</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center pb-4">
             <Calendar
@@ -189,7 +193,7 @@ export default function ShoppingPage() {
         <Card className="mb-6">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Napredak</span>
+              <span className="text-sm font-medium">{t('shopping.progress')}</span>
               <span className="text-sm text-gray-600">
                 {completedItems}/{totalItems}
               </span>

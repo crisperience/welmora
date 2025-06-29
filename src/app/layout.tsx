@@ -1,6 +1,9 @@
 import BottomNavigation from '@/components/BottomNavigation';
 import { DateProvider } from '@/components/DateContext';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import type { Metadata, Viewport } from 'next';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 
@@ -49,9 +52,12 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -105,12 +111,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <div className="flex flex-col h-screen">
-          <DateProvider>
-            <main className="flex-1">{children}</main>
-            <BottomNavigation />
-          </DateProvider>
-        </div>
+        <NextIntlClientProvider messages={messages}>
+          <div className="flex flex-col h-screen">
+            <DateProvider>
+              <div className="absolute top-4 right-4 z-50">
+                <LanguageSwitcher />
+              </div>
+              <main className="flex-1">{children}</main>
+              <BottomNavigation />
+            </DateProvider>
+          </div>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

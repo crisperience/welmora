@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { formatPriceWithConversion, getChfToEurRate } from '@/lib/currency';
 import { FileSpreadsheet, Search, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -35,6 +36,7 @@ interface ProductComparison {
 }
 
 export default function ProductsPage() {
+  const t = useTranslations();
   const [products, setProducts] = useState<ProductComparison[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isPageLoading, setIsPageLoading] = useState(false);
@@ -90,8 +92,6 @@ export default function ProductsPage() {
   const handleClearSearch = () => {
     setSearchTerm('');
   };
-
-
 
   const formatPrice = (price: number, currency: 'CHF' | 'EUR' = 'CHF') => {
     return formatPriceWithConversion(price, currency, currency === 'CHF' ? eurRate : undefined);
@@ -174,11 +174,11 @@ export default function ProductsPage() {
       prev.map(product =>
         product.sku === productSku
           ? {
-            ...product,
-            welmoraStock: getStockFromStatus(newStatus),
-            welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
-            welmoraStockStatus: newStatus, // Update the stock status field too
-          }
+              ...product,
+              welmoraStock: getStockFromStatus(newStatus),
+              welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
+              welmoraStockStatus: newStatus, // Update the stock status field too
+            }
           : product
       )
     );
@@ -207,11 +207,11 @@ export default function ProductsPage() {
         prev.map(product =>
           product.sku === productSku
             ? {
-              ...product,
-              welmoraStock: originalProduct.welmoraStock,
-              welmoraBackorders: originalProduct.welmoraBackorders,
-              welmoraStockStatus: originalProduct.welmoraStockStatus,
-            }
+                ...product,
+                welmoraStock: originalProduct.welmoraStock,
+                welmoraBackorders: originalProduct.welmoraBackorders,
+                welmoraStockStatus: originalProduct.welmoraStockStatus,
+              }
             : product
         )
       );
@@ -236,7 +236,11 @@ export default function ProductsPage() {
           product.sku,
           `"${product.name}"`,
           product.welmoraPrice,
-          getStockStatusForExport(product.welmoraStock, product.welmoraBackorders, product.welmoraStockStatus),
+          getStockStatusForExport(
+            product.welmoraStock,
+            product.welmoraBackorders,
+            product.welmoraStockStatus
+          ),
           product.dmPrice || '',
           product.dmStock !== undefined ? getStockStatus(product.dmStock) : '',
         ].join(',')
@@ -257,13 +261,13 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="p-4 border-b bg-white">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">Proizvodi</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('products.title')}</h1>
         </div>
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Pretraži proizvode po nazivu, SKU ili GTIN..."
+              placeholder={t('products.searchPlaceholder')}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="pl-10 pr-10"
@@ -298,7 +302,7 @@ export default function ProductsPage() {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <Progress value={undefined} className="w-64 mb-4" />
-              <p className="text-gray-600">Učitavam proizvode...</p>
+              <p className="text-gray-600">{t('products.loadingProducts')}</p>
             </div>
           </div>
         ) : (
@@ -316,7 +320,7 @@ export default function ProductsPage() {
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-400 text-xs">
-                      Nema slike
+                      {t('common.noImage')}
                     </div>
                   )}
                 </div>
@@ -354,14 +358,21 @@ export default function ProductsPage() {
                                     )
                                   }
                                   disabled={loadingItems.has(product.sku)}
-                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders, product.welmoraStockStatus))} ${loadingItems.has(product.sku)
-                                    ? 'opacity-50 cursor-not-allowed'
-                                    : ''
-                                    }`}
+                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders, product.welmoraStockStatus))} ${
+                                    loadingItems.has(product.sku)
+                                      ? 'opacity-50 cursor-not-allowed'
+                                      : ''
+                                  }`}
                                 >
-                                  <option value="instock">Dostupno</option>
-                                  <option value="outofstock">Nedostupno</option>
-                                  <option value="backorder">Po narudžbi</option>
+                                  <option value="instock">
+                                    {t('products.stockStatus.instock')}
+                                  </option>
+                                  <option value="outofstock">
+                                    {t('products.stockStatus.outofstock')}
+                                  </option>
+                                  <option value="backorder">
+                                    {t('products.stockStatus.backorder')}
+                                  </option>
                                 </select>
                                 {loadingItems.has(product.sku) && (
                                   <div className="absolute inset-0 flex items-center justify-center">
@@ -406,8 +417,10 @@ export default function ProductsPage() {
                             <h4 className="font-medium text-gray-900 text-xs">Müller</h4>
                             {/* Show Müller search link for all products with valid SKU/GTIN */}
                             {product.sku &&
-                              (product.sku.length === 13 || product.sku.length === 12 || product.sku.length === 8) &&
-                              /^\d+$/.test(product.sku) ? (
+                            (product.sku.length === 13 ||
+                              product.sku.length === 12 ||
+                              product.sku.length === 8) &&
+                            /^\d+$/.test(product.sku) ? (
                               <a
                                 href={`https://www.mueller.de/suche/?query=${product.sku}`}
                                 target="_blank"
@@ -435,8 +448,10 @@ export default function ProductsPage() {
                             <h4 className="font-medium text-gray-900 text-xs">Metro</h4>
                             {/* Show Metro search link for all products with valid SKU/GTIN */}
                             {product.sku &&
-                              (product.sku.length === 13 || product.sku.length === 12 || product.sku.length === 8) &&
-                              /^\d+$/.test(product.sku) ? (
+                            (product.sku.length === 13 ||
+                              product.sku.length === 12 ||
+                              product.sku.length === 8) &&
+                            /^\d+$/.test(product.sku) ? (
                               <a
                                 href={`https://produkte.metro.de/shop/search?q=${product.sku}`}
                                 target="_blank"

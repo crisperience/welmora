@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BrowserMultiFormatReader } from '@zxing/library';
 import { Camera, CameraOff, Scan } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 interface BarcodeScannerProps {
@@ -18,6 +19,7 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
   const [error, setError] = useState<string | null>(null);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  const t = useTranslations('scanner');
 
   useEffect(() => {
     if (isActive && videoRef.current) {
@@ -165,7 +167,7 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Scan className="h-5 w-5" />
-          Barcode Scanner
+          {t('title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -180,17 +182,17 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
             {isInitializing ? (
               <>
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                Pokrećem kameru...
+                {t('initializingCamera')}
               </>
             ) : isActive ? (
               <>
                 <CameraOff className="h-4 w-4" />
-                Stop Scanner
+                {t('stopScanner')}
               </>
             ) : (
               <>
                 <Camera className="h-4 w-4" />
-                Pokreni skener
+                {t('startScanner')}
               </>
             )}
           </Button>

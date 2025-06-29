@@ -25,8 +25,13 @@ export async function GET(request: NextRequest) {
 
     console.log('WooCommerce Config:', {
       url: process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WOOCOMMERCE_URL,
-      hasKey: !!(process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_KEY),
-      hasSecret: !!(process.env.WOOCOMMERCE_CONSUMER_SECRET || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_SECRET),
+      hasKey: !!(
+        process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_KEY
+      ),
+      hasSecret: !!(
+        process.env.WOOCOMMERCE_CONSUMER_SECRET ||
+        process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_SECRET
+      ),
     });
 
     // Handle cache clearing action
@@ -287,9 +292,7 @@ export async function POST(request: NextRequest) {
           // Check if product has any DM data (especially search URLs)
           const hasDMData = metaData.some(
             meta =>
-              meta.key === '_dm_price' ||
-              meta.key === '_dm_url' ||
-              meta.key === '_dm_last_updated'
+              meta.key === '_dm_price' || meta.key === '_dm_url' || meta.key === '_dm_last_updated'
           );
 
           // Also check for search URLs specifically
@@ -297,7 +300,9 @@ export async function POST(request: NextRequest) {
           const hasSearchUrl = dmUrl && dmUrl.includes('search?query=');
 
           if (hasDMData || hasSearchUrl) {
-            console.log(`Cleaning DM data for: ${product.name}${hasSearchUrl ? ' (had search URL)' : ''}`);
+            console.log(
+              `Cleaning DM data for: ${product.name}${hasSearchUrl ? ' (had search URL)' : ''}`
+            );
 
             // Remove DM meta data by setting them to empty
             const cleanMetaData = [

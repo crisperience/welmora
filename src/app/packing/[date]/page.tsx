@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { PackageItem, Package as PackageType, ScanFeedback } from '@/types/woocommerce-api';
 import { CheckCircle, MapPin, Package, RotateCcw, Scan, User } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -18,6 +19,7 @@ export default function PackingPage() {
   const params = useParams();
   const router = useRouter();
   const { selectedDate: globalDate, setSelectedDate: setGlobalDate } = useDateContext();
+  const t = useTranslations();
   const [packages, setPackages] = useState<PackageType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -351,7 +353,7 @@ export default function PackingPage() {
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Učitavam podatke za pakiranje...</p>
+          <p className="text-gray-600">{t('packing.loadingData')}</p>
         </div>
       </div>
     );
@@ -361,8 +363,10 @@ export default function PackingPage() {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 mb-4">Greška: {error}</p>
-          <Button onClick={() => window.location.reload()}>Pokušaj ponovo</Button>
+          <p className="text-red-600 mb-4">
+            {t('common.error')}: {error}
+          </p>
+          <Button onClick={() => window.location.reload()}>{t('common.tryAgain')}</Button>
         </div>
       </div>
     );
@@ -378,13 +382,13 @@ export default function PackingPage() {
         <div className="flex flex-col items-center mb-4">
           <div className="flex items-center gap-3">
             <Package className="h-6 w-6 text-amber-600" />
-            <h1 className="text-2xl font-bold text-gray-900 text-center">Pakiranje</h1>
+            <h1 className="text-2xl font-bold text-gray-900 text-center">{t('packing.title')}</h1>
           </div>
         </div>
         {/* Calendar */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg text-center">Odaberi datum</CardTitle>
+            <CardTitle className="text-lg text-center">{t('packing.selectDate')}</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center pb-4">
             <Calendar
@@ -426,7 +430,7 @@ export default function PackingPage() {
             {/* Manual SKU Entry */}
             <div className="flex gap-2 mb-4">
               <Input
-                placeholder="Upiši SKU ručno..."
+                placeholder={t('packing.enterSku')}
                 value={manualSku}
                 onChange={e => setManualSku(e.target.value)}
                 onKeyPress={e => e.key === 'Enter' && handleManualEntry()}
@@ -802,7 +806,7 @@ export default function PackingPage() {
         {packages.length === 0 && !loading && (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-gray-600 mb-4">Nema paketa za ovaj datum</p>
+              <p className="text-gray-600 mb-4">{t('packing.noPackagesForDate')}</p>
             </CardContent>
           </Card>
         )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { PackageOpen, Scale, ShoppingCart } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import { useDateContext } from './DateContext';
 
@@ -8,6 +9,7 @@ export default function BottomNavigation() {
   const router = useRouter();
   const pathname = usePathname();
   const { selectedDate } = useDateContext();
+  const t = useTranslations('navigation');
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/';
@@ -37,7 +39,7 @@ export default function BottomNavigation() {
           }`}
         >
           <ShoppingCart className="h-6 w-6 mb-1" />
-          <span className="text-xs font-medium">Kupnja</span>
+          <span className="text-xs font-medium">{t('shopping')}</span>
         </button>
 
         {/* Packing Button - 33% */}
@@ -50,7 +52,7 @@ export default function BottomNavigation() {
           }`}
         >
           <PackageOpen className="h-6 w-6 mb-1" />
-          <span className="text-xs font-medium">Pakiranje</span>
+          <span className="text-xs font-medium">{t('packing')}</span>
         </button>
 
         {/* Products Button - 33% */}
@@ -63,7 +65,7 @@ export default function BottomNavigation() {
           }`}
         >
           <Scale className="h-6 w-6 mb-1" />
-          <span className="text-xs font-medium">Proizvodi</span>
+          <span className="text-xs font-medium">{t('products')}</span>
         </button>
       </div>
     </div>

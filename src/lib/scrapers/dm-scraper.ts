@@ -279,9 +279,11 @@ export class DMScraper {
 
     for (let i = 0; i < gtins.length; i += concurrency) {
       const batch = gtins.slice(i, i + concurrency);
-      console.log(`Processing batch ${Math.floor(i / concurrency) + 1}/${Math.ceil(gtins.length / concurrency)}`);
+      console.log(
+        `Processing batch ${Math.floor(i / concurrency) + 1}/${Math.ceil(gtins.length / concurrency)}`
+      );
 
-      const batchPromises = batch.map(async (gtin) => {
+      const batchPromises = batch.map(async gtin => {
         // Check cache first
         const cached = this.getFromCache(gtin);
         if (cached) {
@@ -318,7 +320,7 @@ export class DMScraper {
           console.error(`Error scraping ${gtin}:`, error);
           return {
             gtin,
-            result: { error: error instanceof Error ? error.message : 'Scraping failed' }
+            result: { error: error instanceof Error ? error.message : 'Scraping failed' },
           };
         } finally {
           await page.close();
