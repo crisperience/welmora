@@ -20,7 +20,7 @@ function getSupabaseClient() {
 }
 
 // Service role client for server-side operations (Storage, etc.)
-function getSupabaseServiceClient() {
+export function getSupabaseServiceClient() {
   if (!supabaseServiceInstance) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
