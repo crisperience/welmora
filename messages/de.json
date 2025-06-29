@@ -24,7 +24,8 @@
     "progress": "Fortschritt",
     "noItemsForDate": "Keine Artikel für dieses Datum",
     "completed": "Abgeschlossen",
-    "total": "Gesamt"
+    "total": "Gesamt",
+    "redirecting": "Weiterleitung zum Einkauf..."
   },
   "packing": {
     "title": "Verpackung",

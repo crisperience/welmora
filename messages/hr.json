@@ -24,7 +24,8 @@
     "progress": "Napredak",
     "noItemsForDate": "Nema stavaka za ovaj datum",
     "completed": "Završeno",
-    "total": "Ukupno"
+    "total": "Ukupno",
+    "redirecting": "Preusmjeravam na kupnju..."
   },
   "packing": {
     "title": "Pakiranje",
