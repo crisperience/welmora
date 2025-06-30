@@ -1,3 +1,5 @@
+import AuthGuard from '@/components/auth/AuthGuard';
+import { AuthProvider } from '@/components/auth/AuthProvider';
 import BottomNavigation from '@/components/shared/BottomNavigation';
 import { DateProvider } from '@/components/shared/DateContext';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
@@ -116,15 +118,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased safe-area-insets`}>
         <NextIntlClientProvider messages={messages}>
-          <div className="flex flex-col h-screen">
-            <DateProvider>
-              <div className="absolute top-4 right-4 z-50 safe-area-top">
-                <LanguageSwitcher />
+          <AuthProvider>
+            <AuthGuard>
+              <div className="flex flex-col h-screen">
+                <DateProvider>
+                  <div className="absolute top-4 right-4 z-50 safe-area-top">
+                    <LanguageSwitcher />
+                  </div>
+                  <main className="flex-1 pb-24 safe-area-bottom">{children}</main>
+                  <BottomNavigation />
+                </DateProvider>
               </div>
-              <main className="flex-1 pb-24 safe-area-bottom">{children}</main>
-              <BottomNavigation />
-            </DateProvider>
-          </div>
+            </AuthGuard>
+          </AuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>
