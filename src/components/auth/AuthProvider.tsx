@@ -47,7 +47,7 @@ const setAuthStatus = (authenticated: boolean) => {
     if (authenticated) {
       sessionStorage.setItem('welmora_auth', 'authenticated');
       // For PWA: also store in localStorage with expiration
-      const expirationTime = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
+      const expirationTime = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
       localStorage.setItem('welmora_auth_persistent', 'authenticated');
       localStorage.setItem('welmora_auth_expiry', expirationTime.toString());
     } else {

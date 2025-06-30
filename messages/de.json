@@ -19,6 +19,18 @@
     "title": "Welmora",
     "description": "Welmora - Lagerverwaltung, Auftragsbearbeitung und Preisvergleich"
   },
+  "auth": {
+    "welcome": "Willkommen bei Welmora",
+    "signInPrompt": "Bitte melden Sie sich an, um auf die Anwendung zuzugreifen",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "signIn": "Anmelden",
+    "signingIn": "Anmeldung läuft...",
+    "invalidCredentials": "Ungültiger Benutzername oder Passwort",
+    "enterUsername": "Benutzername eingeben",
+    "enterPassword": "Passwort eingeben",
+    "logout": "Abmelden"
+  },
   "shopping": {
     "title": "Einkauf",
     "selectDate": "Datum auswählen",

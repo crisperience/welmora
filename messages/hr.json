@@ -19,6 +19,18 @@
     "title": "Welmora",
     "description": "Welmora - Upravljanje zalihama, obradu narudžbi i usporedbu cijena"
   },
+  "auth": {
+    "welcome": "Dobro došli u Welmora",
+    "signInPrompt": "Molimo prijavite se za pristup aplikaciji",
+    "username": "Korisničko ime",
+    "password": "Lozinka",
+    "signIn": "Prijaviť se",
+    "signingIn": "Prijavljujem...",
+    "invalidCredentials": "Neispravno korisničko ime ili lozinka",
+    "enterUsername": "Unesite korisničko ime",
+    "enterPassword": "Unesite lozinku",
+    "logout": "Odjavi se"
+  },
   "shopping": {
     "title": "Kupnja",
     "selectDate": "Odaberi datum",

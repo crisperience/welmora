@@ -19,6 +19,18 @@
     "title": "Welmora",
     "description": "Welmora - Inventory management, order processing and price comparison"
   },
+  "auth": {
+    "welcome": "Welcome to Welmora",
+    "signInPrompt": "Please sign in to access the application",
+    "username": "Username",
+    "password": "Password",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "invalidCredentials": "Invalid username or password",
+    "enterUsername": "Enter your username",
+    "enterPassword": "Enter your password",
+    "logout": "Logout"
+  },
   "shopping": {
     "title": "Shopping",
     "selectDate": "Select date",
@@ -59,11 +71,11 @@
     "packageCompleteFor": "Package completed for",
     "addedToPackage": "Added to package for",
     "productNotFound": "Product not found in any package for this date",
-    "productAlreadyComplete": "is already completed for",
+    "productAlreadyComplete": "is already complete for",
     "multipleCustomersNeed": "Multiple customers need",
     "selectCustomer": "Select customer",
     "itemAdded": "Item added! Still",
-    "itemCompleteFor": "completed for",
+    "itemCompleteFor": "complete for",
     "processingError": "Processing error",
     "tryAgainPlease": "Please try again"
   },

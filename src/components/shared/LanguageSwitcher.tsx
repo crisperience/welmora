@@ -3,7 +3,7 @@
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 
 const languages = [
@@ -16,6 +16,7 @@ export default function LanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { logout } = useAuth();
+  const t = useTranslations('auth');
 
   const handleLanguageChange = (newLocale: string) => {
     startTransition(() => {
@@ -36,18 +37,18 @@ export default function LanguageSwitcher() {
 
   return (
     <div className="flex items-center gap-2">
-      {/* Logout Button */}
+      {/* Logout Button - Left Side */}
       <Button
         onClick={handleLogout}
         variant="outline"
         size="sm"
         className="flex items-center gap-1 bg-white/90 backdrop-blur-sm border-gray-200 hover:bg-white/95 rounded-full p-2"
-        title="Logout"
+        title={t('logout')}
       >
-        <LogOut className="h-4 w-4" />
+        <LogOut className="h-4 w-4 scale-x-[-1]" />
       </Button>
 
-      {/* Language Switcher */}
+      {/* Language Switcher - Right Side */}
       <div className="relative">
         <Button
           onClick={() => setIsOpen(!isOpen)}
