@@ -33,76 +33,162 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
     };
   }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const isPWA = () => {
+    // Check if running as PWA
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true ||
+      document.referrer.includes('android-app://') ||
+      window.location.search.includes('utm_source=pwa')
+    );
+  };
+
+  const isIOS = () => {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent);
+  };
+
+  const isSecureContext = () => {
+    return (
+      window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost'
+    );
+  };
+
+  const requestCameraPermission = async (): Promise<MediaStream | null> => {
+    if (!isSecureContext()) {
+      throw new Error(
+        'Camera access requires HTTPS or localhost. Please ensure you are using a secure connection.'
+      );
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('Camera API not supported in this browser. Please use a modern browser.');
+    }
+
+    try {
+      // For PWA on iOS, we need to be more specific about constraints
+      const isPWAMode = isPWA();
+      const isIOSDevice = isIOS();
+
+      let constraints: MediaStreamConstraints;
+
+      if (isPWAMode && isIOSDevice) {
+        // iOS PWA specific constraints - be more permissive initially
+        constraints = {
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280, min: 320 },
+            height: { ideal: 720, min: 240 },
+            frameRate: { ideal: 30, min: 10 },
+          },
+          audio: false,
+        };
+      } else if (isPWAMode) {
+        // General PWA constraints
+        constraints = {
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 1280, min: 640 },
+            height: { ideal: 720, min: 480 },
+            frameRate: { ideal: 30, min: 15 },
+          },
+          audio: false,
+        };
+      } else {
+        // Regular browser constraints
+        constraints = {
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1920, min: 640 },
+            height: { ideal: 1080, min: 480 },
+          },
+          audio: false,
+        };
+      }
+
+      console.log('Requesting camera with constraints:', constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Verify we got a video track
+      const videoTracks = stream.getVideoTracks();
+      if (videoTracks.length === 0) {
+        stream.getTracks().forEach(track => track.stop());
+        throw new Error('No video track available');
+      }
+
+      console.log('Camera access granted:', {
+        isPWA: isPWAMode,
+        isIOS: isIOSDevice,
+        tracks: videoTracks.length,
+        settings: videoTracks[0].getSettings(),
+      });
+
+      return stream;
+    } catch (error) {
+      console.error('Camera permission error:', error);
+
+      if (error instanceof Error) {
+        switch (error.name) {
+          case 'NotAllowedError':
+            throw new Error(
+              'Camera access denied. Please allow camera access in your browser settings and try again. ' +
+                (isPWA() ? 'For PWA: Check device settings > Safari > Camera.' : '')
+            );
+          case 'NotFoundError':
+            throw new Error(
+              'No camera found. Please check your device has a camera and try again.'
+            );
+          case 'NotReadableError':
+            throw new Error(
+              'Camera is being used by another application. Please close other apps using the camera and try again.'
+            );
+          case 'OverconstrainedError':
+            // Try with basic constraints
+            try {
+              console.log('Trying with basic constraints...');
+              const basicStream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false,
+              });
+              return basicStream;
+            } catch {
+              throw new Error(
+                'Camera constraints not supported. Please try with a different device or browser.'
+              );
+            }
+          case 'SecurityError':
+            throw new Error(
+              'Camera access blocked due to security restrictions. Please ensure you are using HTTPS and allow camera access.'
+            );
+          default:
+            throw new Error(`Camera error: ${error.message}. Please check your device settings.`);
+        }
+      } else {
+        throw new Error(
+          'Camera access failed. Please check your device permissions and try again.'
+        );
+      }
+    }
+  };
+
   const startScanning = async () => {
     try {
       setError(null);
       setIsInitializing(true);
 
-      if (!videoRef.current) return;
-
-      // Check if we're in a PWA context
-      const isPWA =
-        window.matchMedia('(display-mode: standalone)').matches ||
-        (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
-
-      // For PWA, we need to request camera permission explicitly first with better constraints
-      if (isPWA) {
-        try {
-          // Use better constraints for mobile devices
-          const constraints = {
-            video: {
-              facingMode: 'environment', // Use back camera by default
-              width: { ideal: 1280, min: 640 },
-              height: { ideal: 720, min: 480 },
-              frameRate: { ideal: 30, min: 15 },
-            },
-            audio: false,
-          };
-
-          // Test camera access with enhanced constraints
-          const testStream = await navigator.mediaDevices.getUserMedia(constraints);
-          testStream.getTracks().forEach(track => track.stop());
-        } catch (cameraError) {
-          console.error('Camera permission error:', cameraError);
-
-          if (cameraError instanceof Error) {
-            if (cameraError.name === 'NotAllowedError') {
-              throw new Error(
-                'Camera access denied. Please allow camera access in your browser settings and try again.'
-              );
-            } else if (cameraError.name === 'NotFoundError') {
-              throw new Error(
-                'No camera found. Please check your device has a camera and try again.'
-              );
-            } else if (cameraError.name === 'NotReadableError') {
-              throw new Error(
-                'Camera is being used by another application. Please close other apps using the camera and try again.'
-              );
-            } else if (cameraError.name === 'OverconstrainedError') {
-              // Try with more basic constraints
-              try {
-                const basicConstraints = { video: true, audio: false };
-                const basicStream = await navigator.mediaDevices.getUserMedia(basicConstraints);
-                basicStream.getTracks().forEach(track => track.stop());
-              } catch {
-                throw new Error(
-                  'Camera access failed. Please check your device permissions and try again.'
-                );
-              }
-            } else {
-              throw new Error(
-                `Camera error: ${cameraError.message}. Please check your device settings.`
-              );
-            }
-          } else {
-            throw new Error(
-              'Camera access failed. Please check your device permissions and try again.'
-            );
-          }
-        }
+      if (!videoRef.current) {
+        throw new Error('Video element not available');
       }
 
-      // Start decoding with enhanced error handling and better constraints
+      // Request camera permission first
+      const stream = await requestCameraPermission();
+      if (!stream) {
+        throw new Error('Failed to get camera stream');
+      }
+
+      // Clean up the test stream since ZXing will create its own
+      stream.getTracks().forEach(track => track.stop());
+
+      // Start decoding with ZXing
       await codeReader.decodeFromVideoDevice(
         null, // Use default camera
         videoRef.current,
@@ -134,19 +220,7 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
       let errorMessage = 'Failed to start camera';
 
       if (err instanceof Error) {
-        if (err.message.includes('Permission denied') || err.message.includes('permission')) {
-          errorMessage = 'Camera permission denied. Please allow camera access and try again.';
-        } else if (err.message.includes('not found') || err.message.includes('NotFoundError')) {
-          errorMessage = 'No camera found. Please check your device has a camera.';
-        } else if (err.message.includes('NotAllowedError')) {
-          errorMessage =
-            'Camera access blocked. Please check browser settings and allow camera access.';
-        } else if (err.message.includes('NotReadableError')) {
-          errorMessage =
-            'Camera is being used by another application. Please close other apps using the camera.';
-        } else {
-          errorMessage = err.message;
-        }
+        errorMessage = err.message;
       }
 
       setError(errorMessage);
@@ -168,16 +242,29 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
         <CardTitle className="flex items-center gap-2">
           <Scan className="h-5 w-5" />
           {t('title')}
+          {isPWA() && (
+            <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">PWA</span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Security Context Warning */}
+        {!isSecureContext() && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">
+              <strong>⚠️ Insecure Connection:</strong> Camera access requires HTTPS. Please access
+              this app through a secure connection.
+            </p>
+          </div>
+        )}
+
         {/* Scanner Controls */}
         <div className="flex gap-2">
           <Button
             onClick={onToggle}
             variant={isActive ? 'destructive' : 'default'}
             className="flex items-center gap-2"
-            disabled={isInitializing}
+            disabled={isInitializing || !isSecureContext()}
           >
             {isInitializing ? (
               <>
@@ -245,6 +332,16 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
                 <li>Check if another app is using the camera</li>
                 <li>Try refreshing the page</li>
                 <li>Ensure you&apos;re using HTTPS (required for camera access)</li>
+                {isPWA() && isIOS() && (
+                  <>
+                    <li>
+                      <strong>iOS PWA:</strong> Go to Settings &gt; Safari &gt; Camera &gt; Allow
+                    </li>
+                    <li>
+                      <strong>iOS PWA:</strong> Make sure the app was added to home screen properly
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
           </div>
@@ -261,6 +358,12 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
               <li>• Postavi barcode ili QR kod u područje skeniranja</li>
               <li>• Aplikacija će automatski detektirati i obraditi kod</li>
               <li>• Za najbolje rezultate, osiguraj dobro osvjetljenje i drži uređaj mirno</li>
+              {isPWA() && (
+                <li>
+                  • <strong>PWA Mode:</strong> Ensure camera permissions are granted in device
+                  settings
+                </li>
+              )}
             </ul>
           </div>
         )}
