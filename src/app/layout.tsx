@@ -122,7 +122,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <AuthGuard>
               <div className="flex flex-col h-screen">
                 <DateProvider>
-                  <div className="absolute top-4 right-4 z-50 safe-area-top">
+                  <div className="absolute top-4 left-4 z-50 safe-area-top">
                     <LanguageSwitcher />
                   </div>
                   <main className="flex-1 pb-24 safe-area-bottom">{children}</main>

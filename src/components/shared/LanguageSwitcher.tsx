@@ -37,7 +37,18 @@ export default function LanguageSwitcher() {
 
   return (
     <div className="flex items-center gap-2">
-      {/* Language Switcher - Left Side */}
+      {/* Logout Button - Left Side */}
+      <Button
+        onClick={handleLogout}
+        variant="outline"
+        size="sm"
+        className="flex items-center gap-1 bg-white/90 backdrop-blur-sm border-gray-200 hover:bg-white/95 rounded-full p-2"
+        title={t('logout')}
+      >
+        <LogOut className="h-4 w-4 scale-x-[-1]" />
+      </Button>
+
+      {/* Language Switcher - Right Side */}
       <div className="relative">
         <Button
           onClick={() => setIsOpen(!isOpen)}
@@ -49,7 +60,7 @@ export default function LanguageSwitcher() {
         </Button>
 
         {isOpen && (
-          <div className="absolute top-12 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px]">
+          <div className="absolute top-12 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px]">
             {languages.map(language => (
               <button
                 key={language.code}
@@ -64,17 +75,6 @@ export default function LanguageSwitcher() {
           </div>
         )}
       </div>
-
-      {/* Logout Button - Right Side */}
-      <Button
-        onClick={handleLogout}
-        variant="outline"
-        size="sm"
-        className="flex items-center gap-1 bg-white/90 backdrop-blur-sm border-gray-200 hover:bg-white/95 rounded-full p-2"
-        title={t('logout')}
-      >
-        <LogOut className="h-4 w-4 scale-x-[-1]" />
-      </Button>
     </div>
   );
 }
