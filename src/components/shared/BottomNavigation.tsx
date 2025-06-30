@@ -27,47 +27,51 @@ export default function BottomNavigation() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-bottom">
+      {/* Main navigation content */}
       <div className="flex h-16">
         {/* Shopping Button - 33% */}
         <button
           onClick={() => handleNavigation('/shopping')}
-          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer ${
+          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer active:scale-95 ${
             isActive('/shopping')
               ? 'bg-amber-50 text-amber-600 border-t-2 border-amber-600'
-              : 'text-gray-600 hover:bg-gray-50'
+              : 'text-gray-600 hover:bg-gray-50 active:bg-gray-100'
           }`}
         >
-          <ShoppingCart className="h-6 w-6 mb-1" />
+          <ShoppingCart className="h-5 w-5 mb-1" />
           <span className="text-xs font-medium">{t('shopping')}</span>
         </button>
 
         {/* Packing Button - 33% */}
         <button
           onClick={() => handleNavigation('/packing')}
-          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer ${
+          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer active:scale-95 ${
             isActive('/packing')
               ? 'bg-amber-50 text-amber-600 border-t-2 border-amber-600'
-              : 'text-gray-600 hover:bg-gray-50'
+              : 'text-gray-600 hover:bg-gray-50 active:bg-gray-100'
           }`}
         >
-          <PackageOpen className="h-6 w-6 mb-1" />
+          <PackageOpen className="h-5 w-5 mb-1" />
           <span className="text-xs font-medium">{t('packing')}</span>
         </button>
 
         {/* Products Button - 33% */}
         <button
           onClick={() => handleNavigation('/products')}
-          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer ${
+          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer active:scale-95 ${
             isActive('/products')
               ? 'bg-amber-50 text-amber-600 border-t-2 border-amber-600'
-              : 'text-gray-600 hover:bg-gray-50'
+              : 'text-gray-600 hover:bg-gray-50 active:bg-gray-100'
           }`}
         >
-          <Scale className="h-6 w-6 mb-1" />
+          <Scale className="h-5 w-5 mb-1" />
           <span className="text-xs font-medium">{t('products')}</span>
         </button>
       </div>
+
+      {/* iOS Safe Area Bottom Padding */}
+      <div className="h-safe-bottom bg-white"></div>
     </div>
   );
 }

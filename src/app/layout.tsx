@@ -114,14 +114,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased safe-area-insets`}>
         <NextIntlClientProvider messages={messages}>
           <div className="flex flex-col h-screen">
             <DateProvider>
-              <div className="absolute top-4 right-4 z-50">
+              <div className="absolute top-4 right-4 z-50 safe-area-top">
                 <LanguageSwitcher />
               </div>
-              <main className="flex-1">{children}</main>
+              <main className="flex-1 pb-20 safe-area-bottom">{children}</main>
               <BottomNavigation />
             </DateProvider>
           </div>
