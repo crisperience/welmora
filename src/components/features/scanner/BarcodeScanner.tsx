@@ -1,10 +1,7 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { BrowserMultiFormatReader } from '@zxing/library';
-import { Camera, CameraOff, Scan } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 interface BarcodeScannerProps {
@@ -13,13 +10,12 @@ interface BarcodeScannerProps {
   onToggle: () => void;
 }
 
-export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeScannerProps) {
+export default function BarcodeScanner({ onScan, isActive }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [codeReader] = useState(() => new BrowserMultiFormatReader());
   const [error, setError] = useState<string | null>(null);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
-  const t = useTranslations('scanner');
 
   useEffect(() => {
     if (isActive && videoRef.current) {
@@ -238,13 +234,7 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Scan className="h-5 w-5" />
-          {t('title')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 p-4">
         {/* Security Context Warning */}
         {!isSecureContext() && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -254,33 +244,6 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
             </p>
           </div>
         )}
-
-        {/* Scanner Controls */}
-        <div className="flex gap-2">
-          <Button
-            onClick={onToggle}
-            variant={isActive ? 'destructive' : 'default'}
-            className="flex items-center gap-2"
-            disabled={isInitializing || !isSecureContext()}
-          >
-            {isInitializing ? (
-              <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                {t('initializingCamera')}
-              </>
-            ) : isActive ? (
-              <>
-                <CameraOff className="h-4 w-4" />
-                {t('stopScanner')}
-              </>
-            ) : (
-              <>
-                <Camera className="h-4 w-4" />
-                {t('startScanner')}
-              </>
-            )}
-          </Button>
-        </div>
 
         {/* Video Preview */}
         {isActive && (
