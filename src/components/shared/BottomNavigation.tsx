@@ -69,9 +69,6 @@ export default function BottomNavigation() {
           <span className="text-xs font-medium">{t('products')}</span>
         </button>
       </div>
-
-      {/* iOS Safe Area Bottom Padding */}
-      <div className="h-safe-bottom bg-white"></div>
     </div>
   );
 }

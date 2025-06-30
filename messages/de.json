@@ -7,7 +7,8 @@
     "checkStock": "Lager prüfen",
     "noImage": "Kein Bild",
     "search": "Suchen",
-    "on": "auf"
+    "on": "auf",
+    "uncategorized": "Unkategorisiert"
   },
   "navigation": {
     "shopping": "Einkauf",
@@ -39,7 +40,8 @@
     "noItemsForDate": "Keine Artikel für dieses Datum",
     "completed": "Abgeschlossen",
     "total": "Gesamt",
-    "redirecting": "Weiterleitung zum Einkauf..."
+    "redirecting": "Weiterleitung zum Einkauf...",
+    "shoppingCompleted": "Einkauf abgeschlossen!"
   },
   "packing": {
     "title": "Verpackung",
@@ -62,6 +64,7 @@
     "inProgress": "In Bearbeitung",
     "allPackagesComplete": "Alle Pakete abgeschlossen!",
     "packagesProgress": "Paket-Fortschritt",
+    "progress": "Fortschritt",
     "estimatedWeight": "Geschätztes Gewicht",
     "close": "Schließen",
     "items": "Artikel",
@@ -81,7 +84,7 @@
   },
   "products": {
     "title": "Produkte",
-    "searchPlaceholder": "Produkte nach Name, SKU oder GTIN suchen...",
+    "searchPlaceholder": "Nach Name oder SKU suchen...",
     "loadingProducts": "Produkte werden geladen...",
     "stockStatus": {
       "instock": "Verfügbar",

@@ -263,7 +263,7 @@ export default function ProductsPage() {
         <div className="flex items-center justify-center gap-2 mb-4">
           <h1 className="text-2xl font-bold text-gray-900">{t('products.title')}</h1>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex gap-2 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
@@ -281,18 +281,16 @@ export default function ProductsPage() {
               </button>
             )}
           </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={exportToCSV}
-              disabled={isPageLoading}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              CSV
-            </Button>
-          </div>
+          <Button
+            onClick={exportToCSV}
+            disabled={isPageLoading}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 flex-shrink-0"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            CSV
+          </Button>
         </div>
       </div>
 

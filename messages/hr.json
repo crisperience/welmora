@@ -7,7 +7,8 @@
     "checkStock": "Provjeri zalihe",
     "noImage": "Nema slike",
     "search": "Pretraži",
-    "on": "na"
+    "on": "na",
+    "uncategorized": "Bez kategorije"
   },
   "navigation": {
     "shopping": "Kupnja",
@@ -24,7 +25,7 @@
     "signInPrompt": "Molimo prijavite se za pristup aplikaciji",
     "username": "Korisničko ime",
     "password": "Lozinka",
-    "signIn": "Prijaviť se",
+    "signIn": "Prijavi se",
     "signingIn": "Prijavljujem...",
     "invalidCredentials": "Neispravno korisničko ime ili lozinka",
     "enterUsername": "Unesite korisničko ime",
@@ -39,7 +40,8 @@
     "noItemsForDate": "Nema stavaka za ovaj datum",
     "completed": "Završeno",
     "total": "Ukupno",
-    "redirecting": "Preusmjeravam na kupnju..."
+    "redirecting": "Preusmjeravam na kupnju...",
+    "shoppingCompleted": "Kupnja završena!"
   },
   "packing": {
     "title": "Pakiranje",
@@ -62,6 +64,7 @@
     "inProgress": "U tijeku",
     "allPackagesComplete": "Svi paketi završeni!",
     "packagesProgress": "Napredak paketa",
+    "progress": "Napredak",
     "estimatedWeight": "Procj. težina",
     "close": "Zatvori",
     "items": "Stavke",
@@ -81,7 +84,7 @@
   },
   "products": {
     "title": "Proizvodi",
-    "searchPlaceholder": "Pretraži proizvode po nazivu, SKU ili GTIN...",
+    "searchPlaceholder": "Pretraži po nazivu ili SKU...",
     "loadingProducts": "Učitavam proizvode...",
     "stockStatus": {
       "instock": "Dostupno",

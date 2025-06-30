@@ -7,7 +7,8 @@
     "checkStock": "Check stock",
     "noImage": "No image",
     "search": "Search",
-    "on": "on"
+    "on": "on",
+    "uncategorized": "Uncategorized"
   },
   "navigation": {
     "shopping": "Shopping",
@@ -39,7 +40,8 @@
     "noItemsForDate": "No items for this date",
     "completed": "Completed",
     "total": "Total",
-    "redirecting": "Redirecting to shopping..."
+    "redirecting": "Redirecting to shopping...",
+    "shoppingCompleted": "Shopping completed!"
   },
   "packing": {
     "title": "Packing",
@@ -62,6 +64,7 @@
     "inProgress": "In progress",
     "allPackagesComplete": "All packages completed!",
     "packagesProgress": "Package progress",
+    "progress": "Progress",
     "estimatedWeight": "Est. weight",
     "close": "Close",
     "items": "Items",
@@ -81,7 +84,7 @@
   },
   "products": {
     "title": "Products",
-    "searchPlaceholder": "Search products by name, SKU or GTIN...",
+    "searchPlaceholder": "Search by name or SKU...",
     "loadingProducts": "Loading products...",
     "stockStatus": {
       "instock": "In stock",
