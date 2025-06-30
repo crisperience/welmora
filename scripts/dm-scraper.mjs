@@ -8,7 +8,11 @@
  */
 
 import fs from 'fs';
+import { createRequire } from 'module';
 import path from 'path';
+
+// Create require function for CommonJS modules
+const require = createRequire(import.meta.url);
 
 // Ensure logs directory exists
 const logsDir = path.join(process.cwd(), 'logs');
@@ -55,9 +59,9 @@ async function main() {
   });
 
   try {
-    // Dynamic import of ES modules
-    const { createDMScraper } = await import('../src/lib/services/scrapers/dm-scraper.ts');
-    const WooCommerceRestApi = (await import('@woocommerce/woocommerce-rest-api')).default;
+    // Import standalone JavaScript scraper
+    const { createDMScraper } = await import('./dm-scraper-standalone.mjs');
+    const WooCommerceRestApi = require('@woocommerce/woocommerce-rest-api').default;
 
     // Initialize WooCommerce client
     const WooCommerce = new WooCommerceRestApi({
