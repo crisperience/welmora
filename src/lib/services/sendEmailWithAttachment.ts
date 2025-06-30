@@ -72,7 +72,6 @@ export async function sendEmailWithAttachment(
 
     htmlContent += `
       <p>U prilogu se nalaze sticker PDF-ovi za deklaracije.</p>
-      <p><em>Automatski generirano iz WooCommerce webhook-a</em></p>
     `;
 
     const textContent = `
@@ -84,8 +83,6 @@ ${orderDetails?.totalValue ? `Ukupna vrijednost: ${orderDetails.totalValue}` : '
 ${orderDetails?.itemCount ? `Broj stavki: ${orderDetails.itemCount}` : ''}
 
 U prilogu se nalaze sticker PDF-ovi za deklaracije.
-
-Automatski generirano iz WooCommerce webhook-a
     `.trim();
 
     // Send email
