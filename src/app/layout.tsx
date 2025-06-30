@@ -2,7 +2,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import BottomNavigation from '@/components/shared/BottomNavigation';
 import { DateProvider } from '@/components/shared/DateContext';
-import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
+import LanguageSwitcher, { LogoutButton } from '@/components/shared/LanguageSwitcher';
 import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
@@ -122,8 +122,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <AuthGuard>
               <div className="flex flex-col h-screen">
                 <DateProvider>
-                  <div className="absolute top-4 left-4 z-50 safe-area-top">
-                    <LanguageSwitcher />
+                  {/* Header with logout left and language switcher right */}
+                  <div className="absolute top-4 left-4 right-4 z-50 safe-area-top flex justify-between items-center">
+                    {/* Logout Button - Left Side */}
+                    <div>
+                      <LogoutButton />
+                    </div>
+
+                    {/* Language Switcher - Right Side */}
+                    <div>
+                      <LanguageSwitcher />
+                    </div>
                   </div>
                   <main className="flex-1 pb-24 safe-area-bottom">{children}</main>
                   <BottomNavigation />
