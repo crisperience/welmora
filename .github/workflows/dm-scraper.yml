@@ -45,11 +45,6 @@ jobs:
           WOOCOMMERCE_CONSUMER_KEY: ${{ secrets.WOOCOMMERCE_CONSUMER_KEY }}
           WOOCOMMERCE_CONSUMER_SECRET: ${{ secrets.WOOCOMMERCE_CONSUMER_SECRET }}
 
-          # WooCommerce HR Configuration (if needed)
-          WOOCOMMERCE_HR_URL: ${{ secrets.WOOCOMMERCE_HR_URL }}
-          WOOCOMMERCE_HR_CONSUMER_KEY: ${{ secrets.WOOCOMMERCE_HR_CONSUMER_KEY }}
-          WOOCOMMERCE_HR_CONSUMER_SECRET: ${{ secrets.WOOCOMMERCE_HR_CONSUMER_SECRET }}
-
         run: |
           echo "🚀 Starting DM Scraper at $(date)"
           node scripts/dm-scraper.mjs
