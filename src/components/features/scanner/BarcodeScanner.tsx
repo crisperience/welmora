@@ -131,7 +131,7 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
           case 'NotAllowedError':
             throw new Error(
               'Camera access denied. Please allow camera access in your browser settings and try again. ' +
-                (isPWA() ? 'For PWA: Check device settings > Safari > Camera.' : '')
+              (isPWA() ? 'For PWA: Check device settings > Safari > Camera.' : '')
             );
           case 'NotFoundError':
             throw new Error(
@@ -242,9 +242,6 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
         <CardTitle className="flex items-center gap-2">
           <Scan className="h-5 w-5" />
           {t('title')}
-          {isPWA() && (
-            <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">PWA</span>
-          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
