@@ -50,14 +50,6 @@ jobs:
           WOOCOMMERCE_HR_CONSUMER_KEY: ${{ secrets.WOOCOMMERCE_HR_CONSUMER_KEY }}
           WOOCOMMERCE_HR_CONSUMER_SECRET: ${{ secrets.WOOCOMMERCE_HR_CONSUMER_SECRET }}
 
-          # DM Scraper Configuration (if needed)
-          DM_EMAIL: ${{ secrets.DM_EMAIL }}
-          DM_PASSWORD: ${{ secrets.DM_PASSWORD }}
-          DM_STORE_ADDRESS: ${{ secrets.DM_STORE_ADDRESS }}
-
-          # BrightData Configuration (if needed)
-          BRIGHTDATA_USERNAME: ${{ secrets.BRIGHTDATA_USERNAME }}
-          BRIGHTDATA_PASSWORD: ${{ secrets.BRIGHTDATA_PASSWORD }}
         run: |
           echo "🚀 Starting DM Scraper at $(date)"
           node scripts/dm-scraper.mjs

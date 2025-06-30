@@ -16,7 +16,7 @@ A comprehensive logistics management system featuring inventory management, orde
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: Tailwind CSS, Radix UI Components
 - **E-commerce**: WooCommerce REST API
-- **Scraping**: Puppeteer with BrightData integration
+- **Scraping**: Puppeteer for automated price collection
 - **Deployment**: Vercel-ready configuration
 
 ## 📋 Prerequisites
@@ -24,7 +24,6 @@ A comprehensive logistics management system featuring inventory management, orde
 - Node.js 18+
 - npm or pnpm
 - WooCommerce store with REST API access
-- DM and Müller account credentials for scraping
 
 ## 🔧 Environment Variables
 
@@ -41,14 +40,7 @@ WOOCOMMERCE_HR_URL=https://welmora.hr
 WOOCOMMERCE_HR_CONSUMER_KEY=your_hr_consumer_key
 WOOCOMMERCE_HR_CONSUMER_SECRET=your_hr_consumer_secret
 
-# DM Scraper Configuration
-DM_EMAIL=your_dm_email@example.com
-DM_PASSWORD=your_dm_password
-DM_STORE_ADDRESS=your_store_address
 
-# BrightData Configuration (Optional)
-BRIGHTDATA_USERNAME=your_brightdata_username
-BRIGHTDATA_PASSWORD=your_brightdata_password
 ```
 
 ## 🚀 Installation & Setup
@@ -218,7 +210,6 @@ npm run type-check
 
 - Visit `/api/scrapers/test` to check scraper health
 - Monitor WooCommerce API connectivity
-- Check BrightData quota usage
 
 ## 🚨 Troubleshooting
 
