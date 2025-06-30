@@ -1,11 +1,5 @@
 {
   "buildCommand": "npm run build",
   "framework": "nextjs",
-  "regions": ["fra1"],
-  "crons": [
-    {
-      "path": "/api/cron/dm-scraper",
-      "schedule": "0 0 * * 4"
-    }
-  ]
+  "regions": ["fra1"]
 }

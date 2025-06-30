@@ -1,43 +1,71 @@
-import WooCommerce from '@/lib/api/woocommerce/client';
-import { createDMScraper } from '@/lib/services/scrapers/dm-scraper';
-import { NextRequest, NextResponse } from 'next/server';
+#!/usr/bin/env node
 
-interface WooCommerceProduct {
-  id: number;
-  name: string;
-  sku: string;
-  price: string;
-  stock_quantity: number | null;
-  stock_status: string;
-  backorders: string;
-  manage_stock: boolean;
-  images: Array<{ src: string }>;
-  meta_data?: Array<{ key: string; value: string }>;
+/**
+ * DM Scraper Script for GitHub Actions
+ *
+ * This script runs the DM scraper independently of Next.js
+ * and is designed to be executed in GitHub Actions environment.
+ */
+
+import fs from 'fs';
+import path from 'path';
+
+// Ensure logs directory exists
+const logsDir = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
 }
 
-export async function GET(request: NextRequest) {
+// Setup logging
+const logFile = path.join(logsDir, `dm-scraper-${new Date().toISOString().split('T')[0]}.log`);
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
+
+function logWithTimestamp(level, ...args) {
+  const timestamp = new Date().toISOString();
+  const message = `[${timestamp}] ${level}: ${args.join(' ')}`;
+
+  // Write to console
+  if (level === 'ERROR') {
+    originalConsoleError(message);
+  } else {
+    originalConsoleLog(message);
+  }
+
+  // Write to file
+  fs.appendFileSync(logFile, message + '\n');
+}
+
+console.log = (...args) => logWithTimestamp('INFO', ...args);
+console.error = (...args) => logWithTimestamp('ERROR', ...args);
+
+async function main() {
   const startTime = Date.now();
   const timestamp = new Date().toISOString();
 
-  console.log('🚀 DM Scraper Cron Job Started:', timestamp);
-  console.log('📋 User Agent:', request.headers.get('user-agent'));
-
-  // Verify this is a legitimate cron request
-  const userAgent = request.headers.get('user-agent');
-  if (!userAgent?.includes('vercel-cron')) {
-    console.log('❌ Unauthorized: Not a Vercel cron request');
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Unauthorized - Not a cron request',
-        timestamp,
-      },
-      { status: 401 }
-    );
-  }
+  console.log('🚀 DM Scraper GitHub Actions Job Started:', timestamp);
+  console.log('📋 Environment:', {
+    nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch,
+    cwd: process.cwd(),
+    hasWooCommerceUrl: !!process.env.WOOCOMMERCE_URL,
+    hasWooCommerceKey: !!process.env.WOOCOMMERCE_CONSUMER_KEY,
+    hasWooCommerceSecret: !!process.env.WOOCOMMERCE_CONSUMER_SECRET,
+  });
 
   try {
-    const api = WooCommerce;
+    // Dynamic import of ES modules
+    const { createDMScraper } = await import('../src/lib/services/scrapers/dm-scraper.ts');
+    const WooCommerceRestApi = (await import('@woocommerce/woocommerce-rest-api')).default;
+
+    // Initialize WooCommerce client
+    const WooCommerce = new WooCommerceRestApi({
+      url: process.env.WOOCOMMERCE_URL || 'https://welmora.ch',
+      consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || '',
+      consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || '',
+      version: 'wc/v3',
+    });
 
     console.log('🔧 WooCommerce Config Check:', {
       url: process.env.WOOCOMMERCE_URL,
@@ -47,18 +75,18 @@ export async function GET(request: NextRequest) {
 
     // Step 1: Fetch all products
     console.log('📦 Step 1: Fetching all WooCommerce products...');
-    let allProducts: WooCommerceProduct[] = [];
+    let allProducts = [];
     let page = 1;
     let hasMorePages = true;
 
     while (hasMorePages) {
       console.log(`📄 Fetching page ${page} of products...`);
-      const response = await api.get('products', {
+      const response = await WooCommerce.get('products', {
         per_page: 100,
         status: 'publish',
         page: page,
       });
-      const pageProducts = response.data as WooCommerceProduct[];
+      const pageProducts = response.data;
 
       if (pageProducts.length === 0) {
         hasMorePages = false;
@@ -128,7 +156,7 @@ export async function GET(request: NextRequest) {
             ],
           };
 
-          await api.put(`products/${product.id}`, updateData);
+          await WooCommerce.put(`products/${product.id}`, updateData);
           updated++;
         } else {
           skipped++;
@@ -167,15 +195,28 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    console.log('🎉 DM Scraper Cron Job Completed Successfully!');
+    console.log('🎉 DM Scraper GitHub Actions Job Completed Successfully!');
     console.log('📊 Final Summary:', JSON.stringify(summary, null, 2));
 
-    return NextResponse.json(summary);
+    // Write summary to file
+    const summaryFile = path.join(
+      logsDir,
+      `dm-scraper-summary-${new Date().toISOString().split('T')[0]}.json`
+    );
+    fs.writeFileSync(summaryFile, JSON.stringify(summary, null, 2));
+
+    // Cleanup browser instances
+    if (typeof dmScraper.cleanup === 'function') {
+      await dmScraper.cleanup();
+    }
+
+    console.log('🧹 Cleanup completed');
+    process.exit(0);
   } catch (error) {
     const endTime = Date.now();
     const duration = Math.round((endTime - startTime) / 1000);
 
-    console.error('💥 DM Scraper Cron Job Failed:', error);
+    console.error('💥 DM Scraper GitHub Actions Job Failed:', error);
 
     const errorResponse = {
       success: false,
@@ -187,6 +228,31 @@ export async function GET(request: NextRequest) {
 
     console.log('❌ Error Summary:', JSON.stringify(errorResponse, null, 2));
 
-    return NextResponse.json(errorResponse, { status: 500 });
+    // Write error to file
+    const errorFile = path.join(
+      logsDir,
+      `dm-scraper-error-${new Date().toISOString().split('T')[0]}.json`
+    );
+    fs.writeFileSync(errorFile, JSON.stringify(errorResponse, null, 2));
+
+    process.exit(1);
   }
 }
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', error => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+// Run the main function
+main().catch(error => {
+  console.error('Main function failed:', error);
+  process.exit(1);
+});

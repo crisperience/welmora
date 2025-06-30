@@ -1,0 +1,74 @@
+name: Weekly DM Scraper
+
+on:
+  schedule:
+    # Every Thursday at 00:00 UTC (1:00 AM or 2:00 AM in Croatia)
+    - cron: '0 0 * * 4'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  scrape-dm-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360 # 6 hours max timeout
+
+    steps:
+      - name: 🚀 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 🔧 Install dependencies
+        run: npm ci
+
+      - name: 🕷️ Install Chrome dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3-dev \
+            libatk-bridge2.0-dev \
+            libdrm-dev \
+            libxcomposite-dev \
+            libxdamage-dev \
+            libxrandr-dev \
+            libgbm-dev \
+            libxss-dev \
+            libasound2-dev
+
+      - name: 🏃‍♂️ Run DM Scraper
+        env:
+          # WooCommerce Configuration
+          WOOCOMMERCE_URL: ${{ secrets.WOOCOMMERCE_URL }}
+          WOOCOMMERCE_CONSUMER_KEY: ${{ secrets.WOOCOMMERCE_CONSUMER_KEY }}
+          WOOCOMMERCE_CONSUMER_SECRET: ${{ secrets.WOOCOMMERCE_CONSUMER_SECRET }}
+
+          # WooCommerce HR Configuration (if needed)
+          WOOCOMMERCE_HR_URL: ${{ secrets.WOOCOMMERCE_HR_URL }}
+          WOOCOMMERCE_HR_CONSUMER_KEY: ${{ secrets.WOOCOMMERCE_HR_CONSUMER_KEY }}
+          WOOCOMMERCE_HR_CONSUMER_SECRET: ${{ secrets.WOOCOMMERCE_HR_CONSUMER_SECRET }}
+
+          # DM Scraper Configuration (if needed)
+          DM_EMAIL: ${{ secrets.DM_EMAIL }}
+          DM_PASSWORD: ${{ secrets.DM_PASSWORD }}
+          DM_STORE_ADDRESS: ${{ secrets.DM_STORE_ADDRESS }}
+
+          # BrightData Configuration (if needed)
+          BRIGHTDATA_USERNAME: ${{ secrets.BRIGHTDATA_USERNAME }}
+          BRIGHTDATA_PASSWORD: ${{ secrets.BRIGHTDATA_PASSWORD }}
+        run: |
+          echo "🚀 Starting DM Scraper at $(date)"
+          node scripts/dm-scraper.mjs
+          echo "✅ DM Scraper completed at $(date)"
+
+      - name: 📊 Upload logs
+        uses: actions/upload-artifact@v4
+        if: always() # Upload logs even if scraper fails
+        with:
+          name: dm-scraper-logs-${{ github.run_number }}
+          path: |
+            logs/
+            *.log
+          retention-days: 30
