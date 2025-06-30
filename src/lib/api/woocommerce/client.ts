@@ -1,12 +1,11 @@
 import { DailySnapshot, Package, ShoppingItem } from '@/types/woocommerce-api';
 import WooCommerceRestApi from '@woocommerce/woocommerce-rest-api';
 
-// WooCommerce configuration
-
+// WooCommerce configuration - with fallback for build time
 const WooCommerce = new WooCommerceRestApi({
   url: process.env.WOOCOMMERCE_URL || 'https://welmora.ch',
-  consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || '',
-  consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || '',
+  consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'build-time-fallback',
+  consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'build-time-fallback',
   version: 'wc/v3',
 });
 

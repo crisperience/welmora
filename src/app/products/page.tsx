@@ -334,7 +334,7 @@ export default function ProductsPage() {
 
                     return (
                       <>
-                        {/* Welmora */}
+                        {/* Welmora.ch */}
                         <div className="mb-2">
                           <h4 className="font-medium text-gray-900 text-xs mb-1">Welmora.ch</h4>
                           <div className="flex justify-between items-start gap-2">
@@ -383,6 +383,7 @@ export default function ProductsPage() {
                             </div>
                           </div>
                         </div>
+
                         {/* DM */}
                         <div className="mb-2">
                           <h4 className="font-medium text-gray-900 text-xs mb-1">DM</h4>

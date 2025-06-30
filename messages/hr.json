@@ -98,6 +98,7 @@
     "troubleshooting": "Rješavanje problema",
     "instructions": "Upute",
     "lastScanned": "Zadnje skenirano",
+    "positionBarcodeHere": "Postavi barkod ovdje",
     "troubleshootingSteps": {
       "cameraPermission": "Provjeri da li si dao dozvolu za kameru",
       "cameraInUse": "Provjeri da li druga aplikacija koristi kameru",

@@ -103,6 +103,7 @@
     "troubleshooting": "Fehlerbehebung",
     "instructions": "Anweisungen",
     "lastScanned": "Zuletzt gescannt",
+    "positionBarcodeHere": "Barcode hier positionieren",
     "troubleshootingSteps": {
       "cameraPermission": "Stellen Sie sicher, dass Sie Kameraberechtigung erteilt haben",
       "cameraInUse": "Prüfen Sie, ob eine andere App die Kamera verwendet",

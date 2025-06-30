@@ -1,6 +1,12 @@
 import { getPackagesForDate } from '@/lib/api/woocommerce/client';
 import { NextResponse } from 'next/server';
 
+// TODO: Add HR integration
+// - Create /api/packing-hr/[date] endpoint using getPackagesForDateHr()
+// - Add webshop selector dropdown in frontend
+// - Update scanner to work with both .ch and .hr orders
+// - Use updateOrderStatusHr() for HR order completion
+
 export async function GET(request: Request, { params }: { params: Promise<{ date: string }> }) {
   try {
     const { date } = await params;

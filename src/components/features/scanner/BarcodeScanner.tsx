@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { BrowserMultiFormatReader } from '@zxing/library';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 interface BarcodeScannerProps {
@@ -16,6 +17,7 @@ export default function BarcodeScanner({ onScan, isActive }: BarcodeScannerProps
   const [error, setError] = useState<string | null>(null);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  const t = useTranslations('scanner');
 
   useEffect(() => {
     if (isActive && videoRef.current) {
@@ -127,7 +129,7 @@ export default function BarcodeScanner({ onScan, isActive }: BarcodeScannerProps
           case 'NotAllowedError':
             throw new Error(
               'Camera access denied. Please allow camera access in your browser settings and try again. ' +
-              (isPWA() ? 'For PWA: Check device settings > Safari > Camera.' : '')
+                (isPWA() ? 'For PWA: Check device settings > Safari > Camera.' : '')
             );
           case 'NotFoundError':
             throw new Error(
@@ -260,7 +262,7 @@ export default function BarcodeScanner({ onScan, isActive }: BarcodeScannerProps
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-48 h-48 border-2 border-red-500 border-dashed rounded-lg flex items-center justify-center">
                 <div className="text-white bg-black bg-opacity-50 px-2 py-1 rounded text-sm">
-                  Position barcode here
+                  {t('positionBarcodeHere')}
                 </div>
               </div>
             </div>

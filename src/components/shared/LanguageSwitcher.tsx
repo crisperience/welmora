@@ -51,8 +51,9 @@ export default function LanguageSwitcher() {
                 key={language.code}
                 onClick={() => handleLanguageChange(language.code)}
                 disabled={isPending}
-                className={`w-12 h-12 flex items-center justify-center hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${locale === language.code ? 'bg-amber-50' : ''
-                  }`}
+                className={`w-12 h-12 flex items-center justify-center hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
+                  locale === language.code ? 'bg-amber-50' : ''
+                }`}
                 title={language.name}
               >
                 <span className="text-lg">{language.flag}</span>

@@ -31,10 +31,15 @@ A comprehensive logistics management system featuring inventory management, orde
 Create a `.env.local` file with the following variables:
 
 ```bash
-# WooCommerce Configuration
-WOOCOMMERCE_URL=https://your-store.com
-WOOCOMMERCE_CONSUMER_KEY=your_consumer_key
-WOOCOMMERCE_CONSUMER_SECRET=your_consumer_secret
+# WooCommerce Configuration (welmora.ch)
+WOOCOMMERCE_URL=https://welmora.ch
+WOOCOMMERCE_CONSUMER_KEY=your_ch_consumer_key
+WOOCOMMERCE_CONSUMER_SECRET=your_ch_consumer_secret
+
+# WooCommerce HR Configuration (welmora.hr)
+WOOCOMMERCE_HR_URL=https://welmora.hr
+WOOCOMMERCE_HR_CONSUMER_KEY=your_hr_consumer_key
+WOOCOMMERCE_HR_CONSUMER_SECRET=your_hr_consumer_secret
 
 # DM Scraper Configuration
 DM_EMAIL=your_dm_email@example.com

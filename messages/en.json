@@ -96,6 +96,7 @@
     "troubleshooting": "Troubleshooting",
     "instructions": "Instructions",
     "lastScanned": "Last scanned",
+    "positionBarcodeHere": "Position barcode here",
     "troubleshootingSteps": {
       "cameraPermission": "Make sure you have granted camera permissions",
       "cameraInUse": "Check if another app is using the camera",

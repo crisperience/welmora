@@ -121,7 +121,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <div className="absolute top-4 right-4 z-50 safe-area-top">
                 <LanguageSwitcher />
               </div>
-              <main className="flex-1 pb-20 safe-area-bottom">{children}</main>
+              <main className="flex-1 pb-24 safe-area-bottom">{children}</main>
               <BottomNavigation />
             </DateProvider>
           </div>

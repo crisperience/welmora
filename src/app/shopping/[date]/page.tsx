@@ -1,5 +1,11 @@
 'use client';
 
+// TODO: Add HR integration
+// - Add webshop selector dropdown (Welmora.ch / Welmora.hr)
+// - Fetch data from /api/shopping-hr/[date] when HR selected
+// - Support unified view showing orders from both webshops
+// - Add webshop indicator badges on shopping items
+
 import { useDateContext } from '@/components/shared/DateContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

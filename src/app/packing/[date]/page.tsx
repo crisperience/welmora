@@ -1,7 +1,14 @@
 'use client';
 
-import { useDateContext } from '@/components/shared/DateContext';
+// TODO: Add HR integration
+// - Add webshop selector dropdown (Welmora.ch / Welmora.hr)
+// - Fetch data from /api/packing-hr/[date] when HR selected
+// - Update scanner to work with both .ch and .hr orders
+// - Use updateOrderStatusHr() for HR order completion
+// - Support cross-webshop package management
+
 import BarcodeScanner from '@/components/features/scanner/BarcodeScanner';
+import { useDateContext } from '@/components/shared/DateContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';

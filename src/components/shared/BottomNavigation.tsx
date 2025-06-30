@@ -33,7 +33,7 @@ export default function BottomNavigation() {
         {/* Shopping Button - 33% */}
         <button
           onClick={() => handleNavigation('/shopping')}
-          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer active:scale-95 ${
+          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer active:scale-95 py-3 ${
             isActive('/shopping')
               ? 'bg-amber-50 text-amber-600 border-t-2 border-amber-600'
               : 'text-gray-600 hover:bg-gray-50 active:bg-gray-100'
@@ -46,7 +46,7 @@ export default function BottomNavigation() {
         {/* Packing Button - 33% */}
         <button
           onClick={() => handleNavigation('/packing')}
-          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer active:scale-95 ${
+          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer active:scale-95 py-3 ${
             isActive('/packing')
               ? 'bg-amber-50 text-amber-600 border-t-2 border-amber-600'
               : 'text-gray-600 hover:bg-gray-50 active:bg-gray-100'
@@ -59,7 +59,7 @@ export default function BottomNavigation() {
         {/* Products Button - 33% */}
         <button
           onClick={() => handleNavigation('/products')}
-          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer active:scale-95 ${
+          className={`flex-1 flex flex-col items-center justify-center transition-colors cursor-pointer active:scale-95 py-3 ${
             isActive('/products')
               ? 'bg-amber-50 text-amber-600 border-t-2 border-amber-600'
               : 'text-gray-600 hover:bg-gray-50 active:bg-gray-100'

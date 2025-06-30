@@ -1,6 +1,11 @@
 import { generateDailySnapshot } from '@/lib/api/woocommerce/client';
 import { NextResponse } from 'next/server';
 
+// TODO: Add HR integration
+// - Create /api/shopping-hr/[date] endpoint using generateDailySnapshotHr()
+// - Add webshop selector dropdown in frontend
+// - Support unified view of both .ch and .hr orders
+
 export async function GET(request: Request, { params }: { params: Promise<{ date: string }> }) {
   try {
     const { date } = await params;
