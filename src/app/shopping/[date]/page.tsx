@@ -1,6 +1,6 @@
 'use client';
 
-import { useDateContext } from '@/components/DateContext';
+import { useDateContext } from '@/components/shared/DateContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';

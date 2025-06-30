@@ -1,4 +1,4 @@
-import { getPackagesForDate } from '@/lib/woocommerce/client';
+import { getPackagesForDate } from '@/lib/api/woocommerce/client';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request, { params }: { params: Promise<{ date: string }> }) {
@@ -14,14 +14,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ date
 
     // Debug environment variables
     const envDebug = {
-      woocommerceUrl: process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WOOCOMMERCE_URL,
-      hasWooCommerceKey: !!(
-        process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_KEY
-      ),
-      hasWooCommerceSecret: !!(
-        process.env.WOOCOMMERCE_CONSUMER_SECRET ||
-        process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_SECRET
-      ),
+      woocommerceUrl: process.env.WOOCOMMERCE_URL,
+      hasWooCommerceKey: !!process.env.WOOCOMMERCE_CONSUMER_KEY,
+      hasWooCommerceSecret: !!process.env.WOOCOMMERCE_CONSUMER_SECRET,
     };
 
     console.log('Environment debug:', envDebug);

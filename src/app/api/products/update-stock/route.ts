@@ -1,4 +1,4 @@
-import api from '@/lib/woocommerce/client';
+import api from '@/lib/api/woocommerce/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {

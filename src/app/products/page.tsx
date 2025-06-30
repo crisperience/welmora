@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { formatPriceWithConversion, getChfToEurRate } from '@/lib/currency';
+import { formatPriceWithConversion, getChfToEurRate } from '@/lib/utils/currency';
 import { FileSpreadsheet, Search, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
@@ -174,11 +174,11 @@ export default function ProductsPage() {
       prev.map(product =>
         product.sku === productSku
           ? {
-            ...product,
-            welmoraStock: getStockFromStatus(newStatus),
-            welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
-            welmoraStockStatus: newStatus, // Update the stock status field too
-          }
+              ...product,
+              welmoraStock: getStockFromStatus(newStatus),
+              welmoraBackorders: newStatus === 'backorder' ? 'yes' : 'no',
+              welmoraStockStatus: newStatus, // Update the stock status field too
+            }
           : product
       )
     );
@@ -207,11 +207,11 @@ export default function ProductsPage() {
         prev.map(product =>
           product.sku === productSku
             ? {
-              ...product,
-              welmoraStock: originalProduct.welmoraStock,
-              welmoraBackorders: originalProduct.welmoraBackorders,
-              welmoraStockStatus: originalProduct.welmoraStockStatus,
-            }
+                ...product,
+                welmoraStock: originalProduct.welmoraStock,
+                welmoraBackorders: originalProduct.welmoraBackorders,
+                welmoraStockStatus: originalProduct.welmoraStockStatus,
+              }
             : product
         )
       );
@@ -358,10 +358,11 @@ export default function ProductsPage() {
                                     )
                                   }
                                   disabled={loadingItems.has(product.sku)}
-                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders, product.welmoraStockStatus))} ${loadingItems.has(product.sku)
-                                    ? 'opacity-50 cursor-not-allowed'
-                                    : ''
-                                    }`}
+                                  className={`text-xs px-2 py-1 rounded border text-center ${getStockColor(getStatusFromStock(product.welmoraStock, product.welmoraBackorders, product.welmoraStockStatus))} ${
+                                    loadingItems.has(product.sku)
+                                      ? 'opacity-50 cursor-not-allowed'
+                                      : ''
+                                  }`}
                                 >
                                   <option value="instock">
                                     {t('products.stockStatus.instock')}
@@ -416,10 +417,10 @@ export default function ProductsPage() {
                             <h4 className="font-medium text-gray-900 text-xs">Müller</h4>
                             {/* Show Müller search link for all products with valid SKU/GTIN */}
                             {product.sku &&
-                              (product.sku.length === 13 ||
-                                product.sku.length === 12 ||
-                                product.sku.length === 8) &&
-                              /^\d+$/.test(product.sku) ? (
+                            (product.sku.length === 13 ||
+                              product.sku.length === 12 ||
+                              product.sku.length === 8) &&
+                            /^\d+$/.test(product.sku) ? (
                               <a
                                 href={`https://www.mueller.de/suche/?query=${product.sku}`}
                                 target="_blank"
@@ -447,10 +448,10 @@ export default function ProductsPage() {
                             <h4 className="font-medium text-gray-900 text-xs">Metro</h4>
                             {/* Show Metro search link for all products with valid SKU/GTIN */}
                             {product.sku &&
-                              (product.sku.length === 13 ||
-                                product.sku.length === 12 ||
-                                product.sku.length === 8) &&
-                              /^\d+$/.test(product.sku) ? (
+                            (product.sku.length === 13 ||
+                              product.sku.length === 12 ||
+                              product.sku.length === 8) &&
+                            /^\d+$/.test(product.sku) ? (
                               <a
                                 href={`https://produkte.metro.de/shop/search?q=${product.sku}`}
                                 target="_blank"

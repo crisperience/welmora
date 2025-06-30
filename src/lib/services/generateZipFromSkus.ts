@@ -1,4 +1,4 @@
-import { downloadFileAsBuffer, findPdfBySku } from '@/lib/supabase/client';
+import { downloadFileAsBuffer, findPdfBySku } from '@/lib/api/supabase/client';
 import JSZip from 'jszip';
 
 interface SkuItem {

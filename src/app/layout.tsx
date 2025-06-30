@@ -1,11 +1,11 @@
-import BottomNavigation from '@/components/BottomNavigation';
-import { DateProvider } from '@/components/DateContext';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
+import BottomNavigation from '@/components/shared/BottomNavigation';
+import { DateProvider } from '@/components/shared/DateContext';
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
+import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

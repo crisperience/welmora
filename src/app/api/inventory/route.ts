@@ -1,4 +1,4 @@
-import WooCommerce from '@/lib/woocommerce/client';
+import WooCommerce from '@/lib/api/woocommerce/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 interface WooCommerceProduct {

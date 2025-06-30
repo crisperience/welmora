@@ -1,4 +1,4 @@
-import { getOrdersByDateRange } from '@/lib/woocommerce/client';
+import { getOrdersByDateRange } from '@/lib/api/woocommerce/client';
 import { NextResponse } from 'next/server';
 
 interface ScanRequest {

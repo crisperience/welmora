@@ -1,5 +1,5 @@
-import { createDMScraper } from '@/lib/scrapers/dm-scraper';
-import WooCommerce from '@/lib/woocommerce/client';
+import { createDMScraper } from '@/lib/services/scrapers/dm-scraper';
+import WooCommerce from '@/lib/api/woocommerce/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 interface WooCommerceProduct {
@@ -24,14 +24,9 @@ export async function GET(request: NextRequest) {
     const api = WooCommerce;
 
     console.log('WooCommerce Config:', {
-      url: process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WOOCOMMERCE_URL,
-      hasKey: !!(
-        process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_KEY
-      ),
-      hasSecret: !!(
-        process.env.WOOCOMMERCE_CONSUMER_SECRET ||
-        process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_SECRET
-      ),
+      url: process.env.WOOCOMMERCE_URL,
+      hasKey: !!process.env.WOOCOMMERCE_CONSUMER_KEY,
+      hasSecret: !!process.env.WOOCOMMERCE_CONSUMER_SECRET,
     });
 
     // Handle cache clearing action
@@ -146,12 +141,15 @@ export async function GET(request: NextRequest) {
       console.log(`Searching for: "${searchLower}" in ${allProductsForFiltering.length} products`);
 
       // Debug: log first few products to see their structure
-      console.log('Sample products:', allProductsForFiltering.slice(0, 3).map(p => ({
-        name: p.name,
-        sku: p.sku,
-        nameMatch: p.name.toLowerCase().includes(searchLower),
-        skuMatch: p.sku.toLowerCase().includes(searchLower)
-      })));
+      console.log(
+        'Sample products:',
+        allProductsForFiltering.slice(0, 3).map(p => ({
+          name: p.name,
+          sku: p.sku,
+          nameMatch: p.name.toLowerCase().includes(searchLower),
+          skuMatch: p.sku.toLowerCase().includes(searchLower),
+        }))
+      );
 
       allProducts = allProductsForFiltering.filter(product => {
         const nameMatch = product.name.toLowerCase().includes(searchLower);
@@ -159,7 +157,9 @@ export async function GET(request: NextRequest) {
         const matches = nameMatch || skuMatch;
 
         if (matches) {
-          console.log(`✓ Match found: ${product.name} (${product.sku}) - nameMatch: ${nameMatch}, skuMatch: ${skuMatch}`);
+          console.log(
+            `✓ Match found: ${product.name} (${product.sku}) - nameMatch: ${nameMatch}, skuMatch: ${skuMatch}`
+          );
         }
 
         return matches;

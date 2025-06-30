@@ -1,5 +1,5 @@
-import { generateZipFromSkus } from '@/lib/generateZipFromSkus';
-import { sendEmailWithAttachment } from '@/lib/sendEmailWithAttachment';
+import { generateZipFromSkus } from '@/lib/services/generateZipFromSkus';
+import { sendEmailWithAttachment } from '@/lib/services/sendEmailWithAttachment';
 import { NextRequest, NextResponse } from 'next/server';
 
 interface WooCommerceWebhookOrder {

@@ -187,7 +187,9 @@ export class DMScraper {
                 validProduct = { card, url: fullUrl };
                 break;
               } else if (searchedGtin) {
-                console.log(`⚠ Skipping product - GTIN ${searchedGtin} not found in URL: ${fullUrl}`);
+                console.log(
+                  `⚠ Skipping product - GTIN ${searchedGtin} not found in URL: ${fullUrl}`
+                );
               }
             }
           }

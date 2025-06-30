@@ -4,14 +4,9 @@ import WooCommerceRestApi from '@woocommerce/woocommerce-rest-api';
 // WooCommerce configuration
 
 const WooCommerce = new WooCommerceRestApi({
-  url:
-    process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WOOCOMMERCE_URL || 'https://welmora.ch',
-  consumerKey:
-    process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_KEY || '',
-  consumerSecret:
-    process.env.WOOCOMMERCE_CONSUMER_SECRET ||
-    process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_SECRET ||
-    '',
+  url: process.env.WOOCOMMERCE_URL || 'https://welmora.ch',
+  consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || '',
+  consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || '',
   version: 'wc/v3',
 });
 
@@ -104,14 +99,9 @@ function isArrayData(data: unknown): data is unknown[] {
 export async function testWooCommerceConnection(): Promise<WooCommerceApiResponse<boolean>> {
   try {
     console.log('Testing WooCommerce connection with config:', {
-      url: process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WOOCOMMERCE_URL,
-      hasKey: !!(
-        process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_KEY
-      ),
-      hasSecret: !!(
-        process.env.WOOCOMMERCE_CONSUMER_SECRET ||
-        process.env.NEXT_PUBLIC_WOOCOMMERCE_CONSUMER_SECRET
-      ),
+      url: process.env.WOOCOMMERCE_URL,
+      hasKey: !!process.env.WOOCOMMERCE_CONSUMER_KEY,
+      hasSecret: !!process.env.WOOCOMMERCE_CONSUMER_SECRET,
       version: 'wc/v3',
     });
 
