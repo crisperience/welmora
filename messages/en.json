@@ -1,0 +1,125 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "tryAgain": "Try again",
+    "add": "Add",
+    "checkStock": "Check stock",
+    "noImage": "No image",
+    "search": "Search",
+    "on": "on"
+  },
+  "navigation": {
+    "shopping": "Shopping",
+    "packing": "Packing",
+    "products": "Products",
+    "inventory": "Inventory"
+  },
+  "app": {
+    "title": "Welmora",
+    "description": "Welmora - Inventory management, order processing and price comparison"
+  },
+  "shopping": {
+    "title": "Shopping",
+    "selectDate": "Select date",
+    "loadingData": "Loading shopping data...",
+    "progress": "Progress",
+    "noItemsForDate": "No items for this date",
+    "completed": "Completed",
+    "total": "Total",
+    "redirecting": "Redirecting to shopping..."
+  },
+  "packing": {
+    "title": "Packing",
+    "selectDate": "Select date",
+    "loadingData": "Loading packing data...",
+    "enterSku": "Enter SKU manually...",
+    "noPackagesForDate": "No packages for this date",
+    "packageComplete": "Package complete",
+    "scanProduct": "Scan product",
+    "addToPackage": "Add to package",
+    "selectPackage": "Select package",
+    "multipleCustomers": "Multiple customers need this product",
+    "multipleCustomersText": "Multiple customers have ordered this product. Click on the package you want to add it to:",
+    "resetPackage": "Reset package",
+    "customerInfo": "Customer information",
+    "orderNumber": "Order number",
+    "address": "Address",
+    "weight": "Weight",
+    "status": "Status",
+    "inProgress": "In progress",
+    "allPackagesComplete": "All packages completed!",
+    "packagesProgress": "Package progress",
+    "estimatedWeight": "Est. weight",
+    "close": "Close",
+    "items": "Items",
+    "remaining": "remaining",
+    "needed": "needed",
+    "complete": "Complete",
+    "packageCompleteFor": "Package completed for",
+    "addedToPackage": "Added to package for",
+    "productNotFound": "Product not found in any package for this date",
+    "productAlreadyComplete": "is already completed for",
+    "multipleCustomersNeed": "Multiple customers need",
+    "selectCustomer": "Select customer",
+    "itemAdded": "Item added! Still",
+    "itemCompleteFor": "completed for",
+    "processingError": "Processing error",
+    "tryAgainPlease": "Please try again"
+  },
+  "products": {
+    "title": "Products",
+    "searchPlaceholder": "Search products by name, SKU or GTIN...",
+    "loadingProducts": "Loading products...",
+    "stockStatus": {
+      "instock": "In stock",
+      "outofstock": "Out of stock",
+      "backorder": "On backorder"
+    },
+    "updateStock": "Update stock",
+    "price": "Price",
+    "stock": "Stock",
+    "category": "Category"
+  },
+  "inventory": {
+    "title": "Inventory",
+    "scanToAdd": "Scan to add",
+    "manualEntry": "Manual entry",
+    "exportData": "Export data"
+  },
+  "scanner": {
+    "title": "Barcode Scanner",
+    "startScanner": "Start scanner",
+    "stopScanner": "Stop scanner",
+    "initializingCamera": "Initializing camera...",
+    "error": "Error",
+    "troubleshooting": "Troubleshooting",
+    "instructions": "Instructions",
+    "lastScanned": "Last scanned",
+    "troubleshootingSteps": {
+      "cameraPermission": "Make sure you have granted camera permissions",
+      "cameraInUse": "Check if another app is using the camera",
+      "refreshPage": "Try refreshing the page",
+      "httpsRequired": "Make sure you are using HTTPS (required for camera access)"
+    },
+    "instructionSteps": {
+      "clickStart": "Click \"Start scanner\" to activate the camera",
+      "positionCode": "Position the barcode or QR code in the scanning area",
+      "autoDetect": "The app will automatically detect and process the code",
+      "goodLighting": "For best results, ensure good lighting and keep the device steady"
+    },
+    "startScanning": "Start scanning",
+    "stopScanning": "Stop scanning",
+    "enterManually": "Enter manually",
+    "scanBarcode": "Scan barcode",
+    "scanInstructions": "Point camera at barcode",
+    "cameraPermission": "Camera permission required",
+    "allowCamera": "Allow camera"
+  },
+  "feedback": {
+    "success": "Success!",
+    "scanSuccess": "Code scanned successfully",
+    "updateSuccess": "Successfully updated",
+    "saveSuccess": "Successfully saved"
+  }
+}

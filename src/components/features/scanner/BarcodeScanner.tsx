@@ -131,7 +131,7 @@ export default function BarcodeScanner({ onScan, isActive, onToggle }: BarcodeSc
           case 'NotAllowedError':
             throw new Error(
               'Camera access denied. Please allow camera access in your browser settings and try again. ' +
-              (isPWA() ? 'For PWA: Check device settings > Safari > Camera.' : '')
+                (isPWA() ? 'For PWA: Check device settings > Safari > Camera.' : '')
             );
           case 'NotFoundError':
             throw new Error(
