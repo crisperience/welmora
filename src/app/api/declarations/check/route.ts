@@ -37,14 +37,19 @@ export async function GET(request: NextRequest) {
 
         if (error) {
           console.error('Error listing stickers bucket:', error);
-          return NextResponse.json({
-            success: false,
-            error: 'Failed to list stickers bucket',
-            details: error,
-          }, { status: 500 });
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Failed to list stickers bucket',
+              details: error,
+            },
+            { status: 500 }
+          );
         }
 
-        console.log(`Found ${data?.length || 0} items in stickers bucket${folder ? ` (folder: ${folder})` : ''}`);
+        console.log(
+          `Found ${data?.length || 0} items in stickers bucket${folder ? ` (folder: ${folder})` : ''}`
+        );
 
         // Separate folders and files
         const folders = data?.filter(item => !item.name.includes('.') && item.name !== '.') || [];
@@ -69,11 +74,14 @@ export async function GET(request: NextRequest) {
         });
       } catch (debugError) {
         console.error('Debug error:', debugError);
-        return NextResponse.json({
-          success: false,
-          error: 'Debug mode failed',
-          details: debugError instanceof Error ? debugError.message : 'Unknown error',
-        }, { status: 500 });
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Debug mode failed',
+            details: debugError instanceof Error ? debugError.message : 'Unknown error',
+          },
+          { status: 500 }
+        );
       }
     }
 

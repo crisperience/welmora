@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       billing: {
         first_name: 'Test',
         last_name: 'Customer',
-        email: 'test@example.com',
+        email: 'info@welmora.ch',
         company: 'Test Company',
         address_1: '123 Test Street',
         address_2: '',
