@@ -13,7 +13,11 @@
     "test:coverage": "jest --coverage --passWithNoTests",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check-missing-stickers": "node scripts/check-missing-stickers.mjs",
+    "check-missing-stickers:list": "node scripts/check-missing-stickers.mjs --format=list",
+    "test-single-sku": "node scripts/test-single-sku.mjs",
+    "test-all-skus": "node scripts/test-all-skus.mjs"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
